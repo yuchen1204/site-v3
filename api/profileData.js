@@ -3,6 +3,12 @@ const fs = require('fs').promises;
 const path = require('path');
 const { executeQuery, testConnection } = require('./db');
 
+// 数据源类型
+const DataSource = {
+  POSTGRES: 'postgres',
+  JSON: 'json'
+};
+
 /**
  * 从数据库获取个人资料数据
  * @returns {Promise<Object>} 个人资料数据
@@ -27,10 +33,11 @@ async function getProfileFromDb() {
       ORDER BY display_order
     `);
     
-    // 合并数据
+    // 合并数据并添加数据源标记
     return {
       ...profileData[0],
-      socialLinks: socialLinks
+      socialLinks: socialLinks,
+      _source: DataSource.POSTGRES
     };
   } catch (error) {
     console.error('从数据库获取个人资料失败:', error.message);
@@ -46,7 +53,13 @@ async function getProfileFromJson() {
   try {
     const filePath = path.join(process.cwd(), 'data', 'profile.json');
     const fileContent = await fs.readFile(filePath, 'utf8');
-    return JSON.parse(fileContent);
+    const profileData = JSON.parse(fileContent);
+    
+    // 添加数据源标记
+    return {
+      ...profileData,
+      _source: DataSource.JSON
+    };
   } catch (error) {
     console.error('从JSON文件获取个人资料失败:', error.message);
     throw error;
@@ -83,5 +96,6 @@ async function getProfile() {
 }
 
 module.exports = {
-  getProfile
+  getProfile,
+  DataSource
 }; 

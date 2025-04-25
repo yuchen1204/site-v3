@@ -3,6 +3,12 @@ const fs = require('fs').promises;
 const path = require('path');
 const { executeQuery, testConnection } = require('./db');
 
+// 数据源类型
+const DataSource = {
+  POSTGRES: 'postgres',
+  JSON: 'json'
+};
+
 /**
  * 从数据库获取博客文章数据
  * @returns {Promise<Array>} 博客文章列表
@@ -54,7 +60,11 @@ async function getBlogPostsFromDb() {
       post.references = references.map(ref => ref.referenced_post_id);
     }
     
-    return posts;
+    // 返回带数据源标记的对象
+    return {
+      _source: DataSource.POSTGRES,
+      posts: posts
+    };
   } catch (error) {
     console.error('从数据库获取博客文章失败:', error.message);
     throw error;
@@ -69,7 +79,13 @@ async function getBlogPostsFromJson() {
   try {
     const filePath = path.join(process.cwd(), 'data', 'blog.json');
     const fileContent = await fs.readFile(filePath, 'utf8');
-    return JSON.parse(fileContent);
+    const posts = JSON.parse(fileContent);
+    
+    // 返回带数据源标记的对象
+    return {
+      _source: DataSource.JSON,
+      posts: posts
+    };
   } catch (error) {
     console.error('从JSON文件获取博客文章失败:', error.message);
     throw error;
@@ -78,7 +94,7 @@ async function getBlogPostsFromJson() {
 
 /**
  * 获取博客文章数据（先尝试数据库，失败则使用JSON）
- * @returns {Promise<Array>} 博客文章列表
+ * @returns {Promise<Array>} 博客文章列表或包含posts属性的对象
  */
 async function getBlogPosts() {
   try {
@@ -112,12 +128,24 @@ async function getBlogPosts() {
  */
 async function getBlogPostsByCategory(category) {
   try {
-    const allPosts = await getBlogPosts();
+    const blogData = await getBlogPosts();
+    const posts = blogData.posts || blogData; // 兼容直接返回数组的情况
     
     if (category === 'all') {
-      return allPosts;
+      return blogData; // 返回原始数据（可能包含_source）
     } else {
-      return allPosts.filter(post => post.category === category);
+      // 筛选文章
+      const filteredPosts = posts.filter(post => post.category === category);
+      
+      // 如果原始数据有_source属性，保留它
+      if (blogData._source) {
+        return {
+          _source: blogData._source,
+          posts: filteredPosts
+        };
+      } else {
+        return filteredPosts;
+      }
     }
   } catch (error) {
     console.error(`获取分类 '${category}' 的博客文章失败:`, error.message);
@@ -127,5 +155,6 @@ async function getBlogPostsByCategory(category) {
 
 module.exports = {
   getBlogPosts,
-  getBlogPostsByCategory
+  getBlogPostsByCategory,
+  DataSource
 };

@@ -20,25 +20,30 @@ router.get('/profile', asyncHandler(async (req, res) => {
 
 // 获取所有博客文章
 router.get('/blog-posts', asyncHandler(async (req, res) => {
-  const posts = await getBlogPosts();
-  res.json(posts);
+  const blogData = await getBlogPosts();
+  res.json(blogData);
 }));
 
 // 根据分类获取博客文章
 router.get('/blog-posts/category/:category', asyncHandler(async (req, res) => {
   const category = req.params.category;
-  const posts = await getBlogPostsByCategory(category);
-  res.json(posts);
+  const blogData = await getBlogPostsByCategory(category);
+  res.json(blogData);
 }));
 
 // 获取单篇博客文章
 router.get('/blog-posts/:id', asyncHandler(async (req, res) => {
   const postId = parseInt(req.params.id, 10);
-  const allPosts = await getBlogPosts();
-  const post = allPosts.find(p => p.id === postId);
+  const blogData = await getBlogPosts();
+  const posts = blogData.posts || blogData;
+  const post = posts.find(p => p.id === postId);
   
   if (!post) {
     return res.status(404).json({ error: '文章未找到' });
+  }
+  
+  if (blogData._source) {
+    post._source = blogData._source;
   }
   
   res.json(post);
