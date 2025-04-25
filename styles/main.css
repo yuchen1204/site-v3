@@ -896,3 +896,57 @@ body.dark-mode .sidebar-link.active {
     }
 }
 */
+
+/* 数据源指示器样式 */
+.data-source-indicator {
+    margin: 1rem;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    border-radius: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 0.8rem;
+}
+
+.data-source-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 10px;
+    background-color: #888; /* 默认颜色 */
+    transition: background-color 0.3s ease;
+}
+
+.data-source-dot.postgresql {
+    background-color: #4285F4; /* 蓝色 - PostgreSQL */
+}
+
+.data-source-dot.json {
+    background-color: #34A853; /* 绿色 - JSON */
+}
+
+.data-source-text {
+    color: rgba(255, 255, 255, 0.8);
+    transition: color 0.3s ease;
+}
+
+/* 深色模式下的数据源指示器 */
+body.dark-mode .data-source-indicator {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .data-source-text {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* 浅色模式下的数据源指示器 */
+body:not(.dark-mode) .data-source-indicator {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+body:not(.dark-mode) .data-source-text {
+    color: rgba(0, 0, 0, 0.7);
+}

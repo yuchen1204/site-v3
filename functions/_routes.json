@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [],
+  "routes": [
+    {
+      "pattern": "/api/profile",
+      "script": "api/profile.js"
+    },
+    {
+      "pattern": "/api/blog",
+      "script": "api/blog.js"
+    }
+  ]
+} 
