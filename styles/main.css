@@ -42,6 +42,13 @@
     /* 文章背景色 */
     --blog-post-bg-light: #ffebf2; /* 浅粉色背景 - 浅色模式 */
     --blog-post-bg-dark: #3d2a33; /* 深粉色背景 - 深色模式 */
+
+    /* 文章分享按钮样式 */
+    --text-subtle: #6c757d;
+    --bg-hover: #e0e0e0;
+    --text-highlight: #212529;
+    --success-color: #28a745;
+    --error-color: #dc3545;
 }
 
 body {
@@ -974,4 +981,56 @@ body.dark-mode .data-source-indicator {
 body.dark-mode .blog-post-header {
     background-color: rgba(0, 0, 0, 0.2); /* 半透明黑色背景 */
     border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 文章分享按钮样式 */
+.blog-post-share {
+    margin-left: 10px;
+}
+
+.share-button {
+    background: transparent;
+    border: 1px solid var(--text-subtle);
+    color: var(--text-subtle);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.share-button:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-highlight);
+    border-color: var(--text-highlight);
+}
+
+.share-button i {
+    font-size: 1.1em;
+}
+
+.share-button.copy-success {
+    background-color: var(--success-color);
+    color: white;
+    border-color: var(--success-color);
+}
+
+.share-button.copy-error {
+    background-color: var(--error-color);
+    color: white;
+    border-color: var(--error-color);
+}
+
+/* 定义深色和浅色主题中的成功/错误颜色 */
+:root {
+    --success-color: #28a745;
+    --error-color: #dc3545;
+}
+
+[data-theme="dark"] {
+    --success-color: #5cb85c;
+    --error-color: #d9534f;
 }

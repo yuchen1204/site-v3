@@ -331,6 +331,11 @@ function displayBlogPosts(postsToShow) {
                         <div class="blog-post-meta">
                             <span class="blog-post-date">${postDate}</span>
                             ${post.category ? `<span class="blog-post-category">${post.category}</span>` : ''}
+                            <span class="blog-post-share">
+                                <button class="share-button" title="复制链接" data-post-id="${post.id}" data-post-link="${post.link || ''}">
+                                    <i class="bi bi-link-45deg"></i> 分享
+                                </button>
+                            </span>
                         </div>
                     </div>
                     <span class="toggle-arrow">▼</span>
@@ -424,6 +429,26 @@ function displayBlogPosts(postsToShow) {
             }
 
             blogPostsContainer.appendChild(postElement);
+        });
+        
+        // 为分享按钮添加事件监听器
+        document.querySelectorAll('.share-button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation(); // 防止触发文章折叠/展开
+                const postId = this.getAttribute('data-post-id');
+                const postLink = this.getAttribute('data-post-link');
+                
+                let shareUrl;
+                if (postLink) {
+                    // 使用自定义友好链接
+                    shareUrl = `${window.location.origin}/blog/${postLink}`;
+                } else {
+                    // 使用ID链接
+                    shareUrl = `${window.location.origin}/#blog-post-${postId}`;
+                }
+                
+                copyToClipboard(shareUrl, this);
+            });
         });
     }
 
@@ -673,4 +698,38 @@ function initializeSidebarToggle() {
             body.classList.add('sidebar-open');
         }
     }
+}
+
+/**
+ * 复制文本到剪贴板并显示反馈
+ * @param {string} text - 要复制的文本
+ * @param {HTMLElement} button - 触发复制的按钮元素
+ */
+function copyToClipboard(text, button) {
+    const originalText = button.innerHTML;
+    
+    navigator.clipboard.writeText(text)
+        .then(() => {
+            // 复制成功，显示反馈
+            button.innerHTML = '<i class="bi bi-check-lg"></i> 已复制';
+            button.classList.add('copy-success');
+            
+            // 2秒后恢复原始状态
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('copy-success');
+            }, 2000);
+        })
+        .catch(err => {
+            // 复制失败，显示错误
+            console.error('复制失败:', err);
+            button.innerHTML = '<i class="bi bi-exclamation-triangle"></i> 复制失败';
+            button.classList.add('copy-error');
+            
+            // 2秒后恢复原始状态
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('copy-error');
+            }, 2000);
+        });
 } 
