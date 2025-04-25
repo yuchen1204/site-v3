@@ -16,21 +16,20 @@ body {
 /* Admin Sidebar Toggle Button */
 .admin-sidebar-toggle-btn {
     position: fixed;
-    top: 12px; /* Align with top navbar content */
+    bottom: 20px; /* Position at bottom */
     right: 20px;
     z-index: 1040;
-    padding: 0.6rem 0.8rem; /* Slightly adjust padding for round shape */
-    border-radius: 50%; /* Make it round */
-    background-color: #343a40; /* Dark background like navbar */
-    border: 1px solid rgba(255, 255, 255, 0.2); /* Light border */
-    color: #f8f9fa; /* Light icon color */
-    /* backdrop-filter: blur(5px); Remove blur for solid background */
+    padding: 0.6rem 0.8rem;
+    border-radius: 50%;
+    background-color: #343a40;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #f8f9fa;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
 }
 
 .admin-sidebar-toggle-btn:hover {
-    background-color: #495057; /* Slightly lighter dark on hover */
+    background-color: #495057;
     border-color: rgba(255, 255, 255, 0.4);
     color: #fff;
     transform: scale(1.1);
@@ -40,22 +39,55 @@ body {
 /* Admin Sidebar Styles */
 .admin-sidebar {
     position: fixed;
-    top: 56px; /* Position below navbar */
+    top: 0; /* Sidebar spans full height */
     bottom: 0;
     right: 0;
     width: var(--admin-sidebar-width);
     background-color: var(--admin-sidebar-bg);
     padding: 20px 10px;
-    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    box-shadow: -3px 0 8px rgba(0, 0, 0, 0.15);
     transform: translateX(100%);
     transition: transform 0.3s ease;
-    z-index: 1035;
+    z-index: 1045; /* Ensure sidebar is above toggle button and content */
     overflow-y: auto;
     border-left: 1px solid #dee2e6;
 }
 
-body.admin-sidebar-open .admin-sidebar {
-    transform: translateX(0);
+/* Remove main content margin shift */
+/* 
+body.admin-sidebar-open .admin-main-content {
+    margin-right: var(--admin-sidebar-width);
+}
+*/
+
+/* Optional: Add an overlay when sidebar is open */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent black */
+    z-index: 1044; /* Below sidebar, above content */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+body.admin-sidebar-open::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Adjust main content z-index if needed */
+.admin-main-content {
+    position: relative; /* Needed for z-index stacking */
+    z-index: 1; /* Ensure content is below overlay/sidebar */
+    margin-right: 0;
+    transition: filter 0.3s ease; /* Can still use filter if desired */
+    padding: 1rem;
+    padding-top: 0;
 }
 
 .admin-sidebar-nav {
@@ -109,18 +141,6 @@ body.admin-sidebar-open .admin-sidebar {
 
 .admin-sidebar-text {
     flex-grow: 1;
-}
-
-/* Main Content Area Adjustment */
-.admin-main-content {
-    margin-right: 0;
-    transition: margin-right 0.3s ease;
-    padding: 1rem;
-    padding-top: 0; /* Remove default top padding, handled by container */
-}
-
-body.admin-sidebar-open .admin-main-content {
-    margin-right: var(--admin-sidebar-width);
 }
 
 /* Content Sections */
