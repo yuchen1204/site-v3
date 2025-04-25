@@ -473,12 +473,16 @@ async function loadBlogPosts() {
             });
 
             // 添加删除按钮事件监听器
-            row.querySelector('.delete-post-button').addEventListener('click', async function() {
+            row.querySelector('.delete-post-button').addEventListener('click', function() {
                 const postId = this.getAttribute('data-id');
-                const postTitle = allBlogPosts.find(p => p.id.toString() === postId)?.title || '该文章';
+                const postToDelete = allBlogPosts.find(p => p.id.toString() === postId);
                 
-                if (confirm(`确定要删除文章 "${postTitle}" (ID: ${postId}) 吗？此操作不可撤销。`)) {
-                    await deleteBlogPost(postId);
+                if (postToDelete) {
+                    // 打开自定义确认对话框，而不是使用浏览器的 confirm()
+                    showDeleteConfirmModal(postToDelete);
+                } else {
+                    console.error(`未找到 ID 为 ${postId} 的文章`);
+                    alert('无法删除该文章，请刷新列表重试。');
                 }
             });
         });
@@ -634,15 +638,51 @@ async function saveBlogPost() {
 }
 
 /**
+ * 显示删除确认模态框
+ * @param {object} post 要删除的文章对象
+ */
+function showDeleteConfirmModal(post) {
+    const modal = document.getElementById('deleteConfirmModal');
+    const confirmMessage = document.getElementById('delete-confirm-message');
+    const confirmButton = document.getElementById('confirmDeleteButton');
+    const bsModal = new bootstrap.Modal(modal);
+    
+    if (!modal || !confirmMessage || !confirmButton) return;
+    
+    // 设置确认消息
+    confirmMessage.textContent = `您确定要删除文章"${post.title}" (ID: ${post.id}) 吗？`;
+    
+    // 移除之前可能存在的事件监听器
+    const newConfirmButton = confirmButton.cloneNode(true);
+    confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
+    
+    // 为确认按钮添加删除逻辑
+    newConfirmButton.addEventListener('click', async () => {
+        bsModal.hide(); // 先隐藏模态框
+        await deleteBlogPost(post.id); // 执行删除操作
+    });
+    
+    // 显示模态框
+    bsModal.show();
+}
+
+/**
  * 删除博客文章
  * @param {string|number} postId 
  */
 async function deleteBlogPost(postId) {
      const listTbody = document.getElementById('blog-list-tbody');
-     // 可选：在列表中找到对应的行并临时标记为"删除中"
+     // 可以给对应行添加删除中的效果
+     const rows = listTbody.querySelectorAll(`button.delete-post-button[data-id="${postId}"]`);
+     const row = rows.length > 0 ? rows[0].closest('tr') : null;
+     
+     if (row) {
+         row.classList.add('table-secondary');
+         row.querySelector('.delete-post-button').disabled = true;
+         row.querySelector('.edit-post-button').disabled = true;
+     }
 
     try {
-        // TODO: 实现 API 端点 /admin/api/blog/{id} (DELETE)
         const response = await fetch(`/admin/api/blog/${postId}`, {
             method: 'DELETE'
         });
@@ -652,15 +692,68 @@ async function deleteBlogPost(postId) {
             throw new Error(`删除失败 (${response.status}): ${errorData.error || response.statusText}`);
         }
 
-        // 删除成功后重新加载列表
-        alert(`文章 (ID: ${postId}) 已删除。`);
+        // 成功删除，显示简短的成功提示
+        const toast = createToast(`文章 (ID: ${postId}) 已成功删除`, 'success');
+        document.body.appendChild(toast);
+        
+        // 移除 toast
+        setTimeout(() => toast.remove(), 3000);
+        
+        // 重新加载文章列表
         loadBlogPosts(); 
 
     } catch (error) {
         console.error(`删除文章 ${postId} 失败:`, error);
-        alert(`删除文章失败: ${error.message}`);
-        // 可选：移除"删除中"标记
+        
+        // 恢复行样式
+        if (row) {
+            row.classList.remove('table-secondary');
+            row.querySelector('.delete-post-button').disabled = false;
+            row.querySelector('.edit-post-button').disabled = false;
+        }
+        
+        // 显示错误提示
+        const toast = createToast(`删除文章失败: ${error.message}`, 'danger');
+        document.body.appendChild(toast);
+        
+        // 移除 toast
+        setTimeout(() => toast.remove(), 5000);
     }
+}
+
+/**
+ * 创建一个 Bootstrap Toast 提示
+ * @param {string} message 提示消息
+ * @param {string} type 提示类型 ('success', 'danger', 'warning', 'info')
+ * @returns {HTMLElement} Toast 元素
+ */
+function createToast(message, type = 'info') {
+    const toastContainer = document.createElement('div');
+    toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+    toastContainer.style.zIndex = '9999';
+    
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="关闭"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    // 初始化 Toast
+    const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+    bsToast.show();
+    
+    return toastContainer;
 }
 
 /**
