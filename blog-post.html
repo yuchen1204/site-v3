@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 标题会动态设置 -->
+    <title>博客文章</title> 
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Maple Mono CN Font -->
+    <link rel='stylesheet' href='https://chinese-fonts-cdn.deno.dev/packages/maple-mono-cn/dist/MapleMono-CN-SemiBold/result.css' />
+    <!-- Marked.js (用于渲染 Markdown) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- DOMPurify (用于防止 XSS) -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.11/dist/purify.min.js"></script>
+    <!-- Custom CSS (可以复用 main.css 或创建新的) -->
+    <link rel="stylesheet" href="/styles/main.css">
+    <style>
+        /* 可以添加针对博客文章页面的特定样式 */
+        .blog-post-content img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.25rem;
+        }
+        .blog-post-meta {
+            color: var(--bs-secondary-color);
+            font-size: 0.9em;
+        }
+        .attachment-link {
+            display: inline-block;
+            margin-right: 15px;
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            border: 1px solid var(--bs-border-color);
+            border-radius: 4px;
+            text-decoration: none;
+            color: var(--bs-body-color);
+            transition: background-color 0.2s ease;
+        }
+        .attachment-link:hover {
+            background-color: var(--bs-secondary-bg);
+            color: var(--bs-body-color);
+        }
+        .attachment-icon {
+            margin-right: 5px;
+        }
+        .reference-link {
+             display: inline-block;
+             margin-right: 10px;
+             margin-bottom: 10px;
+             padding: 3px 8px;
+             border: 1px solid var(--bs-tertiary-bg);
+             border-radius: 4px;
+             background-color: var(--bs-tertiary-bg);
+             color: var(--bs-secondary-color);
+             text-decoration: none;
+             font-size: 0.9em;
+        }
+         .reference-link:hover {
+             background-color: var(--bs-secondary-bg);
+         }
+    </style>
+</head>
+<body data-bs-theme="light"> <!-- 初始主题，JS会处理切换 -->
+
+    <!-- 导航栏/页眉 (可以从 index.html 复制或简化) -->
+    <header class="container mt-3 mb-4 text-center">
+        <a href="/" class="text-decoration-none text-body"><h1>我的网站</h1></a>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-9">
+                <article id="blog-post-container" class="card shadow-sm mb-5">
+                    <div class="card-body p-4">
+                        <!-- 加载提示 -->
+                        <div id="loading-indicator" class="text-center my-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                        </div>
+                        <!-- 错误提示 -->
+                        <div id="error-indicator" class="alert alert-danger my-5" role="alert" style="display: none;">
+                            加载文章失败。
+                        </div>
+                        <!-- 文章内容将填充这里 -->
+                        <h1 id="post-title" class="card-title mb-3"></h1>
+                        <div class="blog-post-meta mb-4">
+                            <span id="post-date"></span> | <span id="post-category"></span>
+                        </div>
+                        <div id="post-content" class="blog-post-content mb-4">
+                            <!-- Markdown 渲染的内容 -->
+                        </div>
+                        <div id="post-attachments" class="mb-4">
+                            <!-- 附件列表 -->
+                        </div>
+                        <div id="post-references">
+                            <!-- 引用列表 -->
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 (可以从 index.html 复制或简化) -->
+    <footer class="container text-center text-muted py-3">
+        &copy; <span id="current-year"></span> 你的名字
+    </footer>
+
+    <!-- 主题切换按钮 (复用 index.html 的) -->
+    <button id="theme-toggle" class="btn theme-toggle-btn" aria-label="切换主题">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-brightness-high-fill" viewBox="0 0 16 16">
+            <path d="M12 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708"/>
+        </svg>
+    </button>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 博客文章页面 spécifique JS -->
+    <script src="/scripts/blog-post.js"></script>
+    <!-- 主题切换和通用逻辑 (可以从 main.js 提取或复用) -->
+    <script>
+        // 简单的页脚年份更新
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+        
+        // 复用主题切换逻辑 (简化版)
+        const themeToggle = document.getElementById('theme-toggle');
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        document.body.setAttribute('data-bs-theme', currentTheme);
+        
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                let newTheme = document.body.getAttribute('data-bs-theme') === 'light' ? 'dark' : 'light';
+                document.body.setAttribute('data-bs-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+            });
+        }
+    </script>
+</body>
+</html> 

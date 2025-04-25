@@ -298,7 +298,6 @@ async function saveProfileData() {
 // --- 博客编辑相关函数 ---
 
 let allBlogPosts = []; // 存储从 API 获取的所有博客文章
-let quillEditor; // Quill编辑器实例
 
 /**
  * 初始化博客编辑器功能
@@ -309,27 +308,8 @@ function initializeBlogEditor() {
     const blogEditorForm = document.getElementById('blog-editor-form');
     const addAttachmentButton = document.getElementById('add-attachment-button');
     const addReferenceButton = document.getElementById('add-reference-button');
-    const quillContainer = document.getElementById('quill-editor');
 
     if (!addPostButton || !cancelEditButton || !blogEditorForm || !addAttachmentButton || !addReferenceButton) return;
-
-    // 初始化Quill编辑器
-    if (quillContainer) {
-        quillEditor = new Quill('#quill-editor', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    [{ 'color': [] }, { 'background': [] }],
-                    ['link', 'image', 'code-block'],
-                    ['clean']
-                ]
-            },
-            placeholder: '开始撰写文章内容...'
-        });
-    }
 
     // "添加新文章"按钮点击事件
     addPostButton.addEventListener('click', () => {
@@ -354,13 +334,6 @@ function initializeBlogEditor() {
     // 表单提交事件 (保存文章)
     blogEditorForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        // 将Quill编辑器内容同步到隐藏的textarea
-        if (quillEditor) {
-            const html = quillEditor.root.innerHTML;
-            document.getElementById('blog-content').value = html;
-        }
-        
         await saveBlogPost();
     });
 }
@@ -414,11 +387,6 @@ function showBlogEditor(post = null) {
         categoryInput.value = post.category || '';
         // 格式化日期以适应 datetime-local input
         dateInput.value = post.date ? new Date(post.date).toISOString().slice(0, 16) : '';
-        
-        // 设置Quill编辑器内容
-        if (quillEditor) {
-            quillEditor.root.innerHTML = post.content || '';
-        }
         contentInput.value = post.content || '';
 
         // 填充附件
@@ -437,11 +405,9 @@ function showBlogEditor(post = null) {
         blogIdInput.value = ''; // 确保 ID 为空
         // 可以设置默认日期为当前时间
         dateInput.value = new Date().toISOString().slice(0, 16);
-        
-        // 清空Quill编辑器
-        if (quillEditor) {
-            quillEditor.root.innerHTML = '';
-        }
+        // 添加一个空的附件和引用输入（可选）
+        // addAttachmentInputGroup(attachmentsEditor);
+        // addReferenceInputGroup(referencesEditor);
     }
 }
 
@@ -479,11 +445,13 @@ async function loadBlogPosts() {
 
         allBlogPosts.forEach(post => {
             const row = tbody.insertRow();
+            const postLink = `/blog/${post.id}`; // 生成公开链接
             row.innerHTML = `
                 <td>${post.id}</td>
                 <td>${escapeHTML(post.title)}</td>
                 <td>${escapeHTML(post.category)}</td>
                 <td>${new Date(post.date).toLocaleString('zh-CN')}</td>
+                <td><a href="${postLink}" target="_blank" title="查看文章"><i class="bi bi-link-45deg"></i> 链接</a></td>
                 <td>
                     <button class="btn btn-primary btn-sm edit-post-button" data-id="${post.id}">
                         <i class="bi bi-pencil-fill"></i> 编辑
