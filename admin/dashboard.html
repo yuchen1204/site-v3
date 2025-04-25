@@ -73,7 +73,35 @@
 
             <section id="edit-profile" class="admin-section">
                 <h1 class="h2">编辑个人资料</h1>
-                <!-- Profile editing form will go here -->
+                <form id="profile-form">
+                    <div class="mb-3">
+                        <label for="profile-name" class="form-label">姓名</label>
+                        <input type="text" class="form-control" id="profile-name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="profile-avatar" class="form-label">头像 URL</label>
+                        <input type="url" class="form-control" id="profile-avatar" placeholder="https://...">
+                    </div>
+                    <div class="mb-3">
+                        <label for="profile-motto" class="form-label">座右铭</label>
+                        <textarea class="form-control" id="profile-motto" rows="3"></textarea>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h5 class="mb-3">社交链接</h5>
+                    <div id="social-links-editor" class="mb-3">
+                        <!-- 社交链接输入组将动态添加到这里 -->
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="add-social-link-button">
+                        <i class="bi bi-plus-circle"></i> 添加社交链接
+                    </button>
+
+                    <hr class="my-4">
+
+                    <button type="submit" class="btn btn-primary">保存个人资料</button>
+                    <span id="profile-save-status" class="ms-3"></span>
+                </form>
             </section>
 
             <section id="edit-blog" class="admin-section">
