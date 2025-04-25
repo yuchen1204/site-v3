@@ -38,6 +38,10 @@
     /* 数据源指示器颜色 */
     --data-source-json-color: #0cd14b; /* 绿色 - JSON数据源 */
     --data-source-kv-color: #2986cc; /* 蓝色 - KV数据源 */
+    
+    /* 文章背景色 */
+    --blog-post-bg-light: #ffebf2; /* 浅粉色背景 - 浅色模式 */
+    --blog-post-bg-dark: #3d2a33; /* 深粉色背景 - 深色模式 */
 }
 
 body {
@@ -327,31 +331,34 @@ body.dark-mode .blog-category-item.active::after {
 .blog-posts-container {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.8rem; /* 增大文章之间的间距 */
 }
 
 .blog-post {
-    padding: 0; /* 移除内部padding，由header和body控制 */
-    border-radius: 0.5rem;
-    background-color: rgba(255, 255, 255, 0.5);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    padding: 0;
+    border-radius: 0.8rem; /* 增大圆角 */
+    background-color: var(--blog-post-bg-light);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
     border-left: 4px solid var(--name-color-light);
-    overflow: hidden; /* 隐藏超出内容 */
+    overflow: hidden;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08); /* 添加柔和的阴影 */
 }
 
 .blog-post:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* 悬停时加深阴影 */
 }
 
 .blog-post-header {
+    background-color: rgba(255, 255, 255, 0.3); /* 半透明白色背景，增加标题区域的辨识度 */
     padding: 1.5rem; 
     margin-bottom: 0; 
-    position: relative; /* Keep relative for potential future absolute positioning inside */
+    position: relative;
     cursor: pointer;
-    display: flex; /* Use flexbox for layout */
-    align-items: center; /* Vertically center items */
-    justify-content: space-between; /* Push title/meta and arrow apart */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 /* Group title and meta */
@@ -367,6 +374,7 @@ body.dark-mode .blog-category-item.active::after {
     margin-bottom: 0.5rem;
     color: var(--body-color-light);
     transition: color 0.3s ease;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5); /* 添加文字阴影提高可读性 */
 }
 
 .blog-post-meta {
@@ -381,12 +389,15 @@ body.dark-mode .blog-category-item.active::after {
 
 .blog-post-category {
     display: inline-block;
-    padding: 0.2rem 0.6rem;
+    padding: 0.25rem 0.7rem;
     border-radius: 1rem;
     background-color: var(--name-color-light);
     color: white;
     font-size: 0.8rem;
-    flex-shrink: 0; /* Prevent category from shrinking */
+    flex-shrink: 0;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Toggle Arrow */
@@ -423,10 +434,11 @@ body.dark-mode .blog-category-item.active::after {
 .blog-post-content {
     font-family: 'Maple Mono CN', 'Arial', sans-serif;
     font-size: 0.95rem;
-    line-height: 1.6;
+    line-height: 1.7; /* 增加行高 */
     color: var(--body-color-light);
     margin-bottom: 1.5rem;
     transition: color 0.3s ease;
+    padding: 0.5rem 0; /* 添加上下内边距 */
 }
 
 /* Blog Post Attachments */
@@ -520,12 +532,18 @@ body.dark-mode .blog-section-title {
 }
 
 body.dark-mode .blog-post {
-    background-color: rgba(0, 0, 0, 0.1);
+    background-color: var(--blog-post-bg-dark);
     border-left-color: var(--name-color-dark);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2); /* 深色模式下更深的阴影 */
+}
+
+body.dark-mode .blog-post:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); /* 深色模式下悬停时的阴影 */
 }
 
 body.dark-mode .blog-post-title {
     color: var(--body-color-dark);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5); /* 深色模式下的文字阴影 */
 }
 
 body.dark-mode .blog-post-meta {
@@ -614,12 +632,13 @@ body.dark-mode .blog-post-body {
 /* Highlight effect */
 .blog-post.highlight {
     transition: background-color 0.5s ease-out;
-    background-color: rgba(79, 172, 254, 0.2); /* Light blue highlight */
+    background-color: rgba(79, 172, 254, 0.3); /* 稍微加深高亮，使其在粉色背景上更明显 */
+    box-shadow: 0 0 10px rgba(79, 172, 254, 0.5); /* 添加发光效果 */
 }
 
 /* Dark Mode Blog References */
 body.dark-mode .blog-post-references {
-    border-top-color: rgba(255, 255, 255, 0.05);
+    border-top-color: rgba(255, 255, 255, 0.1);
 }
 
 body.dark-mode .blog-post-references h5 {
@@ -639,7 +658,8 @@ body.dark-mode .inline-reference {
 }
 
 body.dark-mode .blog-post.highlight {
-    background-color: rgba(142, 197, 252, 0.2); /* Adjusted blue for dark mode */
+    background-color: rgba(142, 197, 252, 0.3); /* 调整暗色模式下的高亮效果 */
+    box-shadow: 0 0 10px rgba(142, 197, 252, 0.5); /* 添加发光效果 */
 }
 
 /* Pagination Styles */
@@ -948,4 +968,10 @@ body.dark-mode .data-source-indicator {
     background-color: rgba(50, 50, 50, 0.8);
     color: var(--body-color-dark);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 深色模式下的标题区域 */
+body.dark-mode .blog-post-header {
+    background-color: rgba(0, 0, 0, 0.2); /* 半透明黑色背景 */
+    border-bottom-color: rgba(255, 255, 255, 0.05);
 }
