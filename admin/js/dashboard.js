@@ -365,12 +365,13 @@ function showBlogEditor(post = null) {
     const categoryInput = document.getElementById('blog-category');
     const dateInput = document.getElementById('blog-date');
     const contentInput = document.getElementById('blog-content');
+    const linkInput = document.getElementById('blog-link');
     const attachmentsEditor = document.getElementById('blog-attachments-editor');
     const referencesEditor = document.getElementById('blog-references-editor');
     const saveStatus = document.getElementById('blog-save-status');
 
     if (!listContainer || !editorContainer || !editorTitle || !form || !blogIdInput || 
-        !titleInput || !categoryInput || !dateInput || !contentInput || 
+        !titleInput || !categoryInput || !dateInput || !contentInput || !linkInput || 
         !attachmentsEditor || !referencesEditor || !saveStatus) return;
 
     listContainer.style.display = 'none';
@@ -385,6 +386,7 @@ function showBlogEditor(post = null) {
         blogIdInput.value = post.id;
         titleInput.value = post.title || '';
         categoryInput.value = post.category || '';
+        linkInput.value = post.link || '';
         // 格式化日期以适应 datetime-local input
         dateInput.value = post.date ? new Date(post.date).toISOString().slice(0, 16) : '';
         contentInput.value = post.content || '';
@@ -449,6 +451,11 @@ async function loadBlogPosts() {
                 <td>${post.id}</td>
                 <td>${escapeHTML(post.title)}</td>
                 <td>${escapeHTML(post.category)}</td>
+                <td>
+                    ${post.link ? 
+                    `<a href="/blog/${escapeHTML(post.link)}" target="_blank" title="在新窗口查看">${escapeHTML(post.link)} <i class="bi bi-box-arrow-up-right"></i></a>` : 
+                    '<span class="text-muted">无</span>'}
+                </td>
                 <td>${new Date(post.date).toLocaleString('zh-CN')}</td>
                 <td>
                     <button class="btn btn-primary btn-sm edit-post-button" data-id="${post.id}">
@@ -536,6 +543,24 @@ function addReferenceInputGroup(container, refId = '') {
 }
 
 /**
+ * 将文本转换为URL友好的链接格式（slug）
+ * @param {string} text 要转换的文本
+ * @returns {string} URL友好的字符串
+ */
+function generateSlug(text) {
+    if (!text) return '';
+    // 替换中文字符为拼音的逻辑需要专门的库，这里简单处理
+    // 1. 移除非字母数字字符，用连字符替换空格
+    // 2. 转为小写
+    // 3. 去除多余的连字符
+    return text
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '') // 移除非单词、空格和连字符的字符
+        .replace(/[\s_-]+/g, '-') // 将空格、下划线和连字符替换为单个连字符
+        .replace(/^-+|-+$/g, ''); // 移除开头和结尾的连字符
+}
+
+/**
  * 保存博客文章 (添加或更新)
  */
 async function saveBlogPost() {
@@ -545,6 +570,7 @@ async function saveBlogPost() {
     const category = document.getElementById('blog-category').value.trim();
     const dateStr = document.getElementById('blog-date').value;
     const content = document.getElementById('blog-content').value.trim();
+    const link = document.getElementById('blog-link').value.trim();
     const statusSpan = document.getElementById('blog-save-status');
     const saveButton = document.getElementById('save-post-button');
 
@@ -561,6 +587,16 @@ async function saveBlogPost() {
     } catch(e) {
         statusSpan.textContent = '日期格式无效。';
         return;
+    }
+
+    // 如果没有提供链接，则根据标题自动生成
+    let finalLink = link;
+    if (!finalLink) {
+        finalLink = generateSlug(title);
+        // 确保链接不为空
+        if (!finalLink) {
+            finalLink = `post-${Date.now()}`;
+        }
     }
 
     statusSpan.textContent = '保存中...';
@@ -602,6 +638,7 @@ async function saveBlogPost() {
         category,
         date: dateISO,
         content,
+        link: finalLink,
         attachments,
         references
     };

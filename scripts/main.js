@@ -489,57 +489,20 @@ function renderPaginationControls(totalPosts, totalPages) {
 }
 
 /**
- * 解析文章内容中的引用和转换Markdown
+ * 解析文章内容中的引用标记 [[id]] 并替换为链接
  * @param {string} content - 文章内容
- * @param {Array} allPosts - 所有文章数据，用于查找引用
- * @returns {string} 处理后的HTML内容
+ * @param {Array} allPosts - 所有博客文章的数组
+ * @returns {string} - 解析后的 HTML 内容
  */
 function parseReferences(content, allPosts) {
-    if (!content) return '';
-    
-    // 首先处理引用，如 [[1]] 形式的引用
-    const referencedText = content.replace(/\[\[(\d+)\]\]/g, (match, refId) => {
+    return content.replace(/\[\[(\d+)\]\]/g, (match, refId) => {
         const referencedPost = findPostById(parseInt(refId, 10), allPosts);
         if (referencedPost) {
-            return `<a href="#blog-post-${refId}" class="internal-reference" data-post-id="${refId}" onclick="scrollToPost(${refId}); return false;">${referencedPost.title}</a>`;
+            return `<a href="#blog-post-${refId}" class="reference-link inline-reference" onclick="scrollToPost(${refId}); return false;">${referencedPost.title}</a>`;
+        } else {
+            return match; // 如果找不到文章，保留原始标记
         }
-        return match; // 如果引用无效，保持原样
     });
-    
-    // 预处理代码块，修复格式问题
-    let processedText = referencedText;
-    
-    // 处理代码块格式问题：替换 ```language code``` 格式为正确的 ```\nlanguage\ncode\n```
-    processedText = processedText.replace(/```(\w+)\s+([^`]+)```/g, (match, language, code) => {
-        return "```\n" + language + "\n" + code.trim() + "\n```";
-    });
-    
-    // 处理没有语言指定的代码块
-    processedText = processedText.replace(/```([^`\n]+)```/g, (match, code) => {
-        return "```\n" + code.trim() + "\n```";
-    });
-    
-    // 然后将Markdown转换为HTML
-    try {
-        // 配置marked.js选项
-        marked.setOptions({
-            breaks: true,             // 将换行符转换为<br>
-            gfm: true,                // 使用GitHub风格的Markdown
-            headerIds: true,          // 为标题添加ID
-            mangle: false,            // 不转义标题ID中的HTML
-            sanitize: false,          // 不禁止HTML输入
-            smartLists: true,         // 使用更智能的列表行为
-            smartypants: true,        // 使用更智能的标点符号
-            xhtml: false,             // 不使用自闭合XHTML标签
-            langPrefix: 'language-'   // 添加语言前缀
-        });
-        
-        // 解析Markdown为HTML
-        return marked.parse(processedText);
-    } catch (error) {
-        console.error('Markdown解析失败:', error);
-        return processedText; // 如果解析失败，至少返回解析了引用的文本
-    }
 }
 
 /**

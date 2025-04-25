@@ -122,6 +122,7 @@
                                     <th>ID</th>
                                     <th>标题</th>
                                     <th>分类</th>
+                                    <th>链接</th>
                                     <th>发布日期</th>
                                     <th>操作</th>
                                 </tr>
@@ -160,8 +161,17 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="blog-content" class="form-label">内容 (Markdown)</label>
+                            <label for="blog-content" class="form-label">内容</label>
                             <textarea class="form-control" id="blog-content" rows="15" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="blog-link" class="form-label">文章链接</label>
+                            <div class="input-group">
+                                <span class="input-group-text">/blog/</span>
+                                <input type="text" class="form-control" id="blog-link" placeholder="my-blog-post" aria-describedby="blog-link-help">
+                            </div>
+                            <div class="form-text" id="blog-link-help">文章的唯一URL标识，例如：my-blog-post（留空则自动生成）</div>
                         </div>
 
                         <hr class="my-4">
