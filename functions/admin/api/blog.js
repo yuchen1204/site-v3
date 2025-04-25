@@ -100,132 +100,22 @@ async function handleCreate(context) {
     }
 }
 
-// Handle GET /admin/api/blog/[id] (Get one)
-async function handleGetOne(context) {
-    const { env, params } = context;
-    const postId = parseInt(params.id, 10);
-
-    if (isNaN(postId)) {
-        return jsonResponse({ error: '无效的文章 ID' }, 400);
-    }
-
-    try {
-        const posts = await getBlogPosts(env);
-        const post = posts.find(p => p.id === postId);
-
-        if (!post) {
-            return jsonResponse({ error: '找不到指定 ID 的文章' }, 404);
-        }
-        return jsonResponse(post);
-
-    } catch (error) {
-        console.error(`Error getting blog post ${postId}:`, error);
-        return jsonResponse({ error: '获取文章详情失败' }, 500);
-    }
-}
-
-// Handle PUT /admin/api/blog/[id] (Update)
-async function handleUpdate(context) {
-    const { request, env, params } = context;
-    const postId = parseInt(params.id, 10);
-
-    if (isNaN(postId)) {
-        return jsonResponse({ error: '无效的文章 ID' }, 400);
-    }
-
-    try {
-        let posts = await getBlogPosts(env);
-        const postIndex = posts.findIndex(p => p.id === postId);
-
-        if (postIndex === -1) {
-            return jsonResponse({ error: '找不到要更新的文章' }, 404);
-        }
-
-        const updatedData = await request.json();
-
-        // Basic validation
-        if (!updatedData.title || !updatedData.content || !updatedData.category || !updatedData.date) {
-             return jsonResponse({ error: '缺少必要字段 (标题, 内容, 分类, 日期)' }, 400);
-        }
-
-        // Merge updated data, keeping the original ID
-        posts[postIndex] = {
-            ...posts[postIndex], // Keep original fields if not provided in update
-            ...updatedData,
-            id: postId, // Ensure ID remains the same
-            date: new Date(updatedData.date).toISOString(), // Ensure date format
-            attachments: updatedData.attachments || [],
-            references: updatedData.references || []
-        };
-
-        await saveBlogPosts(env, posts);
-        return jsonResponse(posts[postIndex]);
-
-    } catch (error) {
-        console.error(`Error updating blog post ${postId}:`, error);
-        if (error instanceof SyntaxError) {
-            return jsonResponse({ error: '无效的请求数据格式' }, 400);
-        }
-        return jsonResponse({ error: '更新文章失败' }, 500);
-    }
-}
-
-// Handle DELETE /admin/api/blog/[id] (Delete)
-async function handleDelete(context) {
-    const { env, params } = context;
-    const postId = parseInt(params.id, 10);
-
-    if (isNaN(postId)) {
-        return jsonResponse({ error: '无效的文章 ID' }, 400);
-    }
-
-    try {
-        let posts = await getBlogPosts(env);
-        const initialLength = posts.length;
-        posts = posts.filter(p => p.id !== postId);
-
-        if (posts.length === initialLength) {
-            return jsonResponse({ error: '找不到要删除的文章' }, 404);
-        }
-
-        await saveBlogPosts(env, posts);
-        return jsonResponse({ message: '文章删除成功' }); // 200 OK is fine, 204 No Content is also an option
-
-    } catch (error) {
-        console.error(`Error deleting blog post ${postId}:`, error);
-        return jsonResponse({ error: '删除文章失败' }, 500);
-    }
-}
-
 // Main onRequest handler to route requests based on method and path
 export async function onRequest(context) {
-    const { request, params } = context;
+    const { request } = context;
     const url = new URL(request.url);
     const pathSegments = url.pathname.split('/').filter(Boolean);
-    const hasId = pathSegments.length === 4 && pathSegments[2] === 'blog' && params.id;
 
-    // Authentication should be handled by _middleware.js before this function is called
-
-    if (request.method === 'GET') {
-        if (hasId) {
-            return handleGetOne(context);
-        } else if (pathSegments.length === 3 && pathSegments[2] === 'blog') {
+    // This file now ONLY handles /admin/api/blog (path length 3)
+    if (pathSegments.length === 3 && pathSegments[0] === 'admin' && pathSegments[1] === 'api' && pathSegments[2] === 'blog') {
+        if (request.method === 'GET') {
             return handleList(context);
-        }
-    } else if (request.method === 'POST') {
-        if (pathSegments.length === 3 && pathSegments[2] === 'blog') {
-             return handleCreate(context);
-        }
-    } else if (request.method === 'PUT') {
-        if (hasId) {
-            return handleUpdate(context);
-        }
-    } else if (request.method === 'DELETE') {
-        if (hasId) {
-            return handleDelete(context);
+        } else if (request.method === 'POST') {
+            return handleCreate(context);
         }
     }
 
-    // If no route matches
-    return jsonResponse({ error: '无效的 API 路由' }, 404);
+    // If method or path doesn't match, return 404 or 405
+    // Returning 404 is simpler here, as the specific item routes are handled elsewhere.
+    return jsonResponse({ error: '无效的 API 路由或方法' }, 404); 
 } 
