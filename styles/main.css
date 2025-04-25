@@ -1,0 +1,898 @@
+/* 自定义样式 */
+:root {
+    --body-bg-light: #f8f9fa;
+    --body-color-light: #212529;
+    --profile-bg-light: white;
+    --profile-shadow-light: rgba(0, 0, 0, 0.1);
+    --name-color-light: #4facfe;
+    --motto-color-light: #6c757d;
+    --toggle-bg-light: rgba(255, 255, 255, 0.8);
+    --toggle-border-light: rgba(0, 0, 0, 0.1);
+    --toggle-icon-color-light: #212529;
+
+    --body-bg-dark: #1a1a1a;
+    --body-color-dark: #e0e0e0;
+    --profile-bg-dark: #2c2c2c;
+    --profile-shadow-dark: rgba(255, 255, 255, 0.1);
+    --name-color-dark: #8ec5fc; /* 调整深色模式下的蓝色 */
+    --motto-color-dark: #e0e0e0; /* 改为与正文一致的亮灰色 */
+    --toggle-bg-dark: rgba(50, 50, 50, 0.8);
+    --toggle-border-dark: rgba(255, 255, 255, 0.1);
+    --toggle-icon-color-dark: #e0e0e0;
+
+    --sidebar-width: 250px;
+    --sidebar-gradient: linear-gradient(135deg, #4facfe 0%, #ffffff 80%, #ffc6f9 100%);
+    --sidebar-link-color-light: #343a40; /* Darker text on gradient */
+    --sidebar-link-hover-bg-light: rgba(0, 0, 0, 0.05); /* Subtle overlay */
+    --sidebar-link-active-color-light: #0d6efd; /* Bootstrap primary blue */
+    --sidebar-link-active-bg-light: rgba(0, 0, 0, 0.1);
+
+    --sidebar-bg-dark: #1a1a1a; /* Use a specific dark color */
+    --sidebar-link-color-dark: #e0e0e0;
+    --sidebar-link-active-color-dark: #a7d4fd; /* Lighter blue for active */
+    --sidebar-link-border-gradient: linear-gradient(135deg, #4facfe 0%, #ffffff 50%, #ffc6f9 100%);
+    --sidebar-link-inner-bg-dark: #2c2c2c; /* Inner background for dark mode links */
+    --sidebar-link-inner-hover-bg-dark: #3e3e3e;
+    --sidebar-link-inner-active-bg-dark: #4f4f4f;
+}
+
+body {
+    font-family: 'Maple Mono CN', 'Arial', sans-serif;
+    background-color: var(--body-bg-light);
+    color: var(--body-color-light);
+    transition: background-color 0.3s ease, color 0.3s ease, margin-right 0.3s ease;
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.profile-container {
+    padding: 2rem;
+    background-color: var(--profile-bg-light);
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px var(--profile-shadow-light);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.avatar-container {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+    position: relative;
+    border-radius: 50%;
+    padding: 5px; /* 为渐变边框留出空间 */
+    background: linear-gradient(135deg, #4facfe 0%, #ffffff 50%, #ffc6f9 100%);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.avatar-container:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    padding: 5px;
+    background: linear-gradient(135deg, #4facfe 0%, #ffffff 50%, #ffc6f9 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+.avatar-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    position: relative;
+    z-index: 1;
+}
+
+#name {
+    font-family: 'Maple Mono CN', monospace;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    color: var(--name-color-light);
+    transition: color 0.3s ease;
+}
+
+#motto {
+    font-family: 'Maple Mono CN', monospace;
+    font-size: 1rem;
+    font-style: italic;
+    color: var(--motto-color-light);
+    transition: color 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .avatar-container {
+        width: 120px;
+        height: 120px;
+    }
+    
+    #name {
+        font-size: 1.3rem;
+    }
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1030;
+    padding: 0.5rem 0.75rem;
+    border-radius: 50%;
+    background-color: var(--toggle-bg-light);
+    border: 1px solid var(--toggle-border-light);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+    color: var(--toggle-icon-color-light);
+}
+
+.theme-toggle-btn:hover {
+    background-color: var(--toggle-bg-light);
+    opacity: 0.8;
+    transform: scale(1.1);
+}
+
+.theme-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+.theme-toggle-btn svg {
+    vertical-align: middle;
+    transition: fill 0.3s ease;
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+    background-color: var(--body-bg-dark);
+    color: var(--body-color-dark);
+}
+
+body.dark-mode .profile-container {
+    background-color: var(--profile-bg-dark);
+    box-shadow: 0 4px 6px var(--profile-shadow-dark);
+}
+
+body.dark-mode #name {
+    color: var(--name-color-dark);
+}
+
+body.dark-mode #motto {
+    color: var(--motto-color-dark);
+}
+
+body.dark-mode .theme-toggle-btn {
+    background-color: var(--toggle-bg-dark);
+    border-color: var(--toggle-border-dark);
+    color: var(--toggle-icon-color-dark);
+}
+
+body.dark-mode .theme-toggle-btn:hover {
+    background-color: var(--toggle-bg-dark);
+    opacity: 0.8;
+}
+
+/* Social Links */
+.social-links-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.social-link {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: var(--body-color-light);
+}
+
+.social-link:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.social-link img {
+    width: 20px;
+    height: 20px;
+    margin-right: 0.5rem;
+    filter: invert(25%);
+    transition: filter 0.3s ease;
+}
+
+.social-link-text {
+    font-family: 'Maple Mono CN', monospace;
+    font-size: 0.9rem;
+}
+
+/* Dark Mode Social Links */
+body.dark-mode .social-link {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--body-color-dark);
+}
+
+body.dark-mode .social-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .social-link img {
+    filter: invert(90%);
+}
+
+/* Blog Styles */
+.blog-container {
+    padding: 2rem;
+    background-color: var(--profile-bg-light);
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px var(--profile-shadow-light);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.blog-section-title {
+    font-family: 'Maple Mono CN', monospace;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    color: var(--name-color-light);
+    transition: color 0.3s ease;
+}
+
+/* 博客分类筛选导航 */
+.blog-nav {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.blog-categories {
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 0.5rem;
+    scrollbar-width: none; /* 隐藏 Firefox 滚动条 */
+}
+
+.blog-categories::-webkit-scrollbar {
+    display: none; /* 隐藏 Chrome 滚动条 */
+}
+
+.blog-category-item {
+    padding: 0.5rem 1rem;
+    margin-right: 1rem;
+    color: var(--motto-color-light);
+    text-decoration: none;
+    position: relative;
+    transition: color 0.3s ease;
+    font-family: 'Maple Mono CN', monospace;
+}
+
+.blog-category-item:hover {
+    color: var(--name-color-light);
+}
+
+.blog-category-item.active {
+    color: var(--name-color-light);
+    font-weight: 600;
+}
+
+.blog-category-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: -0.5rem;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: var(--name-color-light);
+    border-radius: 3px;
+}
+
+/* Dark Mode */
+body.dark-mode .blog-nav {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .blog-category-item {
+    color: var(--motto-color-dark);
+}
+
+body.dark-mode .blog-category-item:hover {
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .blog-category-item.active {
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .blog-category-item.active::after {
+    background-color: var(--name-color-dark);
+}
+
+.blog-posts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.blog-post {
+    padding: 0; /* 移除内部padding，由header和body控制 */
+    border-radius: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.5);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-left: 4px solid var(--name-color-light);
+    overflow: hidden; /* 隐藏超出内容 */
+}
+
+.blog-post:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.blog-post-header {
+    padding: 1.5rem; 
+    margin-bottom: 0; 
+    position: relative; /* Keep relative for potential future absolute positioning inside */
+    cursor: pointer;
+    display: flex; /* Use flexbox for layout */
+    align-items: center; /* Vertically center items */
+    justify-content: space-between; /* Push title/meta and arrow apart */
+}
+
+/* Group title and meta */
+.blog-post-title-meta {
+    flex-grow: 1; /* Allow this group to take up available space */
+    margin-right: 1rem; /* Add space between text group and arrow */
+}
+
+.blog-post-title {
+    font-family: 'Maple Mono CN', monospace;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--body-color-light);
+    transition: color 0.3s ease;
+}
+
+.blog-post-meta {
+    display: flex;
+    /* Remove justify-content, let the parent flex handle spacing */
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--motto-color-light);
+    transition: color 0.3s ease;
+    gap: 1rem; /* Add gap between date and category */
+}
+
+.blog-post-category {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 1rem;
+    background-color: var(--name-color-light);
+    color: white;
+    font-size: 0.8rem;
+    flex-shrink: 0; /* Prevent category from shrinking */
+}
+
+/* Toggle Arrow */
+.toggle-arrow {
+    /* Remove absolute positioning */
+    font-size: 1rem;
+    color: var(--motto-color-light);
+    transition: transform 0.3s ease, color 0.3s ease;
+    flex-shrink: 0; /* Prevent arrow from shrinking */
+}
+
+.blog-post.collapsed .toggle-arrow {
+    transform: rotate(-90deg); /* Only rotate now */
+}
+
+.blog-post:not(.collapsed) .blog-post-header:hover .toggle-arrow {
+    color: var(--name-color-light);
+}
+
+.blog-post-body {
+    max-height: 1000px; /* 设定一个足够大的最大高度 */
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out; 
+    padding: 0 1.5rem 1.5rem 1.5rem; /* 初始无上下padding，展开时添加 */
+}
+
+.blog-post.collapsed .blog-post-body {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-top: none; /* 收起时不需要顶部边框 */
+}
+
+.blog-post-content {
+    font-family: 'Maple Mono CN', 'Arial', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--body-color-light);
+    margin-bottom: 1.5rem;
+    transition: color 0.3s ease;
+}
+
+/* Blog Post Attachments */
+.blog-post-attachments {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.blog-post-attachments h5 {
+    font-family: 'Maple Mono CN', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--body-color-light);
+}
+
+.attachment-list {
+    list-style: none;
+    padding-left: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.attachment-item {
+    /* flex-basis: calc(50% - 0.5rem); 可以设置成两列 */
+}
+
+.attachment-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.25rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.attachment-download {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.25rem;
+    background-color: var(--body-bg-light);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: var(--name-color-light);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    font-family: 'Maple Mono CN', monospace;
+}
+
+.attachment-download:hover {
+    background-color: var(--name-color-light);
+    color: white;
+    border-color: var(--name-color-light);
+}
+
+.attachment-icon {
+    margin-right: 0.4rem;
+    font-weight: bold;
+}
+
+/* Dark Mode Blog Attachments */
+body.dark-mode .blog-post-attachments {
+    border-top-color: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .blog-post-attachments h5 {
+    color: var(--body-color-dark);
+}
+
+body.dark-mode .attachment-download {
+    background-color: var(--profile-bg-dark);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .attachment-download:hover {
+    background-color: var(--name-color-dark);
+    color: var(--body-bg-dark);
+    border-color: var(--name-color-dark);
+}
+
+/* Dark Mode Blog Styles */
+body.dark-mode .blog-container {
+    background-color: var(--profile-bg-dark);
+    box-shadow: 0 4px 6px var(--profile-shadow-dark);
+}
+
+body.dark-mode .blog-section-title {
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .blog-post {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-left-color: var(--name-color-dark);
+}
+
+body.dark-mode .blog-post-title {
+    color: var(--body-color-dark);
+}
+
+body.dark-mode .blog-post-meta {
+    color: var(--motto-color-dark);
+}
+
+body.dark-mode .blog-post-category {
+    background-color: var(--name-color-dark);
+}
+
+body.dark-mode .blog-post-content {
+    color: var(--body-color-dark);
+}
+
+body.dark-mode .toggle-arrow {
+    color: var(--motto-color-dark);
+}
+
+body.dark-mode .blog-post:not(.collapsed) .blog-post-header:hover .toggle-arrow {
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .blog-post-body {
+    /* Dark mode specific styles for the body if needed */
+}
+
+@media (max-width: 768px) {
+    .blog-section-title {
+        font-size: 1.5rem;
+    }
+
+    .blog-post {
+        padding: 1rem;
+    }
+
+    .blog-post-title {
+        font-size: 1.1rem;
+    }
+}
+
+/* Blog Post References */
+.blog-post-references {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.blog-post-references h5 {
+    font-family: 'Maple Mono CN', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--body-color-light);
+}
+
+.reference-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.reference-list li {
+    margin-bottom: 0.5rem;
+}
+
+.reference-link {
+    color: var(--name-color-light);
+    text-decoration: none;
+    transition: color 0.3s ease, text-decoration 0.3s ease;
+    font-family: 'Maple Mono CN', monospace;
+}
+
+.reference-link:hover {
+    color: var(--name-color-dark); /* Use dark mode color for hover */
+    text-decoration: underline;
+}
+
+.inline-reference {
+    font-weight: 600;
+    border-bottom: 1px dashed var(--name-color-light);
+}
+
+.inline-reference:hover {
+    border-bottom-style: solid;
+}
+
+/* Highlight effect */
+.blog-post.highlight {
+    transition: background-color 0.5s ease-out;
+    background-color: rgba(79, 172, 254, 0.2); /* Light blue highlight */
+}
+
+/* Dark Mode Blog References */
+body.dark-mode .blog-post-references {
+    border-top-color: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .blog-post-references h5 {
+    color: var(--body-color-dark);
+}
+
+body.dark-mode .reference-link {
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .reference-link:hover {
+    color: var(--name-color-light); /* Use light mode color for hover */
+}
+
+body.dark-mode .inline-reference {
+    border-bottom-color: var(--name-color-dark);
+}
+
+body.dark-mode .blog-post.highlight {
+    background-color: rgba(142, 197, 252, 0.2); /* Adjusted blue for dark mode */
+}
+
+/* Pagination Styles */
+.blog-pagination-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+.pagination-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    border: 1px solid var(--toggle-border-light);
+    background-color: var(--profile-bg-light);
+    color: var(--name-color-light);
+    font-family: 'Maple Mono CN', monospace;
+    transition: all 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background-color: var(--name-color-light);
+    color: white;
+    border-color: var(--name-color-light);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-indicator {
+    font-family: 'Maple Mono CN', monospace;
+    color: var(--motto-color-light);
+}
+
+/* Dark Mode Pagination */
+body.dark-mode .pagination-btn {
+    background-color: var(--profile-bg-dark);
+    border-color: var(--toggle-border-dark);
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .pagination-btn:hover:not(:disabled) {
+    background-color: var(--name-color-dark);
+    color: var(--body-bg-dark);
+    border-color: var(--name-color-dark);
+}
+
+body.dark-mode .page-indicator {
+    color: var(--motto-color-dark);
+}
+
+/* Sidebar Toggle Button */
+.sidebar-toggle-btn {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    z-index: 1040;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.25rem;
+    background-color: var(--toggle-bg-light);
+    border: 1px solid var(--toggle-border-light);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    color: var(--toggle-icon-color-light);
+}
+
+.sidebar-toggle-btn:hover {
+    background-color: var(--toggle-bg-light);
+    opacity: 0.8;
+    transform: scale(1.1);
+}
+
+body.dark-mode .sidebar-toggle-btn {
+    background-color: var(--toggle-bg-dark);
+    border-color: var(--toggle-border-dark);
+    color: var(--toggle-icon-color-dark);
+}
+
+body.dark-mode .sidebar-toggle-btn:hover {
+    background-color: var(--toggle-bg-dark);
+    opacity: 0.8;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: auto;
+    width: var(--sidebar-width);
+    height: 100vh;
+    /* Light Mode: Gradient Background */
+    background: var(--sidebar-gradient);
+    padding: 20px 10px; /* Add some horizontal padding for links */
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    transform: translateX(100%);
+    transition: transform 0.3s ease, background 0.3s ease; /* Changed transition */
+    z-index: 1035;
+    overflow-y: auto; /* Allow scrolling if content exceeds height */
+}
+
+body.sidebar-open .sidebar {
+    transform: translateX(0);
+}
+
+.sidebar-nav {
+    /* padding: 1rem; Removed, using sidebar padding */
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-item {
+    /* margin-bottom: 0.5rem; Removed, using link margin */
+}
+
+/* Remove background transition for links */
+.sidebar-link {
+    display: block; /* Needed for dark mode border effect */
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem; /* Outer radius for border */
+    position: relative;
+    text-decoration: none;
+    padding: 3px; /* Space for gradient border */
+    color: transparent; /* Hide direct text, will be in content */
+    background: none; /* Remove default background */
+    overflow: hidden; /* Ensure pseudo elements don't overflow */
+}
+
+/* Link content wrapper */
+.sidebar-link-content {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem; /* Actual content padding */
+    border-radius: calc(0.5rem - 3px); /* Inner radius */
+    background-color: transparent; /* Light mode: transparent */
+    color: var(--sidebar-link-color-light);
+    transition: background-color 0.2s ease, color 0.2s ease;
+    font-family: 'Maple Mono CN', monospace;
+    position: relative;
+    z-index: 2; /* Above potential pseudo-elements */
+}
+
+/* Light Mode Hover/Active */
+.sidebar-link:hover .sidebar-link-content {
+    background-color: var(--sidebar-link-hover-bg-light);
+    color: #000; /* Darker color on hover */
+}
+.sidebar-link.active .sidebar-link-content {
+    background-color: var(--sidebar-link-active-bg-light);
+    color: var(--sidebar-link-active-color-light);
+    font-weight: 600;
+}
+.sidebar-link.active .sidebar-icon {
+    color: var(--sidebar-link-active-color-light); /* Ensure icon matches */
+}
+
+.sidebar-icon {
+    margin-right: 0.75rem;
+    font-size: 1.2rem;
+    width: 20px;
+    text-align: center;
+    color: var(--sidebar-link-color-light); /* Default icon color for light */
+    transition: color 0.2s ease;
+}
+
+.sidebar-text {
+    flex-grow: 1;
+}
+
+/* --- Dark Mode --- */
+body.dark-mode .sidebar {
+    background: var(--sidebar-bg-dark); /* Dark background */
+    box-shadow: -2px 0 5px rgba(255, 255, 255, 0.05);
+}
+
+/* Dark Mode Link - Gradient Border */
+body.dark-mode .sidebar-link {
+    background: var(--sidebar-link-border-gradient); /* Apply gradient border */
+}
+
+/* Dark Mode Link Content */
+body.dark-mode .sidebar-link-content {
+    background-color: var(--sidebar-link-inner-bg-dark); /* Inner background */
+    color: var(--sidebar-link-color-dark);
+}
+body.dark-mode .sidebar-icon {
+     color: var(--sidebar-link-color-dark); /* Icon color for dark */
+}
+
+/* Dark Mode Hover/Active */
+body.dark-mode .sidebar-link:hover .sidebar-link-content {
+    background-color: var(--sidebar-link-inner-hover-bg-dark);
+}
+body.dark-mode .sidebar-link.active .sidebar-link-content {
+    background-color: var(--sidebar-link-inner-active-bg-dark);
+    color: var(--sidebar-link-active-color-dark);
+    font-weight: 600;
+}
+body.dark-mode .sidebar-link.active .sidebar-icon {
+    color: var(--sidebar-link-active-color-dark);
+}
+
+/* Main Content Area */
+.main-content {
+    margin-right: 0;
+    margin-left: 0;
+    padding: 1rem;
+    transition: filter 0.3s ease; /* Optional: slightly dim content when sidebar is open */
+}
+
+/* Remove margin shift when sidebar opens */
+/* 
+body.sidebar-open .main-content {
+    margin-right: var(--sidebar-width); 
+    margin-left: 0;
+} 
+*/
+
+/* Optional: Add a slight dim effect to main content when sidebar is open */
+body.sidebar-open .main-content {
+   /* filter: brightness(0.8); */ /* Uncomment to enable dimming */
+}
+
+/* Dark Mode Sidebar Styles */
+body.dark-mode .sidebar {
+    background-color: var(--sidebar-bg-dark);
+    box-shadow: -2px 0 5px rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .sidebar-link {
+    color: var(--sidebar-link-color-dark);
+}
+
+body.dark-mode .sidebar-link:hover {
+    background-color: var(--sidebar-link-hover-bg-dark);
+    color: var(--body-color-dark);
+}
+
+body.dark-mode .sidebar-link.active {
+    background-color: var(--sidebar-link-active-bg-dark);
+    color: var(--sidebar-link-active-color-dark);
+}
+
+/* Responsiveness: Remove rule as it's now default behavior */
+/* 
+@media (max-width: 992px) {
+    body.sidebar-open .main-content {
+        margin-right: 0; 
+    }
+}
+*/

@@ -1,0 +1,27 @@
+{
+  "name": "小c,yc,雨晨",
+  "avatar": "https://siter2.ycxiao1204.com/%E5%9B%BE%E7%89%87_20250326221033.jpg",
+  "motto": "生活不止眼前的苟且，还有诗和远方",
+  "socialLinks": [
+    {
+      "platform": "GitHub",
+      "url": "https://github.com",
+      "icon": "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg"
+    },
+    {
+      "platform": "微博",
+      "url": "https://weibo.com",
+      "icon": "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/sinaweibo.svg"
+    },
+    {
+      "platform": "知乎",
+      "url": "https://zhihu.com",
+      "icon": "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/zhihu.svg"
+    },
+    {
+      "platform": "LinkedIn",
+      "url": "https://linkedin.com",
+      "icon": "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/linkedin.svg"
+    }
+  ]
+} 

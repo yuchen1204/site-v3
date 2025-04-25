@@ -1,0 +1,106 @@
+[
+  {
+    "id": 1,
+    "title": "探索人工智能的未来",
+    "date": "2023-10-15T10:30:00",
+    "category": "技术",
+    "content": "人工智能正在以前所未有的速度发展。近年来，深度学习模型的规模和能力呈指数级增长，从早期的基础模型到如今能够理解自然语言、生成图像和解决复杂问题的大型语言模型。未来，我们可能会看到AI在医疗、教育和气候变化等领域带来革命性的变化。参见文章 [[3]] 中关于编程范式的讨论。",
+    "attachments": [
+      {
+        "url": "https://pub-816e00b733554c838c0f843de8fc0d43.r2.dev/IMG_20250322_204143_500.jpg",
+        "type": "image",
+        "filename": "car.png"
+      },
+      {
+        "url": "/static/files/ai_research_paper.pdf",
+        "type": "pdf",
+        "filename": "AI研究论文.pdf"
+      }
+    ],
+    "references": [3]
+  },
+  {
+    "id": 2,
+    "title": "旅行札记：京都的樱花季",
+    "date": "2023-04-05T16:45:00",
+    "category": "旅行",
+    "content": "四月的京都，樱花如雪般绽放。漫步在哲学之道，两旁的樱花树形成了一条粉色的隧道，微风吹过，花瓣纷纷扬扬地落下，仿佛置身于童话世界。清水寺的夜樱更是壮观，灯光映照下的樱花呈现出不同于白天的神秘感。这次旅行让我深刻体会到了日本人对樱花的热爱，以及'物哀'美学的深邃内涵。这次旅行的美景可以参考我的摄影集 [[4]]。",
+    "attachments": [
+      {
+        "url": "https://via.placeholder.com/300x200.png?text=Kyoto+Sakura+1",
+        "type": "image",
+        "filename": "京都樱花1.png"
+      },
+      {
+        "url": "https://via.placeholder.com/300x200.png?text=Kyoto+Sakura+2",
+        "type": "image",
+        "filename": "京都樱花2.png"
+      }
+    ],
+    "references": [4]
+  },
+  {
+    "id": 3,
+    "title": "编程范式的演变与思考",
+    "date": "2023-07-22T09:15:00",
+    "category": "技术",
+    "content": "从命令式编程到函数式编程，再到如今的响应式编程，编程范式不断演变。每种范式都有其适用场景和优势。函数式编程注重不可变性和纯函数，使代码更易测试；响应式编程则适合处理异步事件流。作为开发者，我们不应拘泥于单一范式，而是应该根据问题特性选择最合适的方法。正如Bruce Lee所说：'吸收有用的，丢弃无用的。' AI的发展也离不开编程范式的进步 (参考 [[1]])。",
+    "attachments": [
+      {
+        "url": "/static/files/code_examples.zip",
+        "type": "zip",
+        "filename": "代码示例.zip"
+      }
+    ],
+    "references": [1]
+  },
+  {
+    "id": 4,
+    "title": "夏日摄影集锦：城市的另一面",
+    "date": "2023-08-12T14:20:00",
+    "category": "相册",
+    "content": "这个夏天，我带着相机走过城市的每一个角落，捕捉那些被人忽略的美丽瞬间。从清晨的第一缕阳光洒在老建筑上的温暖色调，到夕阳西下时高楼玻璃幕墙的金色反光；从小巷中老人们悠闲的棋局，到繁忙十字路口的匆匆行人。这组照片试图展现城市生活的多样性和城市居民的百态人生。摄影，让我看到了熟悉环境中那些平时被忽略的细节与美。",
+    "attachments": [],
+    "references": []
+  },
+  {
+    "id": 1,
+    "title": "探索人工智能的未来",
+    "date": "2023-10-15T10:30:00",
+    "category": "技术",
+    "content": "人工智能正在以前所未有的速度发展。近年来，深度学习模型的规模和能力呈指数级增长，从早期的基础模型到如今能够理解自然语言、生成图像和解决复杂问题的大型语言模型。未来，我们可能会看到AI在医疗、教育和气候变化等领域带来革命性的变化。参见文章 [[3]] 中关于编程范式的讨论。",
+    "attachments": [
+      {
+        "url": "https://pub-816e00b733554c838c0f843de8fc0d43.r2.dev/IMG_20250322_204143_500.jpg",
+        "type": "image",
+        "filename": "car.png"
+      },
+      {
+        "url": "/static/files/ai_research_paper.pdf",
+        "type": "pdf",
+        "filename": "AI研究论文.pdf"
+      }
+    ],
+    "references": [3]
+  },
+  {
+    "id": 1,
+    "title": "探索人工智能的未来",
+    "date": "2023-10-15T10:30:00",
+    "category": "技术",
+    "content": "人工智能正在以前所未有的速度发展。近年来，深度学习模型的规模和能力呈指数级增长，从早期的基础模型到如今能够理解自然语言、生成图像和解决复杂问题的大型语言模型。未来，我们可能会看到AI在医疗、教育和气候变化等领域带来革命性的变化。参见文章 [[3]] 中关于编程范式的讨论。",
+    "attachments": [
+      {
+        "url": "https://pub-816e00b733554c838c0f843de8fc0d43.r2.dev/IMG_20250322_204143_500.jpg",
+        "type": "image",
+        "filename": "car.png"
+      },
+      {
+        "url": "/static/files/ai_research_paper.pdf",
+        "type": "pdf",
+        "filename": "AI研究论文.pdf"
+      }
+    ],
+    "references": [3]
+  }
+] 
