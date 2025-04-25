@@ -34,23 +34,53 @@ function initializeLogout() {
  */
 function initializeAdminSidebar() {
     const sidebarToggleButton = document.getElementById('admin-sidebar-toggle');
+    const sidebar = document.getElementById('admin-sidebar');
+    const backdrop = document.getElementById('admin-sidebar-backdrop');
     const body = document.body;
     const sidebarLinks = document.querySelectorAll('.admin-sidebar-link');
     const sections = document.querySelectorAll('.admin-section');
 
+    const toggleButtonIcon = sidebarToggleButton ? sidebarToggleButton.querySelector('i') : null;
+    const openIconClass = 'bi-list';
+    const closeIconClass = 'bi-x-lg'; // 使用更大的关闭图标
+
+    function openSidebar() {
+        body.classList.add('admin-sidebar-open');
+        if (toggleButtonIcon) toggleButtonIcon.className = `bi ${closeIconClass}`;
+        localStorage.setItem('adminSidebarState', 'open');
+    }
+
+    function closeSidebar() {
+        body.classList.remove('admin-sidebar-open');
+        if (toggleButtonIcon) toggleButtonIcon.className = `bi ${openIconClass}`;
+        localStorage.setItem('adminSidebarState', 'closed');
+    }
+
     // 侧边栏切换按钮事件
     if (sidebarToggleButton && body) {
-        sidebarToggleButton.addEventListener('click', () => {
-            body.classList.toggle('admin-sidebar-open');
-            // (可选) 保存侧边栏状态
-            localStorage.setItem('adminSidebarState', body.classList.contains('admin-sidebar-open') ? 'open' : 'closed');
+        sidebarToggleButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // 防止事件冒泡到 backdrop
+            if (body.classList.contains('admin-sidebar-open')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
         });
 
         // (可选) 恢复侧边栏状态
         const savedSidebarState = localStorage.getItem('adminSidebarState');
         if (savedSidebarState === 'open') {
-            body.classList.add('admin-sidebar-open');
+            openSidebar(); // 使用函数来确保图标也正确设置
+        } else {
+             if (toggleButtonIcon) toggleButtonIcon.className = `bi ${openIconClass}`; // 设置初始图标
         }
+    }
+
+    // 点击遮罩层关闭侧边栏
+    if (backdrop) {
+        backdrop.addEventListener('click', () => {
+            closeSidebar();
+        });
     }
 
     // 侧边栏链接点击事件 - 切换内容区域
@@ -74,6 +104,11 @@ function initializeAdminSidebar() {
                 targetSection.classList.add('active');
             } else {
                 console.warn(`未找到目标区域: ${targetSectionId}`);
+            }
+
+            // (可选) 在小屏幕上点击链接后自动关闭侧边栏
+            if (window.innerWidth < 992) { 
+                closeSidebar();
             }
         });
     });
