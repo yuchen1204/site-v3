@@ -16,21 +16,25 @@ body {
 /* Admin Sidebar Toggle Button */
 .admin-sidebar-toggle-btn {
     position: fixed;
-    top: 65px; /* Below navbar */
+    top: 12px; /* Align with top navbar content */
     right: 20px;
     z-index: 1040;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.25rem;
-    background-color: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(5px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 0.6rem 0.8rem; /* Slightly adjust padding for round shape */
+    border-radius: 50%; /* Make it round */
+    background-color: #343a40; /* Dark background like navbar */
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Light border */
+    color: #f8f9fa; /* Light icon color */
+    /* backdrop-filter: blur(5px); Remove blur for solid background */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
 }
 
 .admin-sidebar-toggle-btn:hover {
-    background-color: rgba(255, 255, 255, 1);
+    background-color: #495057; /* Slightly lighter dark on hover */
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #fff;
     transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* Admin Sidebar Styles */
