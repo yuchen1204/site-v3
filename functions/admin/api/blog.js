@@ -25,12 +25,24 @@ export async function onRequest(context) {
   const { request, env, next, params } = context;
   const method = request.method;
 
+  console.log(`[${method}] /admin/api/blog - 开始处理请求`); // <-- 入口日志
+
   // _middleware.js 应该已经处理了认证，这里假设已认证
 
   try {
     if (method === 'GET') {
-      // 获取所有博客文章
-      const posts = await getBlogPosts(env);
+      console.log('[GET] /admin/api/blog - 准备从 KV 获取数据'); // <-- GET 开始日志
+      let posts = [];
+      try {
+          posts = await getBlogPosts(env);
+          console.log(`[GET] /admin/api/blog - 从 KV 获取数据成功，共 ${posts.length} 条记录`); // <-- 获取成功日志
+      } catch (kvError) {
+          console.error('[GET] /admin/api/blog - 调用 getBlogPosts 时出错:', kvError); // <-- KV 错误日志
+          // 即使 getBlogPosts 内部有 catch，这里也捕获一下以防万一
+          throw new Error('无法从 KV 获取博客数据'); // 抛出更具体的错误
+      }
+      
+      console.log('[GET] /admin/api/blog - 准备返回数据'); // <-- 返回前日志
       return new Response(JSON.stringify(posts), {
         headers: { 'Content-Type': 'application/json;charset=UTF-8' },
       });
@@ -66,12 +78,13 @@ export async function onRequest(context) {
         headers: { 'Content-Type': 'application/json;charset=UTF-8' },
       });
     } else {
-      // 不支持的方法
+      console.warn(`[${method}] /admin/api/blog - 不支持的方法`); // <-- 不支持方法日志
       return new Response('Method Not Allowed', { status: 405 });
     }
   } catch (error) {
-    console.error(`处理 /admin/api/blog [${method}] 失败:`, error);
-    return new Response(JSON.stringify({ error: '服务器内部错误' }), {
+    // 这个 catch 块捕获上面 try 块中的所有错误，包括 GET 和 POST 逻辑中的
+    console.error(`[${method}] /admin/api/blog - 处理请求时发生顶层错误:`, error);
+    return new Response(JSON.stringify({ error: '服务器内部错误', details: error.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json;charset=UTF-8' },
     });
