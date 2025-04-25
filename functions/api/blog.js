@@ -1,101 +1,110 @@
-/**
- * Cloudflare Function: /api/blog
- * Fetches blog post data from Supabase.
- */
-import { createClient } from '@supabase/supabase-js';
+import postgres from 'postgres';
 
-/**
- * @typedef {Object} Attachment
- * @property {string} url
- * @property {string} type
- * @property {string} filename
- */
+// --- Configuration: Adjust these based on your DB schema ---
+const POSTS_TABLE = 'posts';
+const POSTS_COLUMNS = ['id', 'title', 'date', 'category', 'content'];
 
-/**
- * @typedef {Object} BlogPost
- * @property {number} id
- * @property {string} title
- * @property {string} date - ISO 8601 date string
- * @property {string} category
- * @property {string} content
- * @property {Attachment[]} [attachments]
- * @property {number[]} [references]
- */
+const ATTACHMENTS_TABLE = 'attachments';
+const ATTACHMENTS_COLUMNS = ['post_id', 'url', 'type', 'filename'];
 
-/**
- * @typedef {Object} Env
- * @property {string} SUPABASE_URL
- * @property {string} SUPABASE_ANON_KEY
- */
+const REFERENCES_TABLE = 'references'; // Assumes a join table (post_id, referenced_post_id)
+const REFERENCES_COLUMNS = ['post_id', 'referenced_post_id'];
+// ---
 
-/**
- * @param {object} context
- * @param {Env} context.env
- * @returns {Promise<Response>}
- */
-export const onRequestGet = async ({ env }) => {
-  // 1. Check for Supabase credentials
-  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
-    console.error('Supabase URL or Anon Key not found in environment variables.');
-    return new Response(JSON.stringify({ error: 'Server configuration error' }), {
+export async function onRequest(context) {
+  const { env } = context;
+  const { DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD } = env;
+
+  if (!DB_HOST || !DB_PORT || !DB_DATABASE || !DB_USERNAME || !DB_PASSWORD) {
+    console.error('Database environment variables are not set.');
+    return new Response(JSON.stringify({ error: 'Server configuration error.' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
   }
 
-  // 2. Initialize Supabase client
-  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
-
+  let sql;
   try {
-    // 3. Fetch blog post data
-    //    -> Assumes a table named 'posts'
-    //    -> Assumes columns 'id', 'title', 'date', 'category', 'content'
-    //    -> Assumes JSONB columns named 'attachments' and 'references' 
-    //       (Alternatively, these could be related tables)
-    //    *** Adjust table and column names according to your Supabase schema ***
+    const connectionString = `postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}`;
+    sql = postgres(connectionString, { 
+      idle_timeout: undefined,
+      connect_timeout: 10
+    });
 
-    // Example Query (adjust as needed):
-    const { data: posts, error: postsError } = await supabase
-      .from('posts') // Adjust table name if different
-      .select(`
-        id,
-        title,
-        date,
-        category,
-        content,
-        attachments,
-        references 
-      `)
-      // Optionally, add sorting:
-      // .order('date', { ascending: false })
+    // 1. Fetch all blog posts
+    const postsResult = await sql`
+      SELECT ${sql(POSTS_COLUMNS)}
+      FROM ${sql(POSTS_TABLE)}
+      ORDER BY date DESC -- Or however you want to order them initially
+    `;
 
-    if (postsError) {
-      throw postsError;
+    if (postsResult.length === 0) {
+       await sql.end({ timeout: 5 });
+      return new Response(JSON.stringify([]), { // Return empty array if no posts
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
+
+    const postIds = postsResult.map(post => post.id);
+
+    // 2. Fetch all attachments for these posts
+    const attachmentsResult = await sql`
+      SELECT ${sql(ATTACHMENTS_COLUMNS)}
+      FROM ${sql(ATTACHMENTS_TABLE)}
+      WHERE post_id = ANY(${postIds})
+    `;
+
+    // 3. Fetch all references for these posts
+    const referencesResult = await sql`
+      SELECT ${sql(REFERENCES_COLUMNS)}
+      FROM ${sql(REFERENCES_TABLE)}
+      WHERE post_id = ANY(${postIds})
+    `;
     
-    // 4. Format data (ensure it matches the BlogPost structure)
-    // Supabase might return null instead of empty arrays for JSONB columns
-    const formattedPosts = (posts || []).map(post => ({
+    // 4. Map attachments and references to their respective posts
+    const attachmentsMap = attachmentsResult.reduce((acc, attachment) => {
+      const postId = attachment.post_id;
+      if (!acc[postId]) {
+        acc[postId] = [];
+      }
+      // Exclude post_id from the final attachment object
+      const { post_id, ...rest } = attachment;
+      acc[postId].push(rest);
+      return acc;
+    }, {});
+
+    const referencesMap = referencesResult.reduce((acc, reference) => {
+      const postId = reference.post_id;
+      if (!acc[postId]) {
+        acc[postId] = [];
+      }
+      acc[postId].push(reference.referenced_post_id);
+      return acc;
+    }, {});
+
+    // 5. Combine data into the final structure expected by the frontend
+    const responseData = postsResult.map(post => ({
       ...post,
-      attachments: post.attachments || [], // Default to empty array if null
-      references: post.references || [],   // Default to empty array if null
+      attachments: attachmentsMap[post.id] || [],
+      references: referencesMap[post.id] || [],
     }));
 
-    // 5. Return successful response
-    return new Response(JSON.stringify(formattedPosts), {
+    await sql.end({ timeout: 5 });
+
+    return new Response(JSON.stringify(responseData), {
       status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-         // Optional: Add caching headers if desired
-        // 'Cache-Control': 'public, max-age=300' // Cache for 5 minutes
-      },
+      headers: { 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Error fetching blog posts from Supabase:', error.message);
-    return new Response(JSON.stringify({ error: 'Failed to fetch blog posts' }), {
+    console.error('Error fetching blog data:', error);
+    if (sql) {
+      await sql.end({ timeout: 5 }).catch(closeErr => console.error("Error closing connection:", closeErr));
+    }
+    return new Response(JSON.stringify({ error: 'Failed to fetch blog data.' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
   }
-}; 
+} 

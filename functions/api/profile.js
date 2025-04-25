@@ -1,111 +1,95 @@
-/**
- * Cloudflare Function: /api/profile
- * Fetches profile data from Supabase.
- */
-import { createClient } from '@supabase/supabase-js';
+import postgres from 'postgres';
 
-/**
- * @typedef {Object} SocialLink
- * @property {string} platform
- * @property {string} url
- * @property {string} icon
- */
+// Define the expected structure for the profile data
+// Note: Adjust table and column names if your schema differs.
+const PROFILE_TABLE = 'profile'; // Example table name
+const PROFILE_COLUMNS = ['name', 'avatar', 'motto']; // Example columns
 
-/**
- * @typedef {Object} ProfileData
- * @property {string} name
- * @property {string} avatar
- * @property {string} motto
- * @property {SocialLink[]} socialLinks
- */
+// Define the expected structure for social links (assuming a separate table)
+const SOCIAL_LINKS_TABLE = 'social_links'; // Example table name
+const SOCIAL_LINKS_COLUMNS = ['platform', 'url', 'icon'];
+const PROFILE_ID_COLUMN = 'profile_id'; // Foreign key in social_links table
 
-/**
- * @typedef {Object} Env
- * @property {string} SUPABASE_URL
- * @property {string} SUPABASE_ANON_KEY
- */
+export async function onRequest(context) {
+  // Environment variables should be configured in Cloudflare Pages settings
+  const { env } = context;
+  const { DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD } = env;
 
-/**
- * @param {object} context
- * @param {Env} context.env
- * @returns {Promise<Response>}
- */
-export const onRequestGet = async ({ env }) => {
-  // 1. Check for Supabase credentials in environment variables
-  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
-    console.error('Supabase URL or Anon Key not found in environment variables.');
-    return new Response(JSON.stringify({ error: 'Server configuration error' }), {
+  if (!DB_HOST || !DB_PORT || !DB_DATABASE || !DB_USERNAME || !DB_PASSWORD) {
+    console.error('Database environment variables are not set.');
+    return new Response(JSON.stringify({ error: 'Server configuration error.' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
   }
 
-  // 2. Initialize Supabase client
-  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
-
+  let sql;
   try {
-    // 3. Fetch profile data
-    //    -> Assumes a table named 'profiles' with a single row (e.g., id = 1)
-    //    -> Assumes columns 'name', 'avatar', 'motto'
-    //    -> Assumes a related table 'social_links' linked by 'profile_id'
-    //       OR a JSONB column named 'social_links' in the 'profiles' table.
-    //    *** Adjust the table and column names according to your Supabase schema ***
+    // Construct the connection string
+    const connectionString = `postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}`;
+    
+    // Initialize the PostgreSQL client
+    // We disable idle timeout as recommended for serverless environments like Cloudflare Workers
+    // connect_timeout helps prevent hanging connections
+    sql = postgres(connectionString, { 
+      idle_timeout: undefined, // Disable idle timeout
+      connect_timeout: 10 // 10 seconds connection timeout
+    });
 
-    // Example Query (adjust as needed): Fetch the first profile and its related social links
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles') // Adjust table name if different
-      .select(`
-        name,
-        avatar,
-        motto,
-        social_links ( platform, url, icon ) 
-      `) // Adjust columns and related table query if needed
-      .eq('id', 1) // Assuming you fetch a specific profile, e.g., by ID=1
-      .maybeSingle(); // Use maybeSingle() if only one row is expected
+    // Fetch profile data (assuming only one profile entry, e.g., id=1)
+    // Adjust the query based on your actual schema and how you identify the profile
+    const profileResult = await sql`
+      SELECT ${sql(PROFILE_COLUMNS)}
+      FROM ${sql(PROFILE_TABLE)}
+      LIMIT 1 
+    `; // Example: LIMIT 1 or add WHERE id = 1
 
-    if (profileError) {
-      throw profileError;
-    }
-
-    if (!profile) {
-      return new Response(JSON.stringify({ error: 'Profile not found' }), {
+    if (profileResult.length === 0) {
+      return new Response(JSON.stringify({ error: 'Profile data not found.' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' },
       });
     }
     
-    // If social_links is a JSONB column instead of a related table, the query might look like:
-    // const { data: profile, error: profileError } = await supabase
-    //   .from('profiles')
-    //   .select('name, avatar, motto, social_links') // Select the JSONB column directly
-    //   .eq('id', 1)
-    //   .maybeSingle();
+    const profileData = profileResult[0];
 
-    // 4. Format data (ensure it matches the expected structure)
-    /** @type {ProfileData} */
-    const formattedData = {
-      name: profile.name,
-      avatar: profile.avatar,
-      motto: profile.motto,
-      // Ensure social_links is an array, even if null/undefined from DB
-      socialLinks: profile.social_links || [], 
+    // Fetch social links (assuming a foreign key like profile_id links to the profile table)
+    // Adjust the query based on your schema. If profile has an id, use it here.
+    // If profile table doesn't have an explicit ID used here, adjust the query logic.
+    // Example assumes profileResult[0] has an 'id' field, or you have a fixed profile ID (e.g., 1).
+    const profileId = profileData.id || 1; // Adjust this logic based on your schema
+    const socialLinksResult = await sql`
+      SELECT ${sql(SOCIAL_LINKS_COLUMNS)}
+      FROM ${sql(SOCIAL_LINKS_TABLE)}
+      WHERE ${sql(PROFILE_ID_COLUMN)} = ${profileId} 
+    `;
+
+    // Combine profile data and social links
+    const responseData = {
+      ...profileData,
+      socialLinks: socialLinksResult,
     };
 
-    // 5. Return successful response
-    return new Response(JSON.stringify(formattedData), {
+    // Close the connection
+    await sql.end({ timeout: 5 }); // 5 seconds timeout for closing
+
+    return new Response(JSON.stringify(responseData), {
       status: 200,
-      headers: { 
-        'Content-Type': 'application/json',
-        // Optional: Add caching headers if desired
-        // 'Cache-Control': 'public, max-age=600' // Cache for 10 minutes
-       },
+      headers: { 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Error fetching profile data from Supabase:', error.message);
-    return new Response(JSON.stringify({ error: 'Failed to fetch profile data' }), {
+    console.error('Error fetching profile data:', error);
+    
+    // Try to close the connection if it was established
+    if (sql) {
+      await sql.end({ timeout: 5 }).catch(closeErr => console.error("Error closing connection:", closeErr));
+    }
+    
+    // Return a generic server error response
+    return new Response(JSON.stringify({ error: 'Failed to fetch profile data.' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
   }
-}; 
+} 
