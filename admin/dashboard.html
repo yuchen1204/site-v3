@@ -108,85 +108,79 @@
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">编辑博客文章</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="add-new-post-button">
-                            <i class="bi bi-plus-lg"></i>
-                            新建文章
+                        <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#blog-edit-modal" id="add-new-blog-button">
+                            <i class="bi bi-plus-lg"></i> 添加新文章
                         </button>
                     </div>
                 </div>
 
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-striped table-sm" id="blog-table">
                         <thead>
                             <tr>
                                 <th scope="col">标题</th>
                                 <th scope="col">分类</th>
-                                <th scope="col">日期</th>
+                                <th scope="col">发布日期</th>
                                 <th scope="col">操作</th>
                             </tr>
                         </thead>
-                        <tbody id="blog-posts-list">
-                            <!-- 博客文章列表将动态加载到这里 -->
-                            <tr><td colspan="4" class="text-center">加载中...</td></tr>
+                        <tbody id="blog-table-body">
+                            <!-- 博客文章列表将通过 JS 动态加载 -->
+                            <tr>
+                                <td colspan="4" class="text-center">加载中...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
-                <div id="blog-list-error" class="alert alert-danger" style="display: none;"></div>
             </section>
         </div>
     </main>
 
-    <!-- Blog Post Editor Modal -->
-    <div class="modal fade" id="blog-editor-modal" tabindex="-1" aria-labelledby="blogEditorModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <!-- Blog Edit Modal -->
+    <div class="modal fade" id="blog-edit-modal" tabindex="-1" aria-labelledby="blogEditModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
-                <form id="blog-editor-form">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="blogEditorModalLabel">编辑文章</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="hidden" id="blog-post-id">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="blogEditModalLabel">编辑文章</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="blog-edit-form">
+                        <input type="hidden" id="blog-edit-id">
                         <div class="mb-3">
-                            <label for="blog-title" class="form-label">标题</label>
-                            <input type="text" class="form-control" id="blog-title" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="blog-category" class="form-label">分类</label>
-                            <input type="text" class="form-control" id="blog-category" placeholder="例如：技术, 旅行">
+                            <label for="blog-edit-title" class="form-label">标题</label>
+                            <input type="text" class="form-control" id="blog-edit-title" required>
                         </div>
                         <div class="mb-3">
-                            <label for="blog-content" class="form-label">内容 (支持 Markdown)</label>
-                            <textarea class="form-control" id="blog-content" rows="15" required></textarea>
-                            <small class="form-text text-muted">可以使用 Markdown 语法。引用其他文章请使用 `[[文章ID]]` 格式。</small>
+                            <label for="blog-edit-category" class="form-label">分类</label>
+                            <input type="text" class="form-control" id="blog-edit-category" list="category-datalist" placeholder="输入或选择分类" required>
+                            <datalist id="category-datalist">
+                                <!-- 分类选项将通过 JS 动态加载 -->
+                            </datalist>
                         </div>
-
-                        <hr class="my-4">
-                        <h5 class="mb-3">附件</h5>
-                        <div id="blog-attachments-editor" class="mb-3">
-                            <!-- 附件输入组 -->
+                        <div class="mb-3">
+                            <label for="blog-edit-content" class="form-label">内容 (支持 Markdown)</label>
+                            <textarea class="form-control" id="blog-edit-content" rows="15" placeholder="在这里输入文章内容..."></textarea>
                         </div>
-                        <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="add-blog-attachment-button">
-                            <i class="bi bi-plus-circle"></i> 添加附件
-                        </button>
-
-                        <hr class="my-4">
-                        <h5 class="mb-3">参考文献</h5>
-                        <div id="blog-references-editor" class="mb-3">
-                           <!-- 参考文献输入组 -->
+                        <!-- 简化版：附件和引用编辑暂时省略 -->
+                        <!-- 
+                        <div class="mb-3">
+                            <label class="form-label">附件</label>
+                            <div id="blog-edit-attachments"></div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary">添加附件</button>
                         </div>
-                         <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="add-blog-reference-button">
-                            <i class="bi bi-plus-circle"></i> 添加引用
-                        </button>
-                        <small class="form-text text-muted d-block">输入引用的其他文章的 ID，多个 ID 用英文逗号分隔。</small>
-
-                    </div>
-                    <div class="modal-footer">
-                        <span id="blog-editor-status" class="me-auto"></span>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                        <button type="submit" class="btn btn-primary">保存文章</button>
-                    </div>
-                </form>
+                        <div class="mb-3">
+                            <label for="blog-edit-references" class="form-label">引用文章 ID (逗号分隔)</label>
+                            <input type="text" class="form-control" id="blog-edit-references">
+                        </div> 
+                        -->
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <span id="blog-save-status" class="me-auto text-muted"></span>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="save-blog-button">保存</button>
+                </div>
             </div>
         </div>
     </div>
