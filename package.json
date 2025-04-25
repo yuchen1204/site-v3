@@ -1,8 +1,9 @@
 {
-    "name": "site-v3-functions",
-    "version": "1.0.0",
-    "private": true,
-    "dependencies": {
-      "postgres": "^3.4.3" 
-    }
+  "name": "site-v3-functions",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "postgres": "^3.4.3",
+    "@supabase/supabase-js": "^2.0.0"
   }
+}
