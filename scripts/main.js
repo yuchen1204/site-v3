@@ -1,6 +1,11 @@
 // 自定义脚本 
 
 /**
+ * 定义API基础URL，根据环境自动切换
+ */
+const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3001/api' : '/api';
+
+/**
  * 从JSON文件加载个人资料数据
  */
 document.addEventListener('DOMContentLoaded', function() {
@@ -12,22 +17,41 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * 加载个人资料数据
+ * 加载个人资料数据（双线加载：API优先，失败则使用JSON）
  */
 function loadProfileData() {
-    fetch('data/profile.json')
+    // 首先尝试从API加载
+    fetch(`${API_BASE_URL}/profile`)
         .then(response => {
             if (!response.ok) {
-                throw new Error('网络响应异常');
+                throw new Error('API响应异常');
             }
             return response.json();
         })
         .then(data => {
+            console.log('从API加载个人资料成功');
             displayProfileData(data);
         })
-        .catch(error => {
-            console.error('加载个人资料数据失败:', error);
-            displayError();
+        .catch(apiError => {
+            console.error('从API加载个人资料失败:', apiError);
+            console.log('回退到本地JSON文件加载个人资料...');
+            
+            // API加载失败，回退到本地JSON
+            fetch('data/profile.json')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('JSON加载响应异常');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('从JSON加载个人资料成功');
+                    displayProfileData(data);
+                })
+                .catch(jsonError => {
+                    console.error('从JSON加载个人资料失败:', jsonError);
+                    displayError('无法加载个人资料数据，请检查网络连接并刷新页面。');
+                });
         });
 }
 
@@ -102,11 +126,12 @@ function displaySocialLinks(socialLinks) {
 
 /**
  * 显示错误信息
+ * @param {string} message - 错误消息
  */
-function displayError() {
+function displayError(message = '加载个人资料数据失败，请刷新页面重试。') {
     const profileContainer = document.querySelector('.profile-container');
     if (profileContainer) {
-        profileContainer.innerHTML = '<div class="alert alert-danger" role="alert">加载个人资料数据失败，请刷新页面重试。</div>';
+        profileContainer.innerHTML = `<div class="alert alert-danger" role="alert">${message}</div>`;
     }
 }
 
@@ -163,24 +188,45 @@ function filterBlogPosts(category) {
 }
 
 /**
- * 加载博客文章数据
+ * 加载博客文章数据（双线加载：API优先，失败则使用JSON）
  */
 function loadBlogPosts() {
-    fetch('data/blog.json')
+    // 首先尝试从API加载
+    fetch(`${API_BASE_URL}/blog`)
         .then(response => {
             if (!response.ok) {
-                throw new Error('网络响应异常');
+                throw new Error('API响应异常');
             }
             return response.json();
         })
         .then(data => {
+            console.log('从API加载博客文章成功');
             window.cachedBlogPosts = data; // 缓存所有文章
             currentPage = 1; // 重置到第一页
             filterBlogPosts(currentCategory); // 根据当前选中的分类显示文章
         })
-        .catch(error => {
-            console.error('加载博客文章数据失败:', error);
-            displayBlogError();
+        .catch(apiError => {
+            console.error('从API加载博客文章失败:', apiError);
+            console.log('回退到本地JSON文件加载博客文章...');
+            
+            // API加载失败，回退到本地JSON
+            fetch('data/blog.json')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('JSON加载响应异常');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('从JSON加载博客文章成功');
+                    window.cachedBlogPosts = data; // 缓存所有文章
+                    currentPage = 1; // 重置到第一页
+                    filterBlogPosts(currentCategory); // 根据当前选中的分类显示文章
+                })
+                .catch(jsonError => {
+                    console.error('从JSON加载博客文章失败:', jsonError);
+                    displayBlogError('无法加载博客文章数据，请检查网络连接并刷新页面。');
+                });
         });
 }
 
@@ -432,12 +478,13 @@ function scrollToPost(postId) {
 }
 
 /**
- * 显示博客加载错误信息
+ * 显示博客错误信息
+ * @param {string} message - 错误消息
  */
-function displayBlogError() {
+function displayBlogError(message = '加载博客文章数据失败，请刷新页面重试。') {
     const blogPostsContainer = document.getElementById('blog-posts');
     if (blogPostsContainer) {
-        blogPostsContainer.innerHTML = '<div class="alert alert-danger" role="alert">加载博客文章失败，请刷新页面重试。</div>';
+        blogPostsContainer.innerHTML = `<div class="alert alert-danger" role="alert">${message}</div>`;
     }
 }
 

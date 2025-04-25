@@ -1,30 +1,31 @@
-// 服务器启动文件
+/**
+ * 服务端API - 提供数据端点
+ */
 const express = require('express');
-const path = require('path');
-const cors = require('cors');
-const apiRouter = require('./api');
+const dataService = require('./dataService');
 
-// 创建Express应用
-const app = express();
-const PORT = process.env.PORT || 3000;
+const router = express.Router();
 
-// 中间件
-app.use(cors()); // 启用CORS
-app.use(express.json()); // 解析JSON请求体
-app.use(express.urlencoded({ extended: true })); // 解析URL编码的请求体
-
-// 静态文件服务
-app.use(express.static(path.join(__dirname, '../')));
-
-// API路由
-app.use('/api', apiRouter);
-
-// 所有其他请求返回index.html (SPA模式)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../index.html'));
+// 获取个人资料API
+router.get('/profile', async (req, res) => {
+  try {
+    const profileData = await dataService.getProfileData();
+    res.json(profileData);
+  } catch (error) {
+    console.error('获取个人资料API错误:', error);
+    res.status(500).json({ error: '服务器错误，无法获取个人资料数据' });
+  }
 });
 
-// 启动服务器
-app.listen(PORT, () => {
-  console.log(`服务器运行在 http://localhost:${PORT}`);
-}); 
+// 获取博客文章API
+router.get('/blog', async (req, res) => {
+  try {
+    const posts = await dataService.getBlogPosts();
+    res.json(posts);
+  } catch (error) {
+    console.error('获取博客文章API错误:', error);
+    res.status(500).json({ error: '服务器错误，无法获取博客文章数据' });
+  }
+});
+
+module.exports = router; 

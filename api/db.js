@@ -1,100 +1,127 @@
-// 数据库连接模块
+/**
+ * 数据库连接和工具模块
+ */
 const { Pool } = require('pg');
-require('dotenv').config();
 
-// 数据库连接池配置
-let dbPool = null;
+// 数据库连接配置
+const getDbConfig = () => {
+  // 从环境变量获取数据库连接信息
+  const connectionString = process.env.DATABASE_URL;
+  const sslEnabled = process.env.SSL === 'TRUE';
 
-/**
- * 初始化数据库连接池
- * @returns {Pool|null} 数据库连接池或null（如果无法连接）
- */
-function initializeDbPool() {
-  try {
-    // 尝试从环境变量获取数据库连接信息
-    if (!process.env.DATABASE_URL) {
-      console.warn('数据库URL未配置，将使用JSON文件作为数据源');
-      return null;
-    }
+  return {
+    connectionString,
+    ssl: sslEnabled ? { rejectUnauthorized: false } : false
+  };
+};
 
-    // 创建新的数据库连接池
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.SSL === 'TRUE' ? 
-        { rejectUnauthorized: false } : 
-        (process.env.SSL === 'FALSE' ? false : undefined)
-    });
-
-    return pool;
-  } catch (error) {
-    console.error('初始化数据库连接池失败:', error.message);
-    return null;
-  }
+// 创建数据库连接池
+let pool;
+try {
+  pool = new Pool(getDbConfig());
+} catch (error) {
+  console.error('数据库连接池初始化失败:', error);
 }
 
 /**
- * 获取数据库连接池
- * @returns {Pool|null} 数据库连接池或null（如果不可用）
- */
-function getDbPool() {
-  if (!dbPool) {
-    dbPool = initializeDbPool();
-  }
-  return dbPool;
-}
-
-/**
- * 执行SQL查询
- * @param {string} query SQL查询语句
- * @param {Array} params 查询参数
+ * 执行数据库查询
+ * @param {string} text - SQL查询语句
+ * @param {Array} params - 查询参数
  * @returns {Promise<Object>} 查询结果
- * @throws {Error} 查询失败时抛出错误
  */
-async function executeQuery(query, params = []) {
-  const pool = getDbPool();
-  
+async function query(text, params) {
   if (!pool) {
-    throw new Error('数据库连接不可用');
+    throw new Error('数据库连接池未初始化');
   }
-
+  
   try {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(query, params);
-      return result.rows;
-    } finally {
-      client.release();
-    }
+    const result = await pool.query(text, params);
+    return result;
   } catch (error) {
-    console.error('执行查询失败:', error.message);
+    console.error('数据库查询失败:', error);
     throw error;
   }
 }
 
 /**
- * 测试数据库连接
- * @returns {Promise<boolean>} 连接成功返回true，否则返回false
+ * 获取个人资料数据
+ * @returns {Promise<Object>} 个人资料数据
  */
-async function testConnection() {
+async function getProfileData() {
   try {
-    const pool = getDbPool();
-    if (!pool) return false;
+    // 获取基本个人信息
+    const profileResult = await query('SELECT name, avatar, motto FROM profile LIMIT 1');
     
-    const client = await pool.connect();
-    try {
-      await client.query('SELECT NOW()');
-      return true;
-    } finally {
-      client.release();
+    if (profileResult.rows.length === 0) {
+      throw new Error('未找到个人资料数据');
     }
+    
+    const profile = profileResult.rows[0];
+    
+    // 获取社交链接
+    const socialLinksResult = await query('SELECT platform, url, icon FROM social_links');
+    profile.socialLinks = socialLinksResult.rows;
+    
+    return profile;
   } catch (error) {
-    console.error('测试数据库连接失败:', error.message);
-    return false;
+    console.error('从数据库获取个人资料失败:', error);
+    throw error;
+  }
+}
+
+/**
+ * 获取博客文章数据
+ * @returns {Promise<Array>} 博客文章数据数组
+ */
+async function getBlogPosts() {
+  try {
+    // 获取所有博客文章
+    const postsResult = await query(`
+      SELECT 
+        id, title, date, category, content
+      FROM 
+        blog_posts
+      ORDER BY 
+        date DESC
+    `);
+    
+    const posts = postsResult.rows;
+    
+    // 为每篇文章获取附件
+    for (const post of posts) {
+      const attachmentsResult = await query(`
+        SELECT 
+          url, type, filename
+        FROM 
+          attachments
+        WHERE 
+          post_id = $1
+      `, [post.id]);
+      
+      post.attachments = attachmentsResult.rows;
+      
+      // 获取引用
+      const referencesResult = await query(`
+        SELECT 
+          referenced_post_id
+        FROM 
+          post_references
+        WHERE 
+          post_id = $1
+      `, [post.id]);
+      
+      post.references = referencesResult.rows.map(ref => ref.referenced_post_id);
+    }
+    
+    return posts;
+  } catch (error) {
+    console.error('从数据库获取博客文章失败:', error);
+    throw error;
   }
 }
 
 module.exports = {
-  getDbPool,
-  executeQuery,
-  testConnection
+  query,
+  getProfileData,
+  getBlogPosts
 }; 
