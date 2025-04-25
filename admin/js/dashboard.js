@@ -296,10 +296,27 @@ async function saveProfileData() {
 function initializeBlogEditor() {
     const addNewBlogButton = document.getElementById('add-new-blog-button');
     const blogEditModalElement = document.getElementById('blog-edit-modal');
-    const blogEditModal = new bootstrap.Modal(blogEditModalElement); // 创建 Modal 实例
     const blogEditForm = document.getElementById('blog-edit-form');
     const saveBlogButton = document.getElementById('save-blog-button');
     const blogTableBody = document.getElementById('blog-table-body');
+
+    // 添加检查：确保模态框元素存在
+    if (!blogEditModalElement) {
+        console.error("错误：无法在 DOM 中找到博客编辑模态框元素 #blog-edit-modal。");
+        return; // 如果元素不存在，则停止初始化
+    }
+
+    // 在确认元素存在后再初始化模态框
+    let blogEditModal = null;
+    try {
+        console.log("尝试在元素上初始化 Bootstrap Modal:", blogEditModalElement);
+        blogEditModal = new bootstrap.Modal(blogEditModalElement);
+        console.log("Bootstrap Modal 初始化成功。");
+    } catch (error) {
+        console.error("初始化 Bootstrap Modal 时出错:", error);
+        // 如果初始化失败，后续依赖 modal 的操作可能也需要停止，这里先返回
+        return; 
+    }
 
     // 监听侧边栏链接点击，当切换到博客编辑时加载数据
     document.querySelectorAll('.admin-sidebar-link').forEach(link => {
@@ -318,7 +335,7 @@ function initializeBlogEditor() {
     }
 
     // "添加新文章"按钮点击事件
-    if (addNewBlogButton) {
+    if (addNewBlogButton && blogEditModal) {
         addNewBlogButton.addEventListener('click', () => {
             resetBlogEditForm();
             document.getElementById('blogEditModalLabel').textContent = '添加新文章';
@@ -334,7 +351,7 @@ function initializeBlogEditor() {
     }
 
     // 为表格添加事件委托，处理编辑和删除按钮点击
-    if (blogTableBody) {
+    if (blogTableBody && blogEditModal) {
         blogTableBody.addEventListener('click', async (event) => {
             const target = event.target;
             const editButton = target.closest('.edit-blog-button');
@@ -343,7 +360,12 @@ function initializeBlogEditor() {
             if (editButton) {
                 const postId = editButton.getAttribute('data-id');
                 await loadBlogPostForEditing(postId);
-                blogEditModal.show();
+                // 再次检查以防万一
+                if (blogEditModal) { 
+                    blogEditModal.show(); 
+                } else {
+                     console.error("无法显示模态框，因为它未能成功初始化。");
+                }
             } else if (deleteButton) {
                 const postId = deleteButton.getAttribute('data-id');
                 const postTitle = deleteButton.getAttribute('data-title') || '该文章';
