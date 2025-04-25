@@ -1,5 +1,3 @@
-import { customAlphabet } from 'nanoid';
-
 // 定义辅助函数，从 KV 获取博客文章数组
 async function getBlogPosts(env) {
   const postsJson = await env.blog_data.get('blog');
@@ -21,10 +19,6 @@ async function saveBlogPosts(env, posts) {
   }
   await env.blog_data.put('blog', JSON.stringify(posts, null, 2)); // 格式化 JSON 存储
 }
-
-// 安全地生成 ID (使用 nanoid 库，Cloudflare Workers 环境通常支持)
-// 使用数字和字母，长度为 10
-const nanoid = customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 10);
 
 // 处理 /admin/api/blog 请求 (GET, POST)
 export async function onRequest(context) {
@@ -55,7 +49,7 @@ export async function onRequest(context) {
       const posts = await getBlogPosts(env);
       
       const newPost = {
-        id: nanoid(), // 生成唯一 ID
+        id: crypto.randomUUID(), // 使用内置 API 生成 UUID
         date: new Date().toISOString(), // 使用服务器时间
         title: newPostData.title,
         category: newPostData.category,
