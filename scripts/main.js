@@ -1,11 +1,6 @@
 // 自定义脚本 
 
 /**
- * 定义API基础URL，根据环境自动切换
- */
-const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3001/api' : '/api';
-
-/**
  * 从JSON文件加载个人资料数据
  */
 document.addEventListener('DOMContentLoaded', function() {
@@ -17,42 +12,57 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * 加载个人资料数据（双线加载：API优先，失败则使用JSON）
+ * 加载个人资料数据，优先从KV加载，失败则从JSON文件加载
  */
-function loadProfileData() {
-    // 首先尝试从API加载
-    fetch(`${API_BASE_URL}/profile`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('API响应异常');
+async function loadProfileData() {
+    let profileData = null;
+    let loadedFromKV = false;
+
+    // 尝试从 Cloudflare KV 加载
+    // blog_data 会由 Cloudflare Pages 环境注入
+    if (typeof blog_data !== 'undefined') {
+        try {
+            console.log("尝试从 KV 加载个人资料...");
+            const kvData = await blog_data.get('profile');
+            if (kvData) {
+                profileData = JSON.parse(kvData);
+                console.log("成功从 KV 加载个人资料。");
+                loadedFromKV = true;
+            } else {
+                console.log("KV 中未找到个人资料数据。");
             }
-            return response.json();
-        })
-        .then(data => {
-            console.log('从API加载个人资料成功');
-            displayProfileData(data);
-        })
-        .catch(apiError => {
-            console.error('从API加载个人资料失败:', apiError);
-            console.log('回退到本地JSON文件加载个人资料...');
-            
-            // API加载失败，回退到本地JSON
-            fetch('data/profile.json')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('JSON加载响应异常');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('从JSON加载个人资料成功');
-                    displayProfileData(data);
-                })
-                .catch(jsonError => {
-                    console.error('从JSON加载个人资料失败:', jsonError);
-                    displayError('无法加载个人资料数据，请检查网络连接并刷新页面。');
-                });
-        });
+        } catch (error) {
+            console.error('从 KV 加载个人资料数据失败:', error);
+        }
+    } else {
+        console.log("KV 绑定 'blog_data' 未定义，可能不在 Cloudflare 环境中。");
+    }
+
+    // 如果 KV 加载失败或未加载，则尝试从 JSON 文件加载
+    if (!loadedFromKV) {
+        try {
+            console.log("尝试从 JSON 文件加载个人资料...");
+            const response = await fetch('data/profile.json');
+            if (!response.ok) {
+                throw new Error(`网络响应异常: ${response.statusText}`);
+            }
+            profileData = await response.json();
+            console.log("成功从 JSON 文件加载个人资料。");
+        } catch (error) {
+            console.error('从 JSON 文件加载个人资料数据失败:', error);
+            displayError(); // 加载彻底失败，显示错误
+            return; // 终止函数执行
+        }
+    }
+
+    // 如果成功加载了数据 (无论来源)，则显示
+    if (profileData) {
+        displayProfileData(profileData);
+    } else {
+        // 如果 profileData 仍然是 null (理论上不应该发生，因为前面有错误处理)
+        console.error('未能加载个人资料数据。');
+        displayError();
+    }
 }
 
 /**
@@ -126,12 +136,11 @@ function displaySocialLinks(socialLinks) {
 
 /**
  * 显示错误信息
- * @param {string} message - 错误消息
  */
-function displayError(message = '加载个人资料数据失败，请刷新页面重试。') {
+function displayError() {
     const profileContainer = document.querySelector('.profile-container');
     if (profileContainer) {
-        profileContainer.innerHTML = `<div class="alert alert-danger" role="alert">${message}</div>`;
+        profileContainer.innerHTML = '<div class="alert alert-danger" role="alert">加载个人资料数据失败，请刷新页面重试。</div>';
     }
 }
 
@@ -188,46 +197,57 @@ function filterBlogPosts(category) {
 }
 
 /**
- * 加载博客文章数据（双线加载：API优先，失败则使用JSON）
+ * 加载博客文章数据，优先从KV加载，失败则从JSON文件加载
  */
-function loadBlogPosts() {
-    // 首先尝试从API加载
-    fetch(`${API_BASE_URL}/blog`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('API响应异常');
+async function loadBlogPosts() {
+    let blogData = null;
+    let loadedFromKV = false;
+
+    // 尝试从 Cloudflare KV 加载
+    if (typeof blog_data !== 'undefined') {
+        try {
+            console.log("尝试从 KV 加载博客文章...");
+            const kvData = await blog_data.get('blog');
+            if (kvData) {
+                blogData = JSON.parse(kvData);
+                console.log("成功从 KV 加载博客文章。");
+                loadedFromKV = true;
+            } else {
+                console.log("KV 中未找到博客文章数据。");
             }
-            return response.json();
-        })
-        .then(data => {
-            console.log('从API加载博客文章成功');
-            window.cachedBlogPosts = data; // 缓存所有文章
-            currentPage = 1; // 重置到第一页
-            filterBlogPosts(currentCategory); // 根据当前选中的分类显示文章
-        })
-        .catch(apiError => {
-            console.error('从API加载博客文章失败:', apiError);
-            console.log('回退到本地JSON文件加载博客文章...');
-            
-            // API加载失败，回退到本地JSON
-            fetch('data/blog.json')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('JSON加载响应异常');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('从JSON加载博客文章成功');
-                    window.cachedBlogPosts = data; // 缓存所有文章
-                    currentPage = 1; // 重置到第一页
-                    filterBlogPosts(currentCategory); // 根据当前选中的分类显示文章
-                })
-                .catch(jsonError => {
-                    console.error('从JSON加载博客文章失败:', jsonError);
-                    displayBlogError('无法加载博客文章数据，请检查网络连接并刷新页面。');
-                });
-        });
+        } catch (error) {
+            console.error('从 KV 加载博客文章数据失败:', error);
+        }
+    } else {
+        console.log("KV 绑定 'blog_data' 未定义，可能不在 Cloudflare 环境中。");
+    }
+
+    // 如果 KV 加载失败或未加载，则尝试从 JSON 文件加载
+    if (!loadedFromKV) {
+        try {
+            console.log("尝试从 JSON 文件加载博客文章...");
+            const response = await fetch('data/blog.json');
+            if (!response.ok) {
+                throw new Error(`网络响应异常: ${response.statusText}`);
+            }
+            blogData = await response.json();
+            console.log("成功从 JSON 文件加载博客文章。");
+        } catch (error) {
+            console.error('从 JSON 文件加载博客文章数据失败:', error);
+            displayBlogError(); // 加载彻底失败，显示错误
+            return; // 终止函数执行
+        }
+    }
+
+    // 如果成功加载了数据，则缓存并显示
+    if (blogData) {
+        window.cachedBlogPosts = blogData; // 缓存所有文章
+        currentPage = 1; // 重置到第一页
+        filterBlogPosts(currentCategory); // 根据当前选中的分类显示文章
+    } else {
+        console.error('未能加载博客文章数据。');
+        displayBlogError();
+    }
 }
 
 /**
@@ -339,7 +359,7 @@ function displayBlogPosts(postsToShow) {
                 const referenceList = document.createElement('ul');
                 referenceList.className = 'reference-list';
                 post.references.forEach(refId => {
-                    const referencedPost = findPostById(refId, window.cachedBlogPosts || []);
+                    const referencedPost = findPostById(parseInt(refId, 10), window.cachedBlogPosts || []);
                     if (referencedPost) {
                         const listItem = document.createElement('li');
                         const link = document.createElement('a');
@@ -478,13 +498,12 @@ function scrollToPost(postId) {
 }
 
 /**
- * 显示博客错误信息
- * @param {string} message - 错误消息
+ * 显示博客加载错误信息
  */
-function displayBlogError(message = '加载博客文章数据失败，请刷新页面重试。') {
+function displayBlogError() {
     const blogPostsContainer = document.getElementById('blog-posts');
     if (blogPostsContainer) {
-        blogPostsContainer.innerHTML = `<div class="alert alert-danger" role="alert">${message}</div>`;
+        blogPostsContainer.innerHTML = '<div class="alert alert-danger" role="alert">加载博客文章失败，请刷新页面重试。</div>';
     }
 }
 
