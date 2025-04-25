@@ -12,39 +12,22 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * 加载个人资料数据，优先从 API 加载，失败则从 JSON 文件加载
+ * 加载个人资料数据
  */
 function loadProfileData() {
-    fetch('/api/profile') // 尝试从 API 加载
+    fetch('data/profile.json')
         .then(response => {
             if (!response.ok) {
-                // API 失败，抛出错误以触发 fallback
-                throw new Error(`API 请求失败，状态码: ${response.status}`);
+                throw new Error('网络响应异常');
             }
             return response.json();
         })
         .then(data => {
-            console.log("从 API 加载个人资料成功");
             displayProfileData(data);
         })
-        .catch(apiError => {
-            console.warn('从 API 加载个人资料失败:', apiError.message, '尝试从本地 JSON 文件加载...');
-            // API 请求失败，尝试从本地 JSON 文件加载
-            fetch('data/profile.json')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('本地 JSON 文件网络响应异常');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("从本地 JSON 文件加载个人资料成功");
-                    displayProfileData(data);
-                })
-                .catch(jsonError => {
-                    console.error('加载个人资料数据彻底失败 (API 和 JSON):', jsonError);
-                    displayError(); // 显示最终的错误信息
-                });
+        .catch(error => {
+            console.error('加载个人资料数据失败:', error);
+            displayError();
         });
 }
 
@@ -180,43 +163,24 @@ function filterBlogPosts(category) {
 }
 
 /**
- * 加载博客文章数据，优先从 API 加载，失败则从 JSON 文件加载
+ * 加载博客文章数据
  */
 function loadBlogPosts() {
-    fetch('/api/blog') // 尝试从 API 加载
+    fetch('data/blog.json')
         .then(response => {
             if (!response.ok) {
-                 // API 失败，抛出错误以触发 fallback
-                throw new Error(`API 请求失败，状态码: ${response.status}`);
+                throw new Error('网络响应异常');
             }
             return response.json();
         })
         .then(data => {
-            console.log("从 API 加载博客文章成功");
-            window.cachedBlogPosts = data; // 缓存从 API 获取的文章
+            window.cachedBlogPosts = data; // 缓存所有文章
             currentPage = 1; // 重置到第一页
             filterBlogPosts(currentCategory); // 根据当前选中的分类显示文章
         })
-        .catch(apiError => {
-             console.warn('从 API 加载博客文章失败:', apiError.message, '尝试从本地 JSON 文件加载...');
-            // API 请求失败，尝试从本地 JSON 文件加载
-            fetch('data/blog.json')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('本地 JSON 文件网络响应异常');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("从本地 JSON 文件加载博客文章成功");
-                    window.cachedBlogPosts = data; // 缓存从 JSON 获取的文章
-                    currentPage = 1; // 重置到第一页
-                    filterBlogPosts(currentCategory); // 根据当前选中的分类显示文章
-                })
-                .catch(jsonError => {
-                    console.error('加载博客文章数据彻底失败 (API 和 JSON):', jsonError);
-                    displayBlogError(); // 显示最终的错误信息
-                });
+        .catch(error => {
+            console.error('加载博客文章数据失败:', error);
+            displayBlogError();
         });
 }
 
