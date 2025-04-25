@@ -506,6 +506,19 @@ function parseReferences(content, allPosts) {
         return match; // 如果引用无效，保持原样
     });
     
+    // 预处理代码块，修复格式问题
+    let processedText = referencedText;
+    
+    // 处理代码块格式问题：替换 ```language code``` 格式为正确的 ```\nlanguage\ncode\n```
+    processedText = processedText.replace(/```(\w+)\s+([^`]+)```/g, (match, language, code) => {
+        return "```\n" + language + "\n" + code.trim() + "\n```";
+    });
+    
+    // 处理没有语言指定的代码块
+    processedText = processedText.replace(/```([^`\n]+)```/g, (match, code) => {
+        return "```\n" + code.trim() + "\n```";
+    });
+    
     // 然后将Markdown转换为HTML
     try {
         // 配置marked.js选项
@@ -517,14 +530,15 @@ function parseReferences(content, allPosts) {
             sanitize: false,          // 不禁止HTML输入
             smartLists: true,         // 使用更智能的列表行为
             smartypants: true,        // 使用更智能的标点符号
-            xhtml: false              // 不使用自闭合XHTML标签
+            xhtml: false,             // 不使用自闭合XHTML标签
+            langPrefix: 'language-'   // 添加语言前缀
         });
         
         // 解析Markdown为HTML
-        return marked.parse(referencedText);
+        return marked.parse(processedText);
     } catch (error) {
         console.error('Markdown解析失败:', error);
-        return referencedText; // 如果解析失败，至少返回解析了引用的文本
+        return processedText; // 如果解析失败，至少返回解析了引用的文本
     }
 }
 
