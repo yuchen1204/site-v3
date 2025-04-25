@@ -35,34 +35,6 @@ function jsonResponse(data, status = 200, headers = {}) {
     });
 }
 
-// Helper to make sure blog post links are unique (复制自blog.js)
-function ensureUniqueLink(link, existingPosts, currentId = null) {
-    // 如果链接为空，不处理
-    if (!link) return link;
-
-    let finalLink = link;
-    let counter = 1;
-    let isUnique = false;
-    
-    // 检查链接是否唯一
-    while (!isUnique) {
-        isUnique = true;
-        for (const post of existingPosts) {
-            // 跳过当前文章（适用于编辑现有文章时）
-            if (currentId && post.id === currentId) continue;
-            
-            if (post.link === finalLink) {
-                isUnique = false;
-                finalLink = `${link}-${counter}`;
-                counter++;
-                break;
-            }
-        }
-    }
-    
-    return finalLink;
-}
-
 // --- Request Handlers for Single Item ---
 
 // Handle GET /admin/api/blog/[id] (Get one)
@@ -113,9 +85,6 @@ async function handleUpdate(context) {
         if (!updatedData.title || !updatedData.content || !updatedData.category || !updatedData.date) {
              return jsonResponse({ error: '缺少必要字段 (标题, 内容, 分类, 日期)' }, 400);
         }
-        
-        // 确保链接唯一
-        const link = ensureUniqueLink(updatedData.link, posts, postId);
 
         // Merge updated data, keeping the original ID
         posts[postIndex] = {
@@ -124,8 +93,7 @@ async function handleUpdate(context) {
             id: postId, // Ensure ID remains the same
             date: new Date(updatedData.date).toISOString(),
             attachments: updatedData.attachments || [],
-            references: updatedData.references || [],
-            link: link // 使用确保唯一的链接
+            references: updatedData.references || []
         };
 
         await saveBlogPosts(env, posts);

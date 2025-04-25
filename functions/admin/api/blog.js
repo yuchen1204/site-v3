@@ -39,34 +39,6 @@ function generateUniqueId(existingPosts) {
     return newId;
 }
 
-// Helper to make sure blog post links are unique
-function ensureUniqueLink(link, existingPosts, currentId = null) {
-    // 如果链接为空，不处理
-    if (!link) return link;
-
-    let finalLink = link;
-    let counter = 1;
-    let isUnique = false;
-    
-    // 检查链接是否唯一
-    while (!isUnique) {
-        isUnique = true;
-        for (const post of existingPosts) {
-            // 跳过当前文章（适用于编辑现有文章时）
-            if (currentId && post.id === currentId) continue;
-            
-            if (post.link === finalLink) {
-                isUnique = false;
-                finalLink = `${link}-${counter}`;
-                counter++;
-                break;
-            }
-        }
-    }
-    
-    return finalLink;
-}
-
 // Helper function for consistent JSON responses
 function jsonResponse(data, status = 200, headers = {}) {
     return new Response(JSON.stringify(data), {
@@ -104,17 +76,12 @@ async function handleCreate(context) {
             return jsonResponse({ error: '缺少必要字段 (标题, 内容, 分类, 日期)' }, 400);
         }
 
-        // 确保链接唯一
-        const link = ensureUniqueLink(newPostData.link, posts);
-
         const newPost = {
             ...newPostData,
             id: generateUniqueId(posts), // Generate a new ID
             // Ensure date is stored consistently (e.g., ISO string)
             date: new Date(newPostData.date).toISOString(), 
-            // 添加链接字段
-            link: link,
-            // Ensure attachments and references are arrays if not provided
+             // Ensure attachments and references are arrays if not provided
             attachments: newPostData.attachments || [],
             references: newPostData.references || []
         };
