@@ -148,4 +148,40 @@ body.admin-sidebar-open .admin-sidebar-backdrop {
     display: block; /* Show active section */
 }
 
-/* Add any other dashboard specific styles here */ 
+/* Add any other dashboard specific styles here */
+
+/* Blog Post List Table */
+#blog-posts-list td,
+#blog-posts-list th {
+    vertical-align: middle;
+}
+
+#blog-posts-list .btn {
+    margin-right: 0.3rem;
+}
+
+/* Blog Editor Modal */
+#blog-editor-modal .modal-dialog {
+    max-width: 900px; /* Wider modal */
+}
+
+#blog-content {
+    font-family: 'Maple Mono CN', monospace; /* Use monospaced font for content */
+    min-height: 300px; /* Ensure decent height */
+}
+
+.blog-attachment-group .form-control,
+.social-link-group .form-control {
+    /* Adjust widths if needed, e.g., make URL wider */
+}
+
+.blog-attachment-group .blog-attachment-url {
+    flex-grow: 2; /* Make URL input wider */
+}
+.social-link-group .social-link-url {
+    flex-grow: 2; 
+}
+
+#blog-editor-status {
+    font-weight: 500;
+} 

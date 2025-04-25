@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeLogout();
     initializeAdminSidebar();
     initializeProfileEditor(); // 初始化个人资料编辑器
+    initializeBlogEditor(); // 初始化博客编辑器
 });
 
 /**
@@ -103,25 +104,31 @@ function initializeAdminSidebar() {
             const targetSection = document.getElementById(targetSectionId);
             if (targetSection) {
                 targetSection.classList.add('active');
-                // 如果是编辑个人资料区域，加载数据
+                // 根据区域加载数据
                 if (targetSectionId === 'edit-profile') {
                     loadProfileDataForEditing();
+                } else if (targetSectionId === 'edit-blog') {
+                    loadBlogPostsForEditing(); // 加载博客列表
                 }
             } else {
                 console.warn(`未找到目标区域: ${targetSectionId}`);
             }
 
             // (可选) 在小屏幕上点击链接后自动关闭侧边栏
-            if (window.innerWidth < 992) { 
-                closeSidebar();
-            }
+             if (window.innerWidth < 992 && document.body.classList.contains('admin-sidebar-open')) {
+                 document.getElementById('admin-sidebar-toggle').click(); // 模拟点击关闭
+             }
         });
     });
 
     // 初始加载检查，如果默认显示的是编辑个人资料区域
     const initialActiveSection = document.querySelector('.admin-section.active');
-    if (initialActiveSection && initialActiveSection.id === 'edit-profile') {
-        loadProfileDataForEditing();
+    if (initialActiveSection) {
+        if (initialActiveSection.id === 'edit-profile') {
+            loadProfileDataForEditing();
+        } else if (initialActiveSection.id === 'edit-blog') {
+             loadBlogPostsForEditing();
+        }
     }
 }
 
@@ -286,6 +293,373 @@ async function saveProfileData() {
             statusSpan.textContent = '';
             statusSpan.classList.remove('text-success', 'text-danger');
         }, 3000);
+    }
+}
+
+// --- 博客编辑功能 ---
+
+let blogEditorModalInstance = null; // 存储 Modal 实例
+
+/**
+ * 初始化博客编辑器相关功能
+ */
+function initializeBlogEditor() {
+    const addNewPostButton = document.getElementById('add-new-post-button');
+    const blogEditorForm = document.getElementById('blog-editor-form');
+    const addAttachmentButton = document.getElementById('add-blog-attachment-button');
+    const addReferenceButton = document.getElementById('add-blog-reference-button');
+    const blogEditorModalElement = document.getElementById('blog-editor-modal');
+
+    if (!addNewPostButton || !blogEditorForm || !addAttachmentButton || !addReferenceButton || !blogEditorModalElement) return;
+
+    // 初始化 Modal 实例
+    blogEditorModalInstance = new bootstrap.Modal(blogEditorModalElement);
+
+    // "新建文章" 按钮事件
+    addNewPostButton.addEventListener('click', () => {
+        openBlogEditor(); // 打开空编辑器
+    });
+
+    // 编辑器表单提交事件
+    blogEditorForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await saveBlogPost();
+    });
+
+    // 添加附件按钮事件
+    addAttachmentButton.addEventListener('click', () => {
+        addAttachmentInputGroup(document.getElementById('blog-attachments-editor'));
+    });
+
+    // 添加参考文献按钮事件
+    addReferenceButton.addEventListener('click', () => {
+        addReferenceInputGroup(document.getElementById('blog-references-editor'));
+    });
+}
+
+/**
+ * 加载博客文章列表到表格
+ */
+async function loadBlogPostsForEditing() {
+    const listBody = document.getElementById('blog-posts-list');
+    const errorDiv = document.getElementById('blog-list-error');
+    if (!listBody || !errorDiv) return;
+
+    listBody.innerHTML = '<tr><td colspan="4" class="text-center">加载中...</td></tr>';
+    errorDiv.style.display = 'none';
+
+    try {
+        const response = await fetch('/admin/api/blog');
+        if (!response.ok) {
+            throw new Error(`获取数据失败: ${response.statusText}`);
+        }
+        const posts = await response.json();
+
+        listBody.innerHTML = ''; // 清空列表
+        if (posts && posts.length > 0) {
+            posts.forEach(post => {
+                const row = listBody.insertRow();
+                row.innerHTML = `
+                    <td>${escapeHTML(post.title)}</td>
+                    <td>${escapeHTML(post.category || '')}</td>
+                    <td>${formatDateSimple(post.date)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary edit-post-button" data-id="${post.id}"><i class="bi bi-pencil"></i> 编辑</button>
+                        <button class="btn btn-sm btn-outline-danger delete-post-button" data-id="${post.id}"><i class="bi bi-trash"></i> 删除</button>
+                    </td>
+                `;
+                // 添加编辑按钮事件
+                row.querySelector('.edit-post-button').addEventListener('click', function() {
+                    openBlogEditor(this.getAttribute('data-id'));
+                });
+                // 添加删除按钮事件
+                row.querySelector('.delete-post-button').addEventListener('click', function() {
+                    deleteBlogPost(this.getAttribute('data-id'), this.closest('tr').querySelector('td').textContent);
+                });
+            });
+        } else {
+            listBody.innerHTML = '<tr><td colspan="4" class="text-center">还没有博客文章。</td></tr>';
+        }
+
+    } catch (error) {
+        console.error('加载博客列表失败:', error);
+        errorDiv.textContent = `加载博客列表失败: ${error.message}`;
+        errorDiv.style.display = 'block';
+        listBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">加载失败</td></tr>';
+    }
+}
+
+/**
+ * 打开博客编辑器（模态框）
+ * @param {string|null} postId - 要编辑的文章 ID，如果为 null 或 undefined 则为新建文章
+ */
+async function openBlogEditor(postId = null) {
+    const form = document.getElementById('blog-editor-form');
+    const modalTitle = document.getElementById('blogEditorModalLabel');
+    const postIdInput = document.getElementById('blog-post-id');
+    const titleInput = document.getElementById('blog-title');
+    const categoryInput = document.getElementById('blog-category');
+    const contentInput = document.getElementById('blog-content');
+    const attachmentsContainer = document.getElementById('blog-attachments-editor');
+    const referencesContainer = document.getElementById('blog-references-editor');
+    const statusSpan = document.getElementById('blog-editor-status');
+
+    if (!form || !modalTitle || !postIdInput || !titleInput || !categoryInput || !contentInput || !attachmentsContainer || !referencesContainer || !statusSpan || !blogEditorModalInstance) return;
+
+    // 重置表单和状态
+    form.reset();
+    postIdInput.value = '';
+    attachmentsContainer.innerHTML = '';
+    referencesContainer.innerHTML = ''; 
+    statusSpan.textContent = '';
+    statusSpan.className = 'me-auto'; // Reset classes
+
+    if (postId) {
+        // 编辑现有文章
+        modalTitle.textContent = '编辑文章';
+        postIdInput.value = postId;
+        statusSpan.textContent = '加载文章数据...';
+        try {
+            const response = await fetch(`/admin/api/blog?id=${postId}`);
+            if (!response.ok) {
+                throw new Error(`获取文章数据失败: ${response.statusText}`);
+            }
+            const post = await response.json();
+            
+            titleInput.value = post.title || '';
+            categoryInput.value = post.category || '';
+            contentInput.value = post.content || '';
+
+            // 填充附件
+            if (post.attachments && Array.isArray(post.attachments)) {
+                post.attachments.forEach(att => addAttachmentInputGroup(attachmentsContainer, att.url, att.type, att.filename));
+            }
+            // 填充参考文献
+            if (post.references && Array.isArray(post.references)) {
+                addReferenceInputGroup(referencesContainer, post.references.join(', '));
+            }
+            statusSpan.textContent = ''; // 清除加载状态
+
+        } catch (error) {
+            console.error('加载文章编辑数据失败:', error);
+            statusSpan.textContent = `加载失败: ${error.message}`;
+            statusSpan.classList.add('text-danger');
+             // 这里可以选择不打开 modal，或者显示错误并允许关闭
+             // blogEditorModalInstance.hide();
+             // return;
+        }
+
+    } else {
+        // 新建文章
+        modalTitle.textContent = '新建文章';
+    }
+
+    blogEditorModalInstance.show();
+}
+
+/**
+ * 添加一个附件输入组到编辑器
+ */
+function addAttachmentInputGroup(container, url = '', type = '', filename = '') {
+    const inputGroup = document.createElement('div');
+    inputGroup.className = 'input-group mb-2 blog-attachment-group';
+    inputGroup.innerHTML = `
+        <input type="url" class="form-control blog-attachment-url" placeholder="附件 URL (https://...)" value="${url}" required>
+        <input type="text" class="form-control blog-attachment-type" placeholder="类型 (例如: image, pdf, zip)" value="${type}" required>
+        <input type="text" class="form-control blog-attachment-filename" placeholder="显示的文件名 (可选)" value="${filename}">
+        <button class="btn btn-outline-danger remove-blog-attachment-button" type="button"><i class="bi bi-trash"></i></button>
+    `;
+    inputGroup.querySelector('.remove-blog-attachment-button').addEventListener('click', function() {
+        inputGroup.remove();
+    });
+    container.appendChild(inputGroup);
+}
+
+/**
+ * 添加参考文献输入组到编辑器
+ */
+function addReferenceInputGroup(container, refString = '') {
+     // 目前只允许一组参考文献输入
+    if (container.querySelector('.blog-reference-group')) {
+        // 如果已经存在，聚焦到现有输入框
+        const existingInput = container.querySelector('.blog-reference-ids');
+        if (existingInput) existingInput.focus();
+        return; 
+    }
+
+    const inputGroup = document.createElement('div');
+    inputGroup.className = 'input-group mb-2 blog-reference-group'; // Add class for identification
+    inputGroup.innerHTML = `
+        <input type="text" class="form-control blog-reference-ids" placeholder="文章 ID (用逗号分隔)" value="${refString}">
+         <button class="btn btn-outline-danger remove-blog-reference-button" type="button"><i class="bi bi-trash"></i></button>
+    `;
+      inputGroup.querySelector('.remove-blog-reference-button').addEventListener('click', function() {
+        inputGroup.remove(); // 允许删除
+    });
+    container.appendChild(inputGroup);
+}
+
+/**
+ * 保存博客文章（新建或更新）
+ */
+async function saveBlogPost() {
+    const postIdInput = document.getElementById('blog-post-id');
+    const titleInput = document.getElementById('blog-title');
+    const categoryInput = document.getElementById('blog-category');
+    const contentInput = document.getElementById('blog-content');
+    const attachmentGroups = document.querySelectorAll('#blog-attachments-editor .blog-attachment-group');
+    const referenceGroup = document.querySelector('#blog-references-editor .blog-reference-group'); // 只获取第一个（也应该是唯一一个）
+    const statusSpan = document.getElementById('blog-editor-status');
+    const submitButton = document.querySelector('#blog-editor-form button[type="submit"]');
+
+    if (!titleInput || !categoryInput || !contentInput || !statusSpan || !submitButton) return;
+
+    statusSpan.textContent = '保存中...';
+    statusSpan.className = 'me-auto'; // Reset classes
+    submitButton.disabled = true;
+
+    // 收集附件
+    const attachments = [];
+    attachmentGroups.forEach(group => {
+        const urlInput = group.querySelector('.blog-attachment-url');
+        const typeInput = group.querySelector('.blog-attachment-type');
+        const filenameInput = group.querySelector('.blog-attachment-filename');
+        if (urlInput && typeInput && urlInput.value.trim() && typeInput.value.trim()) {
+            attachments.push({
+                url: urlInput.value.trim(),
+                type: typeInput.value.trim(),
+                filename: filenameInput ? filenameInput.value.trim() : ''
+            });
+        }
+    });
+
+    // 收集参考文献
+    let references = [];
+    if (referenceGroup) {
+        const idsInput = referenceGroup.querySelector('.blog-reference-ids');
+        if (idsInput && idsInput.value.trim()) {
+            references = idsInput.value.trim()
+                                .split(',') // 按逗号分割
+                                .map(id => parseInt(id.trim(), 10)) // 转为数字
+                                .filter(id => !isNaN(id) && id > 0); // 过滤无效 ID
+        }
+    }
+
+    const postData = {
+        title: titleInput.value.trim(),
+        category: categoryInput.value.trim(),
+        content: contentInput.value.trim(),
+        attachments: attachments,
+        references: references
+    };
+
+    const postId = postIdInput.value;
+    const isEditing = !!postId;
+    const url = isEditing ? `/admin/api/blog?id=${postId}` : '/admin/api/blog';
+    const method = isEditing ? 'PUT' : 'POST';
+
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(postData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `保存失败: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        statusSpan.textContent = result.message || '保存成功！';
+        statusSpan.classList.add('text-success');
+
+        // 关闭模态框并刷新列表
+        blogEditorModalInstance.hide();
+        await loadBlogPostsForEditing();
+
+    } catch (error) {
+        console.error('保存博客文章失败:', error);
+        statusSpan.textContent = `保存失败: ${error.message}`;
+        statusSpan.classList.add('text-danger');
+    } finally {
+        submitButton.disabled = false;
+         // 模态框关闭后状态会自动清除，不需要延时
+    }
+}
+
+/**
+ * 删除博客文章
+ * @param {string} postId - 要删除的文章 ID
+ * @param {string} postTitle - 文章标题（用于确认信息）
+ */
+async function deleteBlogPost(postId, postTitle) {
+    if (!postId) return;
+
+    if (confirm(`确定要删除文章 "${postTitle}" 吗？此操作无法撤销。`)) {
+        try {
+             // 可以先在界面上添加一个 loading 状态
+            const response = await fetch(`/admin/api/blog?id=${postId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `删除失败: ${response.statusText}`);
+            }
+            
+            // 删除成功后刷新列表
+            await loadBlogPostsForEditing();
+            // 可以在这里显示一个短暂的成功提示
+             alert(`文章 "${postTitle}" 已删除。`);
+
+        } catch (error) {
+            console.error('删除博客文章失败:', error);
+            alert(`删除失败: ${error.message}`);
+        }
+    }
+}
+
+// --- 工具函数 ---
+
+/**
+ * 简单的 HTML 转义函数，防止 XSS
+ * @param {string} str - 需要转义的字符串
+ * @returns {string} - 转义后的字符串
+ */
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"/]/g, function (s) {
+        const entityMap = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+            '/': '&#x2F;'
+        };
+        return entityMap[s];
+    });
+}
+
+/**
+ * 格式化日期为 YYYY-MM-DD 格式
+ * @param {string|Date} dateInput - 日期字符串或对象
+ * @returns {string} - 格式化后的日期字符串
+ */
+function formatDateSimple(dateInput) {
+    if (!dateInput) return '';
+    try {
+        const date = new Date(dateInput);
+        if (isNaN(date)) return '';
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    } catch (e) {
+        return ''; // Handle potential errors from invalid date strings
     }
 }
 
