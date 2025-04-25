@@ -24,6 +24,8 @@ function loadProfileData() {
             return response.json();
         })
         .then(data => {
+            profileDataSource = 'kv';
+            updateDataSourceIndicator();
             displayProfileData(data);
         })
         .catch(error => {
@@ -38,6 +40,8 @@ function loadProfileData() {
                     return response.json();
                 })
                 .then(data => {
+                    profileDataSource = 'json';
+                    updateDataSourceIndicator();
                     displayProfileData(data);
                 })
                 .catch(error => {
@@ -131,6 +135,10 @@ let currentPage = 1;
 const postsPerPage = 5;
 let currentCategory = 'all'; // 跟踪当前选中的分类
 
+// 跟踪数据来源
+let profileDataSource = '';
+let blogDataSource = '';
+
 /**
  * 初始化博客分类筛选
  */
@@ -203,6 +211,8 @@ function loadBlogPosts() {
             return response.json();
         })
         .then(data => {
+            blogDataSource = 'kv';
+            updateDataSourceIndicator();
             window.cachedBlogPosts = data; // 缓存所有文章
             currentPage = 1; // 重置到第一页
             filterBlogPosts(currentCategory); // 根据当前选中的分类显示文章
@@ -219,6 +229,8 @@ function loadBlogPosts() {
                     return response.json();
                 })
                 .then(data => {
+                    blogDataSource = 'json';
+                    updateDataSourceIndicator();
                     window.cachedBlogPosts = data; // 缓存所有文章
                     currentPage = 1; // 重置到第一页
                     filterBlogPosts(currentCategory); // 根据当前选中的分类显示文章
@@ -228,6 +240,51 @@ function loadBlogPosts() {
                     displayBlogError();
                 });
         });
+}
+
+/**
+ * 更新数据源指示器
+ */
+function updateDataSourceIndicator() {
+    const indicator = document.getElementById('data-source-indicator');
+    const dot = indicator.querySelector('.data-source-dot');
+    const text = indicator.querySelector('.data-source-text');
+    
+    if (!indicator || !dot || !text) return;
+    
+    // 清除现有的类
+    dot.classList.remove('json-source', 'kv-source');
+    
+    // 根据数据来源添加对应的类和文本
+    if (profileDataSource === 'kv' && blogDataSource === 'kv') {
+        dot.classList.add('kv-source');
+        text.textContent = 'KV 数据源';
+    } else if (profileDataSource === 'json' && blogDataSource === 'json') {
+        dot.classList.add('json-source');
+        text.textContent = 'JSON 数据源';
+    } else if (profileDataSource && blogDataSource) {
+        // 两种数据源都已加载但不同
+        if (blogDataSource === 'kv') {
+            // 博客数据优先显示
+            dot.classList.add('kv-source');
+            text.textContent = '混合数据源(偏KV)';
+        } else {
+            dot.classList.add('json-source');
+            text.textContent = '混合数据源(偏JSON)';
+        }
+    } else {
+        // 只有一种数据源已加载
+        if (profileDataSource) {
+            dot.classList.add(profileDataSource === 'kv' ? 'kv-source' : 'json-source');
+            text.textContent = `仅个人资料(${profileDataSource.toUpperCase()})`;
+        } else if (blogDataSource) {
+            dot.classList.add(blogDataSource === 'kv' ? 'kv-source' : 'json-source');
+            text.textContent = `仅博客(${blogDataSource.toUpperCase()})`;
+        }
+    }
+    
+    // 使指示器可见
+    indicator.style.display = 'flex';
 }
 
 /**

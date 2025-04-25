@@ -34,6 +34,10 @@
     --sidebar-link-inner-bg-dark: #2c2c2c; /* Inner background for dark mode links */
     --sidebar-link-inner-hover-bg-dark: #3e3e3e;
     --sidebar-link-inner-active-bg-dark: #4f4f4f;
+    
+    /* 数据源指示器颜色 */
+    --data-source-json-color: #0cd14b; /* 绿色 - JSON数据源 */
+    --data-source-kv-color: #2986cc; /* 蓝色 - KV数据源 */
 }
 
 body {
@@ -896,3 +900,52 @@ body.dark-mode .sidebar-link.active {
     }
 }
 */
+
+/* 数据源指示器样式 */
+.data-source-indicator {
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    z-index: 1000;
+    display: none; /* 默认隐藏，直到数据加载后显示 */
+    align-items: center;
+    font-size: 0.85rem;
+    padding: 5px 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+.data-source-indicator:hover {
+    opacity: 1;
+    transform: translateY(-3px);
+}
+
+.data-source-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background-color: #ccc;
+}
+
+.data-source-dot.json-source {
+    background-color: var(--data-source-json-color);
+}
+
+.data-source-dot.kv-source {
+    background-color: var(--data-source-kv-color);
+}
+
+.data-source-text {
+    font-family: 'Maple Mono CN', monospace;
+    font-size: 0.85rem;
+}
+
+body.dark-mode .data-source-indicator {
+    background-color: rgba(50, 50, 50, 0.8);
+    color: var(--body-color-dark);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
