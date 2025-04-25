@@ -1,9 +1,0 @@
-{
-  "name": "site-functions",
-  "version": "1.0.0",
-  "description": "Cloudflare Functions for personal website",
-  "main": "index.js",
-  "dependencies": {
-    "pg": "^8.11.3"
-  }
-} 

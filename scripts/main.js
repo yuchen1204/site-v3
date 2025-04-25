@@ -1,7 +1,7 @@
 // 自定义脚本 
 
 /**
- * 初始化页面
+ * 从JSON文件加载个人资料数据
  */
 document.addEventListener('DOMContentLoaded', function() {
     loadProfileData();
@@ -11,95 +11,23 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeSidebar(); // 更新调用
 });
 
-// 数据源相关变量
-let currentDataSource = {
-    profile: null,
-    blog: null
-};
-
-/**
- * 更新数据源指示器显示
- * @param {string} source - 数据来源 ('postgresql' 或 'json')
- * @param {string} type - 数据类型 ('profile' 或 'blog')
- */
-function updateDataSourceIndicator(source, type) {
-    // 更新数据源跟踪
-    currentDataSource[type] = source;
-    
-    // 确定显示的数据源（如果两种数据都有，使用优先级较高的那个）
-    let displaySource;
-    if (currentDataSource.profile && currentDataSource.blog) {
-        // 如果两个来源一致，显示共同来源
-        if (currentDataSource.profile === currentDataSource.blog) {
-            displaySource = currentDataSource.profile;
-        } else {
-            // 不一致时，PostgreSQL 优先级高于 JSON
-            displaySource = (currentDataSource.profile === 'postgresql' || currentDataSource.blog === 'postgresql') 
-                ? 'postgresql' : 'json';
-        }
-    } else {
-        // 只有一种数据已加载，显示该数据的来源
-        displaySource = currentDataSource.profile || currentDataSource.blog;
-    }
-    
-    // 获取指示器元素
-    const indicatorDot = document.querySelector('.data-source-dot');
-    const indicatorText = document.querySelector('.data-source-text');
-    
-    if (!indicatorDot || !indicatorText) return;
-    
-    // 清除所有可能的类
-    indicatorDot.classList.remove('postgresql', 'json');
-    
-    // 设置数据源样式
-    if (displaySource) {
-        indicatorDot.classList.add(displaySource);
-        indicatorText.textContent = `数据来源: ${displaySource === 'postgresql' ? 'PostgreSQL' : 'JSON'}`;
-    } else {
-        indicatorText.textContent = '数据来源: 未知';
-    }
-}
-
 /**
  * 加载个人资料数据
- * 使用双线加载策略，先从API获取，失败则从JSON文件获取
  */
 function loadProfileData() {
-    // 首先尝试从API获取数据
-    fetch('/api/profile')
+    fetch('data/profile.json')
         .then(response => {
             if (!response.ok) {
-                throw new Error('API响应异常');
+                throw new Error('网络响应异常');
             }
             return response.json();
         })
         .then(data => {
-            // 更新数据源指示器
-            if (data.dataSource) {
-                updateDataSourceIndicator(data.dataSource, 'profile');
-            }
             displayProfileData(data);
         })
-        .catch(apiError => {
-            console.warn('从API加载个人资料失败，尝试从JSON文件加载:', apiError);
-            
-            // 如果API失败，尝试从本地JSON文件获取
-            fetch('data/profile.json')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('JSON文件响应异常');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // JSON文件来源默认设为json
-                    updateDataSourceIndicator('json', 'profile');
-                    displayProfileData(data);
-                })
-                .catch(jsonError => {
-                    console.error('加载个人资料数据失败:', jsonError);
-                    displayError();
-                });
+        .catch(error => {
+            console.error('加载个人资料数据失败:', error);
+            displayError();
         });
 }
 
@@ -236,51 +164,23 @@ function filterBlogPosts(category) {
 
 /**
  * 加载博客文章数据
- * 使用双线加载策略，先从API获取，失败则从JSON文件获取
  */
 function loadBlogPosts() {
-    // 首先尝试从API获取数据
-    fetch('/api/blog')
+    fetch('data/blog.json')
         .then(response => {
             if (!response.ok) {
-                throw new Error('API响应异常');
+                throw new Error('网络响应异常');
             }
             return response.json();
         })
-        .then(response => {
-            // 更新数据源指示器
-            if (response.meta && response.meta.dataSource) {
-                updateDataSourceIndicator(response.meta.dataSource, 'blog');
-            }
-            
-            // 处理新的响应结构
-            const posts = response.posts || response;
-            window.cachedBlogPosts = posts; // 缓存所有文章
+        .then(data => {
+            window.cachedBlogPosts = data; // 缓存所有文章
             currentPage = 1; // 重置到第一页
             filterBlogPosts(currentCategory); // 根据当前选中的分类显示文章
         })
-        .catch(apiError => {
-            console.warn('从API加载博客文章失败，尝试从JSON文件加载:', apiError);
-            
-            // 如果API失败，尝试从本地JSON文件获取
-            fetch('data/blog.json')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('JSON文件响应异常');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // JSON文件来源默认设为json
-                    updateDataSourceIndicator('json', 'blog');
-                    window.cachedBlogPosts = data; // 缓存所有文章
-                    currentPage = 1; // 重置到第一页
-                    filterBlogPosts(currentCategory); // 根据当前选中的分类显示文章
-                })
-                .catch(jsonError => {
-                    console.error('加载博客文章数据失败:', jsonError);
-                    displayBlogError();
-                });
+        .catch(error => {
+            console.error('加载博客文章数据失败:', error);
+            displayBlogError();
         });
 }
 
