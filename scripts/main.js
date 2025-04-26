@@ -288,130 +288,147 @@ function updateDataSourceIndicator() {
 }
 
 /**
- * 在主页显示指定页面的博客文章
- * @param {Array} allPosts - 所有文章的数组
+ * 显示博客文章 (处理分页)
+ * @param {Array} postsToShow - 当前分类/筛选下的所有文章数组
  */
-function displayBlogPosts(allPosts) {
+function displayBlogPosts(postsToShow) {
     const blogPostsContainer = document.getElementById('blog-posts');
-    const paginationContainer = document.getElementById('blog-pagination');
-
-    if (!blogPostsContainer || !paginationContainer) return;
-
-    if (!allPosts || allPosts.length === 0) {
-        blogPostsContainer.innerHTML = '<p class="text-center text-muted">该分类下还没有文章。</p>';
-        paginationContainer.innerHTML = ''; // 清空分页
+    if (!blogPostsContainer || !postsToShow) {
+        displayBlogError();
         return;
     }
 
-    // 根据当前分类筛选（如果需要，filterBlogPosts 应该先执行）
-    const filteredPosts = currentCategory === 'all' 
-        ? allPosts 
-        : allPosts.filter(post => post.category === currentCategory);
-
-    // 计算总页数
-    const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
-    // 确保当前页码有效
-    if (currentPage < 1) currentPage = 1;
-    if (currentPage > totalPages) currentPage = totalPages;
-
-    // 获取当前页的文章
-    const startIndex = (currentPage - 1) * postsPerPage;
-    const endIndex = startIndex + postsPerPage;
-    const postsToDisplay = filteredPosts.slice(startIndex, endIndex);
-
-    // 清空容器
     blogPostsContainer.innerHTML = '';
 
-    if (postsToDisplay.length === 0 && filteredPosts.length > 0) {
-        // 如果当前页没有文章（可能发生在切换分类后页码超出范围）
-        blogPostsContainer.innerHTML = '<p class="text-center text-muted">该页没有文章。</p>';
-    } else if (postsToDisplay.length === 0) {
-        blogPostsContainer.innerHTML = '<p class="text-center text-muted">该分类下还没有文章。</p>';
+    // 分页计算
+    const totalPosts = postsToShow.length;
+    const totalPages = Math.ceil(totalPosts / postsPerPage);
+    const startIndex = (currentPage - 1) * postsPerPage;
+    const endIndex = startIndex + postsPerPage;
+    const postsForCurrentPage = postsToShow.slice(startIndex, endIndex);
+
+    if (postsForCurrentPage.length === 0) {
+        blogPostsContainer.innerHTML = '<div class="alert alert-info" role="alert">没有找到符合当前分类的文章。</div>';
     } else {
-        // 渲染文章
-        postsToDisplay.forEach(post => {
+        // 按日期降序排序当前页的文章
+        postsForCurrentPage.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        postsForCurrentPage.forEach(post => {
+             if (!post.title || !post.content || !post.id) return;
+
             const postElement = document.createElement('div');
-            postElement.className = 'blog-post-item card mb-4 shadow-sm';
-            postElement.id = `post-${post.id}`;
+            postElement.className = 'blog-post collapsed'; 
+            postElement.id = `blog-post-${post.id}`; 
+            
+            const postDate = post.date ? formatDate(new Date(post.date)) : '';
+            
+            const parsedContent = parseReferences(post.content, window.cachedBlogPosts || []);
 
-            // 解析并渲染引用
-            const renderedContent = parseReferences(post.content, allPosts);
+            const headerHTML = `
+                <div class="blog-post-header">
+                    <div class="blog-post-title-meta">
+                        <h3 class="blog-post-title">${post.title}</h3>
+                        <div class="blog-post-meta">
+                            <span class="blog-post-date">${postDate}</span>
+                            ${post.category ? `<span class="blog-post-category">${post.category}</span>` : ''}
+                        </div>
+                    </div>
+                    <span class="toggle-arrow">▼</span>
+                </div>
+            `;
 
-            postElement.innerHTML = `
-                <div class="card-body">
-                    <h3 class="card-title h5"><a href="/blog/${post.id}" class="text-decoration-none blog-title-link">${escapeHTML(post.title)}</a></h3>
-                    <div class="card-subtitle mb-2 text-muted small">
-                        <span class="badge bg-secondary me-2">${escapeHTML(post.category)}</span>
-                        <i class="bi bi-calendar-event me-1"></i> ${formatDate(post.date)}
-                    </div>
-                    <div class="card-text blog-excerpt">
-                        ${renderedContent.excerpt}...
-                         <a href="/blog/${post.id}" class="read-more-link">阅读全文</a>
-                    </div>
-                    <div class="post-actions mt-3 text-end">
-                         <a href="/blog/${post.id}" class="btn btn-outline-primary btn-sm me-2">
-                            <i class="bi bi-book-half me-1"></i> 阅读
-                        </a>
-                        <a href="#" class="btn btn-outline-secondary btn-sm share-link-button" data-post-id="${post.id}" data-post-title="${escapeHTML(post.title)}">
-                             <i class="bi bi-share-fill me-1"></i> 分享
-                         </a>
+            const bodyHTML = `
+                <div class="blog-post-body">
+                    <div class="blog-post-content">
+                        ${parsedContent}
                     </div>
                 </div>
             `;
-            blogPostsContainer.appendChild(postElement);
+            
+            postElement.innerHTML = headerHTML + bodyHTML;
+            const postBodyElement = postElement.querySelector('.blog-post-body');
 
-            // 为分享按钮添加事件 (使用事件委托可能更高效，但这里直接添加)
-            const shareButton = postElement.querySelector('.share-link-button');
-            if (shareButton) {
-                shareButton.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const postId = e.currentTarget.getAttribute('data-post-id');
-                    const postTitle = e.currentTarget.getAttribute('data-post-title');
-                    const shareUrl = `${window.location.origin}/blog/${postId}`;
-                    
-                    if (navigator.share) {
-                        // 使用 Web Share API (如果支持)
-                        navigator.share({
-                            title: postTitle,
-                            text: `来看看这篇文章: ${postTitle}`,
-                            url: shareUrl,
-                        })
-                        .then(() => console.log('分享成功'))
-                        .catch((error) => console.error('分享失败:', error));
+            // 处理附件
+            if (post.attachments && post.attachments.length > 0) {
+                const attachmentsContainer = document.createElement('div');
+                attachmentsContainer.className = 'blog-post-attachments';
+                const attachmentsTitle = document.createElement('h5');
+                attachmentsTitle.textContent = '附件:';
+                attachmentsContainer.appendChild(attachmentsTitle);
+                const attachmentList = document.createElement('ul');
+                attachmentList.className = 'attachment-list';
+                post.attachments.forEach(attachment => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'attachment-item';
+                    if (attachment.type === 'image') {
+                        const img = document.createElement('img');
+                        img.src = attachment.url;
+                        img.alt = attachment.filename || '附件图片';
+                        img.className = 'attachment-image';
+                        listItem.appendChild(img);
                     } else {
-                        // 回退到复制链接
-                        navigator.clipboard.writeText(shareUrl).then(() => {
-                            // 使用 Toast 或按钮文本变化来提供反馈，而不是 alert()
-                            // 方案一：改变按钮文本/图标
-                            const originalIconHTML = shareButton.innerHTML;
-                            shareButton.innerHTML = '<i class="bi bi-check-lg"></i> 已复制';
-                            shareButton.disabled = true;
-                            setTimeout(() => {
-                                shareButton.innerHTML = originalIconHTML;
-                                shareButton.disabled = false;
-                            }, 2000);
-                            // 方案二：使用 Toast (需要 createToast 函数)
-                            // createToast('分享链接已复制到剪贴板！', 'success');
-                        }).catch(err => {
-                            console.error('无法复制分享链接:', err);
-                            // 使用 Toast 显示错误
-                             createToast(`无法自动复制链接: ${err}`, 'danger'); 
-                            // alert('无法自动复制分享链接，请手动复制: ' + shareUrl);
+                        const link = document.createElement('a');
+                        link.href = attachment.url;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        link.className = 'attachment-download';
+                        if (attachment.filename) { link.download = attachment.filename; }
+                        const icon = document.createElement('span');
+                        icon.className = 'attachment-icon';
+                        icon.textContent = `[${attachment.type.toUpperCase()}]`;
+                        link.appendChild(icon);
+                        link.appendChild(document.createTextNode(` ${attachment.filename || '下载附件'}`));
+                        listItem.appendChild(link);
+                    }
+                    attachmentList.appendChild(listItem);
+                });
+                attachmentsContainer.appendChild(attachmentList);
+                postBodyElement.appendChild(attachmentsContainer);
+            }
+
+            // 处理显式引用列表
+            if (post.references && post.references.length > 0) {
+                const referencesContainer = document.createElement('div');
+                referencesContainer.className = 'blog-post-references';
+                const referencesTitle = document.createElement('h5');
+                referencesTitle.textContent = '相关文章:';
+                referencesContainer.appendChild(referencesTitle);
+                const referenceList = document.createElement('ul');
+                referenceList.className = 'reference-list';
+                post.references.forEach(refId => {
+                    const referencedPost = findPostById(refId, window.cachedBlogPosts || []);
+                    if (referencedPost) {
+                        const listItem = document.createElement('li');
+                        const link = document.createElement('a');
+                        link.href = `#blog-post-${refId}`;
+                        link.textContent = referencedPost.title;
+                        link.className = 'reference-link';
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            scrollToPost(refId);
                         });
+                        listItem.appendChild(link);
+                        referenceList.appendChild(listItem);
                     }
                 });
+                referencesContainer.appendChild(referenceList);
+                postBodyElement.appendChild(referencesContainer);
             }
+            
+            // 添加点击事件监听器到头部
+            const headerElement = postElement.querySelector('.blog-post-header');
+            if(headerElement){
+                headerElement.addEventListener('click', () => {
+                    postElement.classList.toggle('collapsed');
+                });
+            }
+
+            blogPostsContainer.appendChild(postElement);
         });
     }
 
     // 渲染分页控件
-    renderPaginationControls(filteredPosts.length, totalPages);
-
-    // 处理 URL 中的锚点
-    if (window.location.hash) {
-        const postId = window.location.hash.substring(1);
-        scrollToPost(postId);
-    }
+    renderPaginationControls(totalPosts, totalPages);
 }
 
 /**
