@@ -335,36 +335,32 @@ body.dark-mode .blog-category-item.active::after {
 }
 
 .blog-post {
-    padding: 0;
-    border-radius: 0.8rem; /* 增大圆角 */
+    padding: 1.5rem;
+    border-radius: 0.8rem;
     background-color: var(--blog-post-bg-light);
     transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
     border-left: 4px solid var(--name-color-light);
     overflow: hidden;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08); /* 添加柔和的阴影 */
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
 }
 
 .blog-post:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* 悬停时加深阴影 */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 .blog-post-header {
-    background-color: rgba(255, 255, 255, 0.3); /* 半透明白色背景，增加标题区域的辨识度 */
-    padding: 1.5rem; 
-    margin-bottom: 0; 
+    background-color: transparent;
+    padding: 0 0 1rem 0;
+    margin-bottom: 1rem;
     position: relative;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: block;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-/* Group title and meta */
 .blog-post-title-meta {
-    flex-grow: 1; /* Allow this group to take up available space */
-    margin-right: 1rem; /* Add space between text group and arrow */
+    width: 100%;
 }
 
 .blog-post-title {
@@ -374,71 +370,47 @@ body.dark-mode .blog-category-item.active::after {
     margin-bottom: 0.5rem;
     color: var(--body-color-light);
     transition: color 0.3s ease;
-    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5); /* 添加文字阴影提高可读性 */
-}
-
-.blog-post-meta {
-    display: flex;
-    /* Remove justify-content, let the parent flex handle spacing */
-    align-items: center;
-    font-size: 0.85rem;
-    color: var(--motto-color-light);
-    transition: color 0.3s ease;
-    gap: 1rem; /* Add gap between date and category */
-}
-
-.blog-post-category {
-    display: inline-block;
-    padding: 0.25rem 0.7rem;
-    border-radius: 1rem;
-    background-color: var(--name-color-light);
-    color: white;
-    font-size: 0.8rem;
-    flex-shrink: 0;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Toggle Arrow */
-.toggle-arrow {
-    /* Remove absolute positioning */
-    font-size: 1rem;
-    color: var(--motto-color-light);
-    transition: transform 0.3s ease, color 0.3s ease;
-    flex-shrink: 0; /* Prevent arrow from shrinking */
-}
-
-.blog-post.collapsed .toggle-arrow {
-    transform: rotate(-90deg); /* Only rotate now */
-}
-
-.blog-post:not(.collapsed) .blog-post-header:hover .toggle-arrow {
-    color: var(--name-color-light);
 }
 
 .blog-post-body {
-    max-height: 1000px; /* 设定一个足够大的最大高度 */
+    display: block;
+    padding: 0;
+}
+
+/* 文章摘要固定为两行高度 */
+.blog-post-summary {
+    max-height: 3.4em; /* 约两行文字高度 */
     overflow: hidden;
-    transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out; 
-    padding: 0 1.5rem 1.5rem 1.5rem; /* 初始无上下padding，展开时添加 */
-}
-
-.blog-post.collapsed .blog-post-body {
-    max-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    border-top: none; /* 收起时不需要顶部边框 */
-}
-
-.blog-post-content {
-    font-family: 'Maple Mono CN', 'Arial', sans-serif;
+    line-height: 1.7;
+    margin-bottom: 1rem;
     font-size: 0.95rem;
-    line-height: 1.7; /* 增加行高 */
     color: var(--body-color-light);
-    margin-bottom: 1.5rem;
-    transition: color 0.3s ease;
-    padding: 0.5rem 0; /* 添加上下内边距 */
+}
+
+/* 阅读全文按钮优化 */
+.blog-post-read-more {
+    margin-top: 0.5rem;
+    text-align: right;
+}
+
+/* 调整深色模式 */
+body.dark-mode .blog-post {
+    background-color: var(--blog-post-bg-dark);
+    border-left-color: var(--name-color-dark);
+}
+
+body.dark-mode .blog-post-header {
+    background-color: transparent;
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .blog-post-summary {
+    color: var(--body-color-dark);
+}
+
+/* 移除不再需要的样式 */
+.toggle-arrow {
+    display: none;
 }
 
 /* Blog Post Attachments */

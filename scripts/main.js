@@ -314,17 +314,30 @@ function displayBlogPosts(postsToShow) {
         postsForCurrentPage.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         postsForCurrentPage.forEach(post => {
-             if (!post.title || !post.content || !post.id) return;
+            if (!post.title || !post.content || !post.id) return;
 
             const postElement = document.createElement('div');
-            postElement.className = 'blog-post collapsed'; 
+            postElement.className = 'blog-post'; // 移除collapsed类
             postElement.id = `blog-post-${post.id}`; 
             
             const postDate = post.date ? formatDate(new Date(post.date)) : '';
             
-            const parsedContent = parseReferences(post.content, window.cachedBlogPosts || []);
+            // 生成文章摘要（大约两行）
+            let summary = '';
+            if (post.content) {
+                // 清除HTML标签，只保留纯文本
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = post.content;
+                const plainText = tempDiv.textContent || tempDiv.innerText;
+                
+                // 截取约120个字符作为摘要（约两行）
+                summary = plainText.substring(0, 120).trim();
+                if (plainText.length > 120) {
+                    summary += '...';
+                }
+            }
 
-            // 修改：添加链接到博客详情页
+            // 修改HTML结构，移除展开/折叠元素
             const headerHTML = `
                 <div class="blog-post-header">
                     <div class="blog-post-title-meta">
@@ -336,14 +349,13 @@ function displayBlogPosts(postsToShow) {
                             ${post.category ? `<span class="blog-post-category">${post.category}</span>` : ''}
                         </div>
                     </div>
-                    <span class="toggle-arrow">▼</span>
                 </div>
             `;
 
             const bodyHTML = `
                 <div class="blog-post-body">
-                    <div class="blog-post-content">
-                        ${parsedContent}
+                    <div class="blog-post-content blog-post-summary">
+                        ${summary}
                     </div>
                     <div class="blog-post-read-more">
                         <a href="blog/index.html?id=${post.id}" class="read-more-link">阅读全文</a>
@@ -352,87 +364,6 @@ function displayBlogPosts(postsToShow) {
             `;
             
             postElement.innerHTML = headerHTML + bodyHTML;
-            const postBodyElement = postElement.querySelector('.blog-post-body');
-
-            // 处理附件
-            if (post.attachments && post.attachments.length > 0) {
-                const attachmentsContainer = document.createElement('div');
-                attachmentsContainer.className = 'blog-post-attachments';
-                const attachmentsTitle = document.createElement('h5');
-                attachmentsTitle.textContent = '附件:';
-                attachmentsContainer.appendChild(attachmentsTitle);
-                const attachmentList = document.createElement('ul');
-                attachmentList.className = 'attachment-list';
-                post.attachments.forEach(attachment => {
-                    const listItem = document.createElement('li');
-                    listItem.className = 'attachment-item';
-                    if (attachment.type === 'image') {
-                        const img = document.createElement('img');
-                        img.src = attachment.url;
-                        img.alt = attachment.filename || '附件图片';
-                        img.className = 'attachment-image';
-                        listItem.appendChild(img);
-                    } else {
-                        const link = document.createElement('a');
-                        link.href = attachment.url;
-                        link.target = '_blank';
-                        link.rel = 'noopener noreferrer';
-                        link.className = 'attachment-download';
-                        if (attachment.filename) { link.download = attachment.filename; }
-                        const icon = document.createElement('span');
-                        icon.className = 'attachment-icon';
-                        icon.textContent = `[${attachment.type.toUpperCase()}]`;
-                        link.appendChild(icon);
-                        link.appendChild(document.createTextNode(` ${attachment.filename || '下载附件'}`));
-                        listItem.appendChild(link);
-                    }
-                    attachmentList.appendChild(listItem);
-                });
-                attachmentsContainer.appendChild(attachmentList);
-                postBodyElement.appendChild(attachmentsContainer);
-            }
-
-            // 处理显式引用列表
-            if (post.references && post.references.length > 0) {
-                const referencesContainer = document.createElement('div');
-                referencesContainer.className = 'blog-post-references';
-                const referencesTitle = document.createElement('h5');
-                referencesTitle.textContent = '相关文章:';
-                referencesContainer.appendChild(referencesTitle);
-                const referenceList = document.createElement('ul');
-                referenceList.className = 'reference-list';
-                post.references.forEach(refId => {
-                    const referencedPost = findPostById(refId, window.cachedBlogPosts || []);
-                    if (referencedPost) {
-                        const listItem = document.createElement('li');
-                        const link = document.createElement('a');
-                        // 修改：链接到详情页而不是锚点
-                        link.href = `blog/index.html?id=${refId}`;
-                        link.textContent = referencedPost.title;
-                        link.className = 'reference-link';
-                        listItem.appendChild(link);
-                        referenceList.appendChild(listItem);
-                    }
-                });
-                referencesContainer.appendChild(referenceList);
-                postBodyElement.appendChild(referencesContainer);
-            }
-            
-            // 添加点击事件监听器到头部
-            const headerElement = postElement.querySelector('.blog-post-header');
-            if(headerElement){
-                // 修改：阻止链接点击事件冒泡
-                const titleLink = headerElement.querySelector('.blog-post-title-link');
-                if (titleLink) {
-                    titleLink.addEventListener('click', (e) => {
-                        e.stopPropagation(); // 阻止事件冒泡
-                    });
-                }
-                
-                headerElement.addEventListener('click', () => {
-                    postElement.classList.toggle('collapsed');
-                });
-            }
 
             blogPostsContainer.appendChild(postElement);
         });
