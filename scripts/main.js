@@ -324,10 +324,13 @@ function displayBlogPosts(postsToShow) {
             
             const parsedContent = parseReferences(post.content, window.cachedBlogPosts || []);
 
+            // 修改：添加链接到博客详情页
             const headerHTML = `
                 <div class="blog-post-header">
                     <div class="blog-post-title-meta">
-                        <h3 class="blog-post-title">${post.title}</h3>
+                        <h3 class="blog-post-title">
+                            <a href="blog/index.html?id=${post.id}" class="blog-post-title-link">${post.title}</a>
+                        </h3>
                         <div class="blog-post-meta">
                             <span class="blog-post-date">${postDate}</span>
                             ${post.category ? `<span class="blog-post-category">${post.category}</span>` : ''}
@@ -341,6 +344,9 @@ function displayBlogPosts(postsToShow) {
                 <div class="blog-post-body">
                     <div class="blog-post-content">
                         ${parsedContent}
+                    </div>
+                    <div class="blog-post-read-more">
+                        <a href="blog/index.html?id=${post.id}" class="read-more-link">阅读全文</a>
                     </div>
                 </div>
             `;
@@ -400,13 +406,10 @@ function displayBlogPosts(postsToShow) {
                     if (referencedPost) {
                         const listItem = document.createElement('li');
                         const link = document.createElement('a');
-                        link.href = `#blog-post-${refId}`;
+                        // 修改：链接到详情页而不是锚点
+                        link.href = `blog/index.html?id=${refId}`;
                         link.textContent = referencedPost.title;
                         link.className = 'reference-link';
-                        link.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            scrollToPost(refId);
-                        });
                         listItem.appendChild(link);
                         referenceList.appendChild(listItem);
                     }
@@ -418,6 +421,14 @@ function displayBlogPosts(postsToShow) {
             // 添加点击事件监听器到头部
             const headerElement = postElement.querySelector('.blog-post-header');
             if(headerElement){
+                // 修改：阻止链接点击事件冒泡
+                const titleLink = headerElement.querySelector('.blog-post-title-link');
+                if (titleLink) {
+                    titleLink.addEventListener('click', (e) => {
+                        e.stopPropagation(); // 阻止事件冒泡
+                    });
+                }
+                
                 headerElement.addEventListener('click', () => {
                     postElement.classList.toggle('collapsed');
                 });
@@ -489,19 +500,26 @@ function renderPaginationControls(totalPosts, totalPages) {
 }
 
 /**
- * 解析文章内容中的引用标记 [[id]] 并替换为链接
+ * 解析文章内容中的引用标记
+ * 将 {{post:123}} 格式的引用转换为链接
  * @param {string} content - 文章内容
- * @param {Array} allPosts - 所有博客文章的数组
- * @returns {string} - 解析后的 HTML 内容
+ * @param {Array} allPosts - 所有文章数据
+ * @returns {string} 解析后的内容
  */
 function parseReferences(content, allPosts) {
-    return content.replace(/\[\[(\d+)\]\]/g, (match, refId) => {
-        const referencedPost = findPostById(parseInt(refId, 10), allPosts);
-        if (referencedPost) {
-            return `<a href="#blog-post-${refId}" class="reference-link inline-reference" onclick="scrollToPost(${refId}); return false;">${referencedPost.title}</a>`;
-        } else {
-            return match; // 如果找不到文章，保留原始标记
+    if (!content || !allPosts) return content;
+    
+    // 匹配 {{post:数字}} 格式的引用
+    return content.replace(/\{\{post:(\d+)\}\}/g, (match, id) => {
+        const postId = parseInt(id, 10);
+        const post = findPostById(postId, allPosts);
+        
+        if (post) {
+            // 修改：链接到详情页
+            return `<a href="blog/index.html?id=${postId}" class="inline-reference">${post.title}</a>`;
         }
+        
+        return match; // 如果找不到引用的文章，保留原始文本
     });
 }
 
