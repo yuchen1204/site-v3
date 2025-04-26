@@ -288,6 +288,37 @@ function updateDataSourceIndicator() {
 }
 
 /**
+ * 从Markdown内容生成简短摘要
+ * @param {string} content - Markdown内容
+ * @param {number} maxLines - 最大行数
+ * @returns {string} 纯文本摘要
+ */
+function generateSummary(content, maxLines = 2) {
+    if (!content) return '';
+
+    // 1. 移除Markdown标记 (简单移除)
+    let text = content
+        .replace(/```[^`]*```/gs, ' [代码块] ') // 移除代码块
+        .replace(/`[^`]*`/g, ' [代码] ')     // 移除行内代码
+        .replace(/!?\[[^\]]*\]\([^\)]*\)/g, '') // 移除链接和图片
+        .replace(/[\*\#\>\-\_]/g, '')        // 移除其他Markdown符号
+        .replace(/\s{2,}/g, ' ')              // 合并多余空格
+        .trim();
+
+    // 2. 按行分割并限制行数
+    const lines = text.split('\n');
+    const summaryLines = lines.slice(0, maxLines);
+    let summary = summaryLines.join(' ').trim(); // 将摘要行合并为空格分隔
+
+    // 3. 添加省略号（如果内容被截断）
+    if (lines.length > maxLines || text.length > summary.length) {
+        summary += '...';
+    }
+
+    return summary;
+}
+
+/**
  * 显示博客文章 (处理分页)
  * @param {Array} postsToShow - 当前分类/筛选下的所有文章数组
  */
@@ -314,31 +345,20 @@ function displayBlogPosts(postsToShow) {
         postsForCurrentPage.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         postsForCurrentPage.forEach(post => {
-            if (!post.title || !post.content || !post.id) return;
+             if (!post.title || !post.id) return; // 不再需要 post.content 来显示
 
             const postElement = document.createElement('div');
-            postElement.className = 'blog-post'; // 移除collapsed类
+            // 移除 collapsed 类
+            postElement.className = 'blog-post'; 
             postElement.id = `blog-post-${post.id}`; 
             
             const postDate = post.date ? formatDate(new Date(post.date)) : '';
             
-            // 生成文章摘要（大约两行）
-            let summary = '';
-            if (post.content) {
-                // 清除HTML标签，只保留纯文本
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = post.content;
-                const plainText = tempDiv.textContent || tempDiv.innerText;
-                
-                // 截取约120个字符作为摘要（约两行）
-                summary = plainText.substring(0, 120).trim();
-                if (plainText.length > 120) {
-                    summary += '...';
-                }
-            }
+            // 生成摘要
+            const summary = generateSummary(post.content, 2);
 
-            // 修改HTML结构，移除展开/折叠元素
-            const headerHTML = `
+            // 修改HTML结构，移除 toggle-arrow 和 blog-post-body
+            const postHTML = `
                 <div class="blog-post-header">
                     <div class="blog-post-title-meta">
                         <h3 class="blog-post-title">
@@ -350,20 +370,21 @@ function displayBlogPosts(postsToShow) {
                         </div>
                     </div>
                 </div>
-            `;
-
-            const bodyHTML = `
-                <div class="blog-post-body">
-                    <div class="blog-post-content blog-post-summary">
-                        ${summary}
-                    </div>
-                    <div class="blog-post-read-more">
-                        <a href="blog/index.html?id=${post.id}" class="read-more-link">阅读全文</a>
-                    </div>
+                <div class="blog-post-summary">
+                    ${summary}
+                </div>
+                <div class="blog-post-read-more">
+                    <a href="blog/index.html?id=${post.id}" class="read-more-link">阅读全文</a>
                 </div>
             `;
             
-            postElement.innerHTML = headerHTML + bodyHTML;
+            postElement.innerHTML = postHTML;
+
+            // 移除展开/折叠的事件监听器
+            // const headerElement = postElement.querySelector('.blog-post-header');
+            // if(headerElement){
+            //     // ... (移除之前的点击事件)
+            // }
 
             blogPostsContainer.appendChild(postElement);
         });
@@ -462,25 +483,6 @@ function parseReferences(content, allPosts) {
  */
 function findPostById(id, posts) {
     return posts.find(post => post.id === id);
-}
-
-/**
- * 平滑滚动到指定 ID 的文章
- * @param {number} postId - 文章 ID
- */
-function scrollToPost(postId) {
-    const postElement = document.getElementById(`blog-post-${postId}`);
-    if (postElement) {
-        // 确保文章是展开状态
-        postElement.classList.remove('collapsed'); 
-
-        postElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        
-        postElement.classList.add('highlight');
-        setTimeout(() => {
-            postElement.classList.remove('highlight');
-        }, 1500); 
-    }
 }
 
 /**
