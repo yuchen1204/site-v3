@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章详情 - 个人网站</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Maple Mono CN Font -->
+    <link rel='stylesheet' href='https://chinese-fonts-cdn.deno.dev/packages/maple-mono-cn/dist/MapleMono-CN-SemiBold/result.css' />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/styles/main.css">
+    <style>
+        .post-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        .post-header {
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(0,0,0,.1);
+            padding-bottom: 1rem;
+        }
+        .post-meta {
+            margin-bottom: 1rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .post-content {
+            line-height: 1.8;
+            margin-bottom: 2rem;
+        }
+        .post-content img {
+            max-width: 100%;
+            height: auto;
+            margin: 1rem 0;
+        }
+        .post-attachments {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0,0,0,.1);
+        }
+        .attachment-item {
+            display: inline-block;
+            margin-right: 1rem;
+            margin-bottom: 1rem;
+        }
+        .back-link {
+            margin-bottom: 2rem;
+            display: inline-block;
+        }
+        .post-references {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0,0,0,.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- 返回主页按钮 -->
+    <div class="container mt-4">
+        <a href="/" class="back-link">
+            <i class="bi bi-arrow-left"></i> 返回主页
+        </a>
+    </div>
+
+    <!-- 文章容器 -->
+    <div class="container">
+        <div class="post-container">
+            <div id="post-loading" class="text-center my-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+                <p class="mt-2">正在加载文章...</p>
+            </div>
+
+            <div id="post-content" style="display: none;">
+                <!-- 文章头部 -->
+                <div class="post-header">
+                    <h1 id="post-title"></h1>
+                    <div class="post-meta">
+                        <span id="post-date"></span> · 
+                        <span id="post-category"></span>
+                    </div>
+                </div>
+
+                <!-- 文章内容 -->
+                <div id="post-body" class="post-content"></div>
+
+                <!-- 附件 -->
+                <div id="post-attachments-container" class="post-attachments" style="display: none;">
+                    <h5>附件</h5>
+                    <div id="post-attachments"></div>
+                </div>
+
+                <!-- 参考文章 -->
+                <div id="post-references-container" class="post-references" style="display: none;">
+                    <h5>参考文章</h5>
+                    <ul id="post-references" class="list-unstyled"></ul>
+                </div>
+            </div>
+
+            <!-- 错误信息 -->
+            <div id="post-error" class="alert alert-danger my-5" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- 主题切换按钮 -->
+    <button id="theme-toggle" class="btn theme-toggle-btn" aria-label="切换主题">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-brightness-high-fill" viewBox="0 0 16 16">
+            <path d="M12 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708"/>
+        </svg>
+    </button>
+
+    <!-- 数据源指示器 -->
+    <div id="data-source-indicator" class="data-source-indicator">
+        <span class="data-source-dot"></span>
+        <span class="data-source-text"></span>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- 主题切换脚本 -->
+    <script>
+        // 继承主页的主题切换功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 主题切换
+            const themeToggle = document.getElementById('theme-toggle');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const savedTheme = localStorage.getItem('theme');
+            
+            // 初始主题
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                document.body.classList.add('dark-theme');
+            }
+            
+            // 切换主题
+            themeToggle.addEventListener('click', function() {
+                document.body.classList.toggle('dark-theme');
+                const isDark = document.body.classList.contains('dark-theme');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            });
+        });
+    </script>
+    
+    <!-- 博客文章加载脚本 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBlogPost();
+        });
+
+        /**
+         * 从URL获取文章ID并加载文章内容
+         */
+        async function loadBlogPost() {
+            const postLoading = document.getElementById('post-loading');
+            const postContent = document.getElementById('post-content');
+            const postError = document.getElementById('post-error');
+            
+            // 从URL获取文章ID
+            const pathParts = window.location.pathname.split('/');
+            const postId = pathParts[pathParts.length - 1];
+            
+            if (!postId || isNaN(parseInt(postId, 10))) {
+                showError('无效的文章ID，请检查链接是否正确');
+                return;
+            }
+            
+            try {
+                // 尝试从API获取文章数据
+                const response = await fetch(`/api/blog/post/${postId}`);
+                
+                if (!response.ok) {
+                    // 如果API失败，尝试从本地数据加载
+                    await loadFromLocalData(postId);
+                    return;
+                }
+                
+                const post = await response.json();
+                renderPost(post);
+                
+                // 更新页面标题
+                document.title = `${post.title} - 个人网站`;
+                
+                // 显示API数据源指示器
+                updateDataSourceIndicator('API');
+                
+            } catch (error) {
+                console.error('加载文章失败, 尝试从本地数据加载', error);
+                await loadFromLocalData(postId);
+            }
+        }
+        
+        /**
+         * 当API加载失败时，从本地JSON文件加载
+         */
+        async function loadFromLocalData(postId) {
+            try {
+                const response = await fetch('/data/blog.json');
+                if (!response.ok) {
+                    throw new Error('无法加载本地数据');
+                }
+                
+                const posts = await response.json();
+                const post = posts.find(p => p.id.toString() === postId.toString());
+                
+                if (!post) {
+                    showError('未找到该文章');
+                    return;
+                }
+                
+                renderPost(post);
+                
+                // 更新页面标题
+                document.title = `${post.title} - 个人网站`;
+                
+                // 显示本地数据源指示器
+                updateDataSourceIndicator('本地数据');
+                
+            } catch (error) {
+                console.error('从本地数据加载文章失败', error);
+                showError('加载文章失败，请稍后重试');
+            }
+        }
+        
+        /**
+         * 渲染文章内容到页面
+         */
+        function renderPost(post) {
+            const postLoading = document.getElementById('post-loading');
+            const postContent = document.getElementById('post-content');
+            const postTitle = document.getElementById('post-title');
+            const postDate = document.getElementById('post-date');
+            const postCategory = document.getElementById('post-category');
+            const postBody = document.getElementById('post-body');
+            const postAttachmentsContainer = document.getElementById('post-attachments-container');
+            const postAttachments = document.getElementById('post-attachments');
+            const postReferencesContainer = document.getElementById('post-references-container');
+            const postReferences = document.getElementById('post-references');
+            
+            // 隐藏加载指示器，显示内容区域
+            postLoading.style.display = 'none';
+            postContent.style.display = 'block';
+            
+            // 填充基本信息
+            postTitle.textContent = post.title;
+            postDate.textContent = new Date(post.date).toLocaleDateString('zh-CN');
+            postCategory.textContent = post.category;
+            
+            // 处理内容中的引用链接 [[id]]
+            let contentHTML = post.content;
+            if (contentHTML.includes('[[')) {
+                const refRegex = /\[\[(\d+)\]\]/g;
+                contentHTML = contentHTML.replace(refRegex, (match, refId) => {
+                    return `<a href="/blog/${refId}" class="reference-link">[${refId}]</a>`;
+                });
+            }
+            
+            // 填充内容，可能包含HTML
+            postBody.innerHTML = contentHTML;
+            
+            // 处理附件
+            if (post.attachments && post.attachments.length > 0) {
+                postAttachmentsContainer.style.display = 'block';
+                postAttachments.innerHTML = '';
+                
+                post.attachments.forEach(attachment => {
+                    const attachmentEl = document.createElement('div');
+                    attachmentEl.className = 'attachment-item';
+                    
+                    switch (attachment.type) {
+                        case 'image':
+                            attachmentEl.innerHTML = `
+                                <a href="${attachment.url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-image"></i> ${attachment.filename}
+                                </a>
+                            `;
+                            break;
+                        case 'pdf':
+                            attachmentEl.innerHTML = `
+                                <a href="${attachment.url}" target="_blank" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-file-pdf"></i> ${attachment.filename}
+                                </a>
+                            `;
+                            break;
+                        case 'zip':
+                            attachmentEl.innerHTML = `
+                                <a href="${attachment.url}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-file-zip"></i> ${attachment.filename}
+                                </a>
+                            `;
+                            break;
+                        default:
+                            attachmentEl.innerHTML = `
+                                <a href="${attachment.url}" target="_blank" class="btn btn-sm btn-outline-dark">
+                                    <i class="bi bi-file-earmark"></i> ${attachment.filename}
+                                </a>
+                            `;
+                    }
+                    
+                    postAttachments.appendChild(attachmentEl);
+                });
+            } else {
+                postAttachmentsContainer.style.display = 'none';
+            }
+            
+            // 处理引用
+            if (post.references && post.references.length > 0) {
+                postReferencesContainer.style.display = 'block';
+                postReferences.innerHTML = '';
+                
+                post.references.forEach(refId => {
+                    const refItem = document.createElement('li');
+                    refItem.innerHTML = `
+                        <a href="/blog/${refId}" class="reference-link">
+                            [${refId}] 文章ID: ${refId}
+                        </a>
+                    `;
+                    postReferences.appendChild(refItem);
+                });
+            } else {
+                postReferencesContainer.style.display = 'none';
+            }
+        }
+        
+        /**
+         * 显示错误信息
+         */
+        function showError(message) {
+            const postLoading = document.getElementById('post-loading');
+            const postContent = document.getElementById('post-content');
+            const postError = document.getElementById('post-error');
+            
+            postLoading.style.display = 'none';
+            postContent.style.display = 'none';
+            postError.style.display = 'block';
+            postError.textContent = message;
+        }
+        
+        /**
+         * 更新数据源指示器
+         */
+        function updateDataSourceIndicator(source) {
+            const indicator = document.getElementById('data-source-indicator');
+            const dotEl = indicator.querySelector('.data-source-dot');
+            const textEl = indicator.querySelector('.data-source-text');
+            
+            if (indicator && dotEl && textEl) {
+                textEl.textContent = `数据源: ${source}`;
+                indicator.style.display = 'block';
+                
+                if (source === 'API') {
+                    dotEl.style.backgroundColor = '#28a745'; // 绿色表示API
+                } else {
+                    dotEl.style.backgroundColor = '#ffc107'; // 黄色表示本地数据
+                }
+            }
+        }
+    </script>
+</body>
+</html> 

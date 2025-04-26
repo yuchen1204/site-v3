@@ -451,14 +451,17 @@ async function loadBlogPosts() {
                 <td>${escapeHTML(post.category)}</td>
                 <td>${new Date(post.date).toLocaleString('zh-CN')}</td>
                 <td>
+                    <a href="/blog/${post.id}" target="_blank" class="btn btn-info btn-sm share-post-button" data-id="${post.id}" title="查看文章">
+                        <i class="bi bi-box-arrow-up-right"></i> 查看
+                    </a>
                     <button class="btn btn-primary btn-sm edit-post-button" data-id="${post.id}">
                         <i class="bi bi-pencil-fill"></i> 编辑
                     </button>
                     <button class="btn btn-danger btn-sm delete-post-button" data-id="${post.id}">
                         <i class="bi bi-trash-fill"></i> 删除
                     </button>
-                    <button class="btn btn-info btn-sm text-white share-post-button" data-id="${post.id}">
-                        <i class="bi bi-share-fill"></i> 分享
+                    <button class="btn btn-outline-secondary btn-sm copy-link-button" data-id="${post.id}" title="复制分享链接">
+                        <i class="bi bi-link-45deg"></i> 复制链接
                     </button>
                 </td>
             `;
@@ -488,18 +491,32 @@ async function loadBlogPosts() {
                     alert('无法删除该文章，请刷新列表重试。');
                 }
             });
-
-            // 添加分享按钮事件监听器
-            row.querySelector('.share-post-button').addEventListener('click', function() {
+            
+            // 添加复制链接按钮事件监听器
+            row.querySelector('.copy-link-button').addEventListener('click', function() {
                 const postId = this.getAttribute('data-id');
-                const postToShare = allBlogPosts.find(p => p.id.toString() === postId);
+                const postTitle = allBlogPosts.find(p => p.id.toString() === postId)?.title || '文章';
                 
-                if (postToShare) {
-                    showShareLinkModal(postToShare);
-                } else {
-                    console.error(`未找到 ID 为 ${postId} 的文章`);
-                    alert('无法生成分享链接，请刷新列表重试。');
-                }
+                // 构建完整的分享链接
+                const host = window.location.origin;
+                const shareUrl = `${host}/blog/${postId}`;
+                
+                // 复制链接到剪贴板
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    // 显示成功提示
+                    const toast = createToast(`"${postTitle}" 的分享链接已复制！`, 'success');
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 3000);
+                }).catch(err => {
+                    console.error('复制链接失败:', err);
+                    // 显示失败提示
+                    const toast = createToast('复制链接失败，请手动复制', 'danger');
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 3000);
+                    
+                    // 提供备用方案：显示链接并让用户手动复制
+                    alert(`请手动复制链接：${shareUrl}`);
+                });
             });
         });
 
@@ -790,57 +807,4 @@ function escapeHTML(str) {
         };
         return entityMap[s];
     });
-}
-
-/**
- * 显示文章分享链接模态框
- * @param {object} post 要分享的文章对象
- */
-function showShareLinkModal(post) {
-    const modal = document.getElementById('shareLinkModal');
-    const shareLinkInput = document.getElementById('share-link-input');
-    const copyButton = document.getElementById('copy-share-link-btn');
-    const copyStatus = document.getElementById('copy-status');
-    const bsModal = new bootstrap.Modal(modal);
-    
-    if (!modal || !shareLinkInput || !copyButton || !copyStatus) return;
-    
-    // 构建分享链接 - 使用正确的文章访问路径
-    // 基于当前页面的 origin 构建完整URL，使用根目录下的index.html而不是/blog目录
-    const origin = window.location.origin;
-    
-    // 使用查询参数方式访问特定文章
-    const shareLink = `${origin}/?post=${post.id}`;
-    
-    // 设置链接到输入框
-    shareLinkInput.value = shareLink;
-    
-    // 隐藏之前可能显示的复制状态
-    copyStatus.style.display = 'none';
-    copyStatus.className = 'text-success'; // 重置为成功样式
-    copyStatus.textContent = '链接已复制到剪贴板！'; // 重置为默认文本
-    
-    // 添加复制功能
-    copyButton.onclick = function() {
-        shareLinkInput.select();
-        navigator.clipboard.writeText(shareLink).then(
-            function() {
-                // 成功复制
-                copyStatus.style.display = 'block';
-                setTimeout(() => {
-                    copyStatus.style.display = 'none';
-                }, 2000);
-            },
-            function(err) {
-                // 复制失败
-                console.error('无法复制链接:', err);
-                copyStatus.textContent = '复制失败，请手动复制链接';
-                copyStatus.className = 'text-danger';
-                copyStatus.style.display = 'block';
-            }
-        );
-    };
-    
-    // 显示模态框
-    bsModal.show();
 } 
