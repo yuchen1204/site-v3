@@ -1,162 +1,208 @@
 document.addEventListener('DOMContentLoaded', () => {
-    loadPostData();
-    
-    // Set copyright year
-    const yearSpan = document.getElementById('copyright-year');
-    if (yearSpan) {
-        yearSpan.textContent = new Date().getFullYear();
+    const postId = getPostIdFromUrl();
+
+    if (postId) {
+        fetchAndDisplayPost(postId);
+    } else {
+        displayError('无效的文章链接。');
+        hideLoading();
     }
+
+    setupShareButton();
 });
 
-// Helper function to get post ID from URL path /blog/{id}
+/**
+ * 从 URL 路径中提取文章 ID
+ * 例如：/blog/12345 -> 12345
+ * @returns {number | null} 文章 ID 或 null
+ */
 function getPostIdFromUrl() {
     const pathSegments = window.location.pathname.split('/').filter(Boolean);
     if (pathSegments.length >= 2 && pathSegments[0] === 'blog') {
-        const potentialId = parseInt(pathSegments[1], 10);
-        return isNaN(potentialId) ? null : potentialId;
+        const id = parseInt(pathSegments[1], 10);
+        return isNaN(id) ? null : id;
     }
     return null;
 }
 
-// Helper to get file type icon
-function getIconForType(type) {
-    switch (type.toLowerCase()) {
-        case 'image': return 'bi-file-earmark-image';
-        case 'pdf': return 'bi-file-earmark-pdf';
-        case 'zip': return 'bi-file-earmark-zip';
-        case 'word':
-        case 'docx': return 'bi-file-earmark-word';
-        case 'excel':
-        case 'xlsx': return 'bi-file-earmark-excel';
-        default: return 'bi-file-earmark-text';
-    }
-}
-
-// Load and render post data
-async function loadPostData() {
-    const postId = getPostIdFromUrl();
-    const loadingIndicator = document.getElementById('loading-indicator');
-    const errorMessageDiv = document.getElementById('error-message');
-    const postDetailsDiv = document.getElementById('post-details');
-
-    if (!postId) {
-        showError('无效的文章链接。');
-        return;
-    }
+/**
+ * 获取并显示文章数据
+ * @param {number} postId 
+ */
+async function fetchAndDisplayPost(postId) {
+    showLoading();
+    hideError();
 
     try {
-        loadingIndicator.style.display = 'block';
-        errorMessageDiv.style.display = 'none';
-        postDetailsDiv.style.display = 'none';
-
-        const response = await fetch(`/api/blog/${postId}`);
-
+        // 注意：这里调用的是公共 API 端点，不是 /admin/api/...
+        const response = await fetch(`/api/blog/post/${postId}`);
+        
         if (!response.ok) {
             if (response.status === 404) {
-                showError('找不到指定的文章。');
+                throw new Error('找不到指定的文章。');
             } else {
-                 const errorData = await response.json().catch(() => null);
-                 showError(`加载文章失败: ${errorData?.error || response.statusText}`);
+                throw new Error(`获取文章数据失败 (状态码: ${response.status})`);
             }
-            return;
         }
 
         const post = await response.json();
-        renderPost(post);
+        displayPost(post);
 
     } catch (error) {
-        console.error('加载文章时出错:', error);
-        showError('加载文章时发生网络错误，请稍后重试。');
+        console.error('获取或显示文章时出错:', error);
+        displayError(error.message);
     } finally {
-        loadingIndicator.style.display = 'none';
+        hideLoading();
     }
 }
 
-// Render the fetched post data into the DOM
-function renderPost(post) {
-    const postDetailsDiv = document.getElementById('post-details');
-    const breadcrumbTitle = document.getElementById('breadcrumb-post-title');
+/**
+ * 将文章数据显示在页面上
+ * @param {object} post 文章数据对象
+ */
+function displayPost(post) {
+    const contentArea = document.getElementById('post-content-area');
     const titleEl = document.getElementById('post-title');
-    const dateEl = document.getElementById('post-date');
     const categoryEl = document.getElementById('post-category');
-    const contentEl = document.getElementById('post-content');
+    const dateEl = document.getElementById('post-date');
+    const bodyEl = document.getElementById('post-body');
     const attachmentsSection = document.getElementById('post-attachments');
-    const attachmentList = document.getElementById('attachment-list');
+    const attachmentsListEl = document.getElementById('post-attachments-list');
     const referencesSection = document.getElementById('post-references');
-    const referenceList = document.getElementById('reference-list');
+    const referencesListEl = document.getElementById('post-references-list');
 
-    if (!postDetailsDiv || !titleEl || !dateEl || !categoryEl || !contentEl || 
-        !attachmentsSection || !attachmentList || !referencesSection || !referenceList || !breadcrumbTitle) return;
+    if (!contentArea || !titleEl || !categoryEl || !dateEl || !bodyEl || 
+        !attachmentsSection || !attachmentsListEl || !referencesSection || !referencesListEl)
+    {
+        console.error('缺少必要的页面元素。');
+        displayError('页面结构错误，无法显示文章。');
+        return;
+    }
 
-    // Update page title and breadcrumb
-    document.title = post.title; 
-    breadcrumbTitle.textContent = post.title;
+    // 更新页面标题
+    document.title = post.title || '博客文章';
 
-    // Populate header
+    // 填充基本信息
     titleEl.textContent = post.title;
-    dateEl.textContent = new Date(post.date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
     categoryEl.textContent = post.category;
-
-    // Render Markdown content safely
-    // Configure marked to handle line breaks properly
-    marked.setOptions({
-        breaks: true, // Convert single line breaks in source to <br>
-        gfm: true      // Use GitHub Flavored Markdown
+    categoryEl.href = `/?category=${encodeURIComponent(post.category)}`; // 链接回主页分类
+    dateEl.textContent = new Date(post.date).toLocaleString('zh-CN', { 
+        year: 'numeric', month: 'long', day: 'numeric' 
     });
-    const rawHtml = marked.parse(post.content || '');
-    // Sanitize the HTML to prevent XSS attacks
-    const cleanHtml = DOMPurify.sanitize(rawHtml);
-    contentEl.innerHTML = cleanHtml;
 
-    // Render attachments
-    attachmentList.innerHTML = ''; // Clear previous
+    // 渲染 Markdown 内容并净化
+    if (post.content && typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
+         const dirtyHtml = marked.parse(post.content);
+         bodyEl.innerHTML = DOMPurify.sanitize(dirtyHtml);
+    } else if (post.content) {
+        // Fallback to plain text if libraries are missing
+         bodyEl.textContent = post.content;
+    } else {
+        bodyEl.textContent = '';
+    }
+
+    // 显示附件
+    attachmentsListEl.innerHTML = ''; // 清空旧列表
     if (post.attachments && post.attachments.length > 0) {
         post.attachments.forEach(att => {
             const li = document.createElement('li');
-            const iconClass = getIconForType(att.type);
-            li.innerHTML = `<i class="bi ${iconClass} attachment-icon"></i> <a href="${att.url}" target="_blank" rel="noopener noreferrer">${escapeHTML(att.filename || '下载附件')}</a>`;
-            attachmentList.appendChild(li);
+            const link = document.createElement('a');
+            link.href = att.url;
+            link.target = '_blank'; // 在新标签页打开
+            link.rel = 'noopener noreferrer';
+            
+            // 根据类型添加图标
+            let iconClass = 'bi-file-earmark';
+            if (att.type === 'image') iconClass = 'bi-file-earmark-image';
+            else if (att.type === 'pdf') iconClass = 'bi-file-earmark-pdf';
+            else if (att.type === 'zip') iconClass = 'bi-file-earmark-zip';
+
+            link.innerHTML = `<i class="bi ${iconClass} me-2"></i>${escapeHTML(att.filename || '下载附件')}`;
+            li.appendChild(link);
+            attachmentsListEl.appendChild(li);
         });
         attachmentsSection.style.display = 'block';
     } else {
         attachmentsSection.style.display = 'none';
     }
 
-    // Render references
-    referenceList.innerHTML = ''; // Clear previous
+    // 显示引用链接
+    referencesListEl.innerHTML = ''; // 清空旧列表
     if (post.references && post.references.length > 0) {
-        // Here you might want to fetch titles for referenced posts, 
-        // but for simplicity, we'll just link using the ID for now.
         post.references.forEach(refId => {
-             const li = document.createElement('li');
-             li.innerHTML = `<i class="bi bi-journal-text reference-icon"></i> <a href="/blog/${refId}">引用文章 ID: ${refId}</a>`;
-             referenceList.appendChild(li);
+            const li = document.createElement('li');
+            // TODO: Ideally, fetch reference titles here for better UX
+            // For now, just link to the post
+            const link = document.createElement('a');
+            link.href = `/blog/${refId}`;
+            link.innerHTML = `<i class="bi bi-link-45deg me-2"></i> 相关文章 ID: ${refId}`;
+            li.appendChild(link);
+            referencesListEl.appendChild(li);
         });
-        referencesSection.style.display = 'block';
+         referencesSection.style.display = 'block';
     } else {
-         referencesSection.style.display = 'none';
+        referencesSection.style.display = 'none';
     }
 
-    // Show the populated content
-    postDetailsDiv.style.display = 'block';
+    // 显示内容区域
+    contentArea.style.display = 'block';
 }
 
-// Display an error message
-function showError(message) {
-    const loadingIndicator = document.getElementById('loading-indicator');
-    const errorMessageDiv = document.getElementById('error-message');
-    const postDetailsDiv = document.getElementById('post-details');
+function showLoading() {
+    const loadingEl = document.getElementById('post-loading');
+    if (loadingEl) loadingEl.style.display = 'block';
+}
 
-    if (loadingIndicator) loadingIndicator.style.display = 'none';
-    if (postDetailsDiv) postDetailsDiv.style.display = 'none';
-    
-    if (errorMessageDiv) {
-        errorMessageDiv.textContent = message;
-        errorMessageDiv.style.display = 'block';
+function hideLoading() {
+     const loadingEl = document.getElementById('post-loading');
+    if (loadingEl) loadingEl.style.display = 'none';
+}
+
+function displayError(message) {
+    const errorEl = document.getElementById('post-error');
+    if (errorEl) {
+        errorEl.textContent = message || '加载文章时出错。';
+        errorEl.style.display = 'block';
+    }
+     // 隐藏文章内容区，以防部分加载
+    const contentArea = document.getElementById('post-content-area');
+    if(contentArea) contentArea.style.display = 'none';
+}
+
+function hideError() {
+    const errorEl = document.getElementById('post-error');
+    if (errorEl) errorEl.style.display = 'none';
+}
+
+/**
+ * 设置复制链接按钮的功能
+ */
+function setupShareButton() {
+    const copyButton = document.getElementById('share-link-copy');
+    if (copyButton) {
+        copyButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            const urlToCopy = window.location.href;
+            navigator.clipboard.writeText(urlToCopy).then(() => {
+                // 提示用户已复制 (可以用 Tooltip 或短暂改变按钮文本)
+                const originalText = copyButton.innerHTML;
+                copyButton.innerHTML = '<i class="bi bi-check-lg"></i> 已复制!';
+                setTimeout(() => {
+                    copyButton.innerHTML = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('无法复制链接:', err);
+                alert('无法自动复制链接，请手动复制。');
+            });
+        });
     }
 }
 
-// Simple HTML escape helper (reuse if needed)
+/**
+ * 简单的 HTML 转义函数 (与 dashboard.js 中的相同)
+ * @param {string} str 
+ * @returns {string}
+ */
 function escapeHTML(str) {
     if (!str) return '';
     return str.replace(/[&<>'"/]/g, function (s) {
@@ -170,4 +216,4 @@ function escapeHTML(str) {
         };
         return entityMap[s];
     });
-} 
+}

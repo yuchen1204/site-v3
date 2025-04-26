@@ -1,0 +1,95 @@
+/* styles/post.css */
+
+.post-body img {
+    max-width: 100%;
+    height: auto;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 0.25rem; /* Optional: add slight rounding */
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* Optional: subtle shadow */
+}
+
+.post-body {
+    line-height: 1.8; /* Improve readability */
+}
+
+.post-body h2,
+.post-body h3,
+.post-body h4,
+.post-body h5,
+.post-body h6 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.post-body p {
+    margin-bottom: 1.25rem;
+}
+
+.post-body blockquote {
+    border-left: 4px solid #ccc;
+    padding-left: 1rem;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 1.25rem;
+    color: #6c757d; /* Bootstrap text-muted color */
+    font-style: italic;
+}
+
+.post-body pre {
+    background-color: #f8f9fa; /* Light background for code */
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    overflow-x: auto; /* Allow horizontal scrolling for long code lines */
+    font-family: 'MapleMono-CN-SemiBold', monospace; /* Use mono font */
+}
+
+.post-body code {
+    font-family: 'MapleMono-CN-SemiBold', monospace;
+    font-size: 0.9em;
+    background-color: rgba(0,0,0,0.05); /* Subtle background for inline code */
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+}
+
+.post-body pre code {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit; /* Inherit size from pre */
+}
+
+/* Dark theme adjustments for code blocks */
+[data-bs-theme="dark"] .post-body pre {
+    background-color: #343a40; /* Darker background */
+    border-color: #495057;
+    color: #e9ecef; /* Lighter text */
+}
+
+[data-bs-theme="dark"] .post-body code {
+     background-color: rgba(255,255,255,0.1);
+}
+
+[data-bs-theme="dark"] .post-body pre code {
+    background-color: transparent;
+    color: inherit; 
+}
+
+#post-attachments-list li a,
+#post-references-list li a {
+    display: inline-block;
+    margin-bottom: 0.5rem;
+    text-decoration: none;
+    color: var(--bs-link-color);
+}
+
+#post-attachments-list li a:hover,
+#post-references-list li a:hover {
+    text-decoration: underline;
+    color: var(--bs-link-hover-color);
+} 

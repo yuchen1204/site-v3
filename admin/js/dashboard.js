@@ -418,14 +418,14 @@ async function loadBlogPosts() {
     const tbody = document.getElementById('blog-list-tbody');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center">加载中...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center">加载中...</td></tr>';
 
     try {
         // TODO: 实现 API 端点 /admin/api/blog (GET)
         const response = await fetch('/admin/api/blog'); 
         if (!response.ok) {
             if (response.status === 401) {
-                 tbody.innerHTML = '<tr><td colspan="6" class="text-center">需要登录才能查看。</td></tr>'; // 更新 colspan
+                 tbody.innerHTML = '<tr><td colspan="5" class="text-center">需要登录才能查看。</td></tr>';
                  return;
             }
             throw new Error(`获取文章列表失败: ${response.statusText}`);
@@ -434,7 +434,7 @@ async function loadBlogPosts() {
         allBlogPosts = await response.json(); // 存储文章数据
 
         if (!Array.isArray(allBlogPosts) || allBlogPosts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center">还没有文章。</td></tr>'; // 更新 colspan
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">还没有文章。</td></tr>';
             return;
         }
 
@@ -457,14 +457,6 @@ async function loadBlogPosts() {
                     <button class="btn btn-danger btn-sm delete-post-button" data-id="${post.id}">
                         <i class="bi bi-trash-fill"></i> 删除
                     </button>
-                </td>
-                <td>
-                     <a href="/blog/${post.id}" target="_blank" class="btn btn-info btn-sm" title="查看文章">
-                         <i class="bi bi-eye-fill"></i>
-                     </a>
-                     <button class="btn btn-secondary btn-sm copy-link-button" data-link="/blog/${post.id}" title="复制链接">
-                         <i class="bi bi-clipboard-fill"></i>
-                     </button>
                 </td>
             `;
 
@@ -493,28 +485,11 @@ async function loadBlogPosts() {
                     alert('无法删除该文章，请刷新列表重试。');
                 }
             });
-            
-            // 添加复制链接按钮事件监听器
-            row.querySelector('.copy-link-button').addEventListener('click', function() {
-                const linkToCopy = window.location.origin + this.getAttribute('data-link');
-                navigator.clipboard.writeText(linkToCopy).then(() => {
-                    // 显示复制成功的 Toast 提示
-                    const toast = createToast('分享链接已复制到剪贴板！', 'success');
-                    document.body.appendChild(toast);
-                    setTimeout(() => toast.remove(), 2000);
-                }).catch(err => {
-                    console.error('复制链接失败:', err);
-                    // 显示复制失败的 Toast 提示
-                    const toast = createToast('复制链接失败，请手动复制。', 'danger');
-                    document.body.appendChild(toast);
-                    setTimeout(() => toast.remove(), 3000);
-                });
-            });
         });
 
     } catch (error) {
         console.error('加载博客文章列表失败:', error);
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">加载文章列表失败: ${error.message}</td></tr>`; // 更新 colspan
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">加载文章列表失败: ${error.message}</td></tr>`;
     }
 }
 
