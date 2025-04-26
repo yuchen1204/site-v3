@@ -805,16 +805,20 @@ function showShareLinkModal(post) {
     
     if (!modal || !shareLinkInput || !copyButton || !copyStatus) return;
     
-    // 构建分享链接 - 假设文章的访问路径是 /blog/[id]
-    // 基于当前页面的 origin 构建完整URL
+    // 构建分享链接 - 使用正确的文章访问路径
+    // 基于当前页面的 origin 构建完整URL，使用根目录下的index.html而不是/blog目录
     const origin = window.location.origin;
-    const shareLink = `${origin}/blog/${post.id}`;
+    
+    // 使用查询参数方式访问特定文章
+    const shareLink = `${origin}/?post=${post.id}`;
     
     // 设置链接到输入框
     shareLinkInput.value = shareLink;
     
     // 隐藏之前可能显示的复制状态
     copyStatus.style.display = 'none';
+    copyStatus.className = 'text-success'; // 重置为成功样式
+    copyStatus.textContent = '链接已复制到剪贴板！'; // 重置为默认文本
     
     // 添加复制功能
     copyButton.onclick = function() {
