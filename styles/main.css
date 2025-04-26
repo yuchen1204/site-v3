@@ -890,20 +890,39 @@ body.dark-mode .blog-post-header {
 .blog-post-full {
     padding: 20px;
     background-color: var(--card-bg);
-    border-radius: 8px;
+    border-radius: 12px; /* 增加圆角 */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* 深色模式下增加内边距 */
+body.dark-mode .blog-post-full {
+    padding: 30px;
+    border-radius: 16px; /* 深色模式下使用更大的圆角 */
 }
 
 .blog-post-full .blog-post-header {
     margin-bottom: 20px;
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 15px;
+    border-radius: 8px 8px 0 0; /* 为标题区域添加上部圆角 */
+}
+
+/* 深色模式下增加标题区域间距 */
+body.dark-mode .blog-post-full .blog-post-header {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-radius: 10px 10px 0 0; /* 深色模式下更大的圆角 */
 }
 
 .blog-post-full .blog-post-title {
     font-size: 2.2rem;
     margin-bottom: 10px;
     color: var(--heading-color);
+}
+
+/* 深色模式下调整标题下边距 */
+body.dark-mode .blog-post-full .blog-post-title {
+    margin-bottom: 15px;
 }
 
 .blog-post-full .blog-post-meta {
@@ -918,6 +937,7 @@ body.dark-mode .blog-post-header {
     line-height: 1.8;
     font-size: 1.1rem;
     margin-bottom: 25px;
+    padding: 5px 10px; /* 内容区域添加内边距 */
 }
 
 .blog-post-full .blog-post-attachments,
@@ -1152,7 +1172,7 @@ body.dark-mode .blog-post-header {
 .blog-post-full {
     padding: 20px;
     background-color: var(--card-bg);
-    border-radius: 8px;
+    border-radius: 12px; /* 增加圆角 */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -1160,6 +1180,7 @@ body.dark-mode .blog-post-header {
     margin-bottom: 20px;
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 15px;
+    border-radius: 8px 8px 0 0; /* 为标题区域添加上部圆角 */
 }
 
 .blog-post-full .blog-post-title {
@@ -1180,6 +1201,7 @@ body.dark-mode .blog-post-header {
     line-height: 1.8;
     font-size: 1.1rem;
     margin-bottom: 25px;
+    padding: 5px 10px; /* 内容区域添加内边距 */
 }
 
 .blog-post-full .blog-post-attachments,
