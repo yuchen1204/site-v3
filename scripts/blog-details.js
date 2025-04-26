@@ -13,45 +13,55 @@ let blogDataSource = '';
  * 初始化主题切换功能
  */
 function initializeThemeToggle() {
-    const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-    const currentTheme = localStorage.getItem('theme');
     const themeToggleButton = document.getElementById('theme-toggle');
-    
+    if (!themeToggleButton) return;
+
+    // 获取当前主题（优先从 localStorage 读取）
+    let currentTheme = localStorage.getItem('theme') || 'light';
+
     // 设置初始主题
-    if (currentTheme) {
-        document.body.className = currentTheme;
-    } else {
-        document.body.className = prefersDarkScheme.matches ? 'dark-theme' : 'light-theme';
-    }
-    
-    // 切换主题按钮事件
-    if (themeToggleButton) {
-        themeToggleButton.addEventListener('click', () => {
-            const newTheme = document.body.classList.contains('light-theme') ? 'dark-theme' : 'light-theme';
-            setTheme(newTheme);
-        });
-    }
+    setTheme(currentTheme);
+
+    themeToggleButton.addEventListener('click', () => {
+        // 切换主题
+        currentTheme = (currentTheme === 'light') ? 'dark' : 'light';
+        setTheme(currentTheme);
+        // 保存主题到 localStorage
+        localStorage.setItem('theme', currentTheme);
+    });
 }
 
 /**
- * 设置主题并保存到本地存储
- * @param {string} theme - 主题名称 ('light-theme' 或 'dark-theme')
+ * 设置主题
+ * @param {string} theme - 要设置的主题 ('light' or 'dark')
  */
 function setTheme(theme) {
-    document.body.className = theme;
-    localStorage.setItem('theme', theme);
+    const themeToggleButton = document.getElementById('theme-toggle');
+    if (theme === 'dark') {
+        document.body.classList.add('dark-mode');
+        if (themeToggleButton) themeToggleButton.innerHTML = moonIcon;
+    } else {
+        document.body.classList.remove('dark-mode');
+        if (themeToggleButton) themeToggleButton.innerHTML = sunIcon;
+    }
 }
 
 /**
  * 初始化侧边栏功能
  */
 function initializeSidebar() {
+    initializeSidebarToggle();
+    setupSidebarLinks(); // 新增：设置链接结构
+}
+
+/**
+ * 初始化侧边栏切换按钮
+ */
+function initializeSidebarToggle() {
     const sidebarToggleButton = document.getElementById('sidebar-toggle');
-    const sidebar = document.getElementById('sidebar');
     const body = document.body;
 
-    // 侧边栏切换按钮事件
-    if (sidebarToggleButton && sidebar && body) {
+    if (sidebarToggleButton && body) {
         sidebarToggleButton.addEventListener('click', () => {
             body.classList.toggle('sidebar-open');
             localStorage.setItem('sidebarState', body.classList.contains('sidebar-open') ? 'open' : 'closed');
@@ -63,6 +73,34 @@ function initializeSidebar() {
             body.classList.add('sidebar-open');
         }
     }
+}
+
+/**
+ * 设置侧边栏链接的内部结构
+ * 为.sidebar-link创建.sidebar-link-content内部容器，
+ * 用于实现深色模式下的渐变边框效果
+ */
+function setupSidebarLinks() {
+    const sidebarLinks = document.querySelectorAll('.sidebar-link');
+    sidebarLinks.forEach(link => {
+        // 检查内容包装器是否已存在，避免在可能的重新运行时重复
+        if (link.querySelector('.sidebar-link-content')) {
+            return;
+        }
+        // 创建内部容器 div.sidebar-link-content
+        const contentWrapper = document.createElement('div');
+        contentWrapper.className = 'sidebar-link-content';
+
+        // 将原链接的所有子元素（图标<i>和文本<span>）移动到新容器中
+        // 需要先收集节点，因为移动它们会修改childNodes列表
+        const childNodesToMove = [];
+        link.childNodes.forEach(node => childNodesToMove.push(node));
+        
+        childNodesToMove.forEach(node => contentWrapper.appendChild(node));
+
+        // 将新容器添加到链接中
+        link.appendChild(contentWrapper);
+    });
 }
 
 /**
@@ -328,4 +366,13 @@ function formatDate(date) {
         console.error('日期格式化出错:', e);
         return '';
     }
-} 
+}
+
+// SVG Icons - 添加图标
+const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-brightness-high-fill" viewBox="0 0 16 16">
+<path d="M12 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708"/>
+</svg>`;
+const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-moon-stars-fill" viewBox="0 0 16 16">
+<path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278"/>
+<path d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.73 1.73 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.73 1.73 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.73 1.73 0 0 0 1.097-1.097zM13.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.73 1.73 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162a1.73 1.73 0 0 0-1.097-1.097l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.73 1.73 0 0 0 1.097-1.097z"/>
+</svg>`; 
