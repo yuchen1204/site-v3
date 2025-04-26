@@ -381,10 +381,22 @@ function displayBlogPosts(allPosts) {
                     } else {
                         // 回退到复制链接
                         navigator.clipboard.writeText(shareUrl).then(() => {
-                            alert('分享链接已复制到剪贴板！');
+                            // 使用 Toast 或按钮文本变化来提供反馈，而不是 alert()
+                            // 方案一：改变按钮文本/图标
+                            const originalIconHTML = shareButton.innerHTML;
+                            shareButton.innerHTML = '<i class="bi bi-check-lg"></i> 已复制';
+                            shareButton.disabled = true;
+                            setTimeout(() => {
+                                shareButton.innerHTML = originalIconHTML;
+                                shareButton.disabled = false;
+                            }, 2000);
+                            // 方案二：使用 Toast (需要 createToast 函数)
+                            // createToast('分享链接已复制到剪贴板！', 'success');
                         }).catch(err => {
                             console.error('无法复制分享链接:', err);
-                            alert('无法自动复制分享链接，请手动复制: ' + shareUrl);
+                            // 使用 Toast 显示错误
+                             createToast(`无法自动复制链接: ${err}`, 'danger'); 
+                            // alert('无法自动复制分享链接，请手动复制: ' + shareUrl);
                         });
                     }
                 });
