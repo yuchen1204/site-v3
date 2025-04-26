@@ -123,13 +123,12 @@
                                     <th>标题</th>
                                     <th>分类</th>
                                     <th>发布日期</th>
-                                    <th>链接</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
                             <tbody id="blog-list-tbody">
                                 <!-- 文章列表将动态加载到这里 -->
-                                <tr><td colspan="6" class="text-center">加载中...</td></tr>
+                                <tr><td colspan="5" class="text-center">加载中...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -216,6 +215,31 @@
                     <button type="button" class="btn btn-danger" id="confirmDeleteButton">
                         <i class="bi bi-trash-fill me-1"></i> 确认删除
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分享链接模态框 -->
+    <div class="modal fade" id="shareLinkModal" tabindex="-1" aria-labelledby="shareLinkModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="shareLinkModalLabel">文章分享链接</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <p>您可以使用以下链接分享这篇文章：</p>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="share-link-input" readonly>
+                        <button class="btn btn-outline-primary" type="button" id="copy-share-link-btn">
+                            <i class="bi bi-clipboard"></i> 复制
+                        </button>
+                    </div>
+                    <div id="copy-status" class="text-success" style="display: none;">链接已复制到剪贴板！</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
                 </div>
             </div>
         </div>

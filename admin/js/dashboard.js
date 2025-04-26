@@ -445,19 +445,20 @@ async function loadBlogPosts() {
 
         allBlogPosts.forEach(post => {
             const row = tbody.insertRow();
-            const postLink = `/blog/${post.id}`; // 生成公开链接
             row.innerHTML = `
                 <td>${post.id}</td>
                 <td>${escapeHTML(post.title)}</td>
                 <td>${escapeHTML(post.category)}</td>
                 <td>${new Date(post.date).toLocaleString('zh-CN')}</td>
-                <td><a href="${postLink}" target="_blank" title="查看文章"><i class="bi bi-link-45deg"></i> 链接</a></td>
                 <td>
                     <button class="btn btn-primary btn-sm edit-post-button" data-id="${post.id}">
                         <i class="bi bi-pencil-fill"></i> 编辑
                     </button>
                     <button class="btn btn-danger btn-sm delete-post-button" data-id="${post.id}">
                         <i class="bi bi-trash-fill"></i> 删除
+                    </button>
+                    <button class="btn btn-info btn-sm text-white share-post-button" data-id="${post.id}">
+                        <i class="bi bi-share-fill"></i> 分享
                     </button>
                 </td>
             `;
@@ -485,6 +486,19 @@ async function loadBlogPosts() {
                 } else {
                     console.error(`未找到 ID 为 ${postId} 的文章`);
                     alert('无法删除该文章，请刷新列表重试。');
+                }
+            });
+
+            // 添加分享按钮事件监听器
+            row.querySelector('.share-post-button').addEventListener('click', function() {
+                const postId = this.getAttribute('data-id');
+                const postToShare = allBlogPosts.find(p => p.id.toString() === postId);
+                
+                if (postToShare) {
+                    showShareLinkModal(postToShare);
+                } else {
+                    console.error(`未找到 ID 为 ${postId} 的文章`);
+                    alert('无法生成分享链接，请刷新列表重试。');
                 }
             });
         });
@@ -776,4 +790,53 @@ function escapeHTML(str) {
         };
         return entityMap[s];
     });
+}
+
+/**
+ * 显示文章分享链接模态框
+ * @param {object} post 要分享的文章对象
+ */
+function showShareLinkModal(post) {
+    const modal = document.getElementById('shareLinkModal');
+    const shareLinkInput = document.getElementById('share-link-input');
+    const copyButton = document.getElementById('copy-share-link-btn');
+    const copyStatus = document.getElementById('copy-status');
+    const bsModal = new bootstrap.Modal(modal);
+    
+    if (!modal || !shareLinkInput || !copyButton || !copyStatus) return;
+    
+    // 构建分享链接 - 假设文章的访问路径是 /blog/[id]
+    // 基于当前页面的 origin 构建完整URL
+    const origin = window.location.origin;
+    const shareLink = `${origin}/blog/${post.id}`;
+    
+    // 设置链接到输入框
+    shareLinkInput.value = shareLink;
+    
+    // 隐藏之前可能显示的复制状态
+    copyStatus.style.display = 'none';
+    
+    // 添加复制功能
+    copyButton.onclick = function() {
+        shareLinkInput.select();
+        navigator.clipboard.writeText(shareLink).then(
+            function() {
+                // 成功复制
+                copyStatus.style.display = 'block';
+                setTimeout(() => {
+                    copyStatus.style.display = 'none';
+                }, 2000);
+            },
+            function(err) {
+                // 复制失败
+                console.error('无法复制链接:', err);
+                copyStatus.textContent = '复制失败，请手动复制链接';
+                copyStatus.className = 'text-danger';
+                copyStatus.style.display = 'block';
+            }
+        );
+    };
+    
+    // 显示模态框
+    bsModal.show();
 } 
