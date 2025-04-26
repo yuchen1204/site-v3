@@ -418,14 +418,14 @@ async function loadBlogPosts() {
     const tbody = document.getElementById('blog-list-tbody');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center">加载中...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center">加载中...</td></tr>';
 
     try {
         // TODO: 实现 API 端点 /admin/api/blog (GET)
         const response = await fetch('/admin/api/blog'); 
         if (!response.ok) {
             if (response.status === 401) {
-                 tbody.innerHTML = '<tr><td colspan="5" class="text-center">需要登录才能查看。</td></tr>';
+                 tbody.innerHTML = '<tr><td colspan="6" class="text-center">需要登录才能查看。</td></tr>'; // 更新 colspan
                  return;
             }
             throw new Error(`获取文章列表失败: ${response.statusText}`);
@@ -434,7 +434,7 @@ async function loadBlogPosts() {
         allBlogPosts = await response.json(); // 存储文章数据
 
         if (!Array.isArray(allBlogPosts) || allBlogPosts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center">还没有文章。</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">还没有文章。</td></tr>'; // 更新 colspan
             return;
         }
 
@@ -451,18 +451,20 @@ async function loadBlogPosts() {
                 <td>${escapeHTML(post.category)}</td>
                 <td>${new Date(post.date).toLocaleString('zh-CN')}</td>
                 <td>
-                    <a href="/blog/${post.id}" target="_blank" class="btn btn-info btn-sm share-post-button" data-id="${post.id}" title="查看文章">
-                        <i class="bi bi-box-arrow-up-right"></i> 查看
-                    </a>
                     <button class="btn btn-primary btn-sm edit-post-button" data-id="${post.id}">
                         <i class="bi bi-pencil-fill"></i> 编辑
                     </button>
                     <button class="btn btn-danger btn-sm delete-post-button" data-id="${post.id}">
                         <i class="bi bi-trash-fill"></i> 删除
                     </button>
-                    <button class="btn btn-outline-secondary btn-sm copy-link-button" data-id="${post.id}" title="复制分享链接">
-                        <i class="bi bi-link-45deg"></i> 复制链接
-                    </button>
+                </td>
+                <td>
+                     <a href="/blog/${post.id}" target="_blank" class="btn btn-info btn-sm" title="查看文章">
+                         <i class="bi bi-eye-fill"></i>
+                     </a>
+                     <button class="btn btn-secondary btn-sm copy-link-button" data-link="/blog/${post.id}" title="复制链接">
+                         <i class="bi bi-clipboard-fill"></i>
+                     </button>
                 </td>
             `;
 
@@ -494,35 +496,25 @@ async function loadBlogPosts() {
             
             // 添加复制链接按钮事件监听器
             row.querySelector('.copy-link-button').addEventListener('click', function() {
-                const postId = this.getAttribute('data-id');
-                const postTitle = allBlogPosts.find(p => p.id.toString() === postId)?.title || '文章';
-                
-                // 构建完整的分享链接
-                const host = window.location.origin;
-                const shareUrl = `${host}/blog/${postId}`;
-                
-                // 复制链接到剪贴板
-                navigator.clipboard.writeText(shareUrl).then(() => {
-                    // 显示成功提示
-                    const toast = createToast(`"${postTitle}" 的分享链接已复制！`, 'success');
+                const linkToCopy = window.location.origin + this.getAttribute('data-link');
+                navigator.clipboard.writeText(linkToCopy).then(() => {
+                    // 显示复制成功的 Toast 提示
+                    const toast = createToast('分享链接已复制到剪贴板！', 'success');
                     document.body.appendChild(toast);
-                    setTimeout(() => toast.remove(), 3000);
+                    setTimeout(() => toast.remove(), 2000);
                 }).catch(err => {
                     console.error('复制链接失败:', err);
-                    // 显示失败提示
-                    const toast = createToast('复制链接失败，请手动复制', 'danger');
+                    // 显示复制失败的 Toast 提示
+                    const toast = createToast('复制链接失败，请手动复制。', 'danger');
                     document.body.appendChild(toast);
                     setTimeout(() => toast.remove(), 3000);
-                    
-                    // 提供备用方案：显示链接并让用户手动复制
-                    alert(`请手动复制链接：${shareUrl}`);
                 });
             });
         });
 
     } catch (error) {
         console.error('加载博客文章列表失败:', error);
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">加载文章列表失败: ${error.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">加载文章列表失败: ${error.message}</td></tr>`; // 更新 colspan
     }
 }
 
