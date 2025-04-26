@@ -968,3 +968,101 @@ body.dark-mode .blog-post-header {
         font-size: 1rem;
     }
 }
+
+/* 文章引用相关样式优化 */
+.blog-post-full .blog-post-references {
+    margin-top: 25px;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: rgba(79, 172, 254, 0.1); /* 浅蓝色背景 */
+    border: 2px solid rgba(79, 172, 254, 0.3); /* 蓝色边框 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.blog-post-full .blog-post-references:before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 30px;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(79, 172, 254, 0.1);
+    border-top: 2px solid rgba(79, 172, 254, 0.3);
+    border-left: 2px solid rgba(79, 172, 254, 0.3);
+    transform: rotate(45deg);
+}
+
+.blog-post-full .blog-post-references h5 {
+    margin-bottom: 15px;
+    color: var(--name-color-light);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.blog-post-full .reference-list {
+    padding-left: 20px;
+    margin-bottom: 0;
+}
+
+.blog-post-full .reference-list li {
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.blog-post-full .reference-list li:last-child {
+    margin-bottom: 0;
+}
+
+.blog-post-full .reference-list li:before {
+    content: '→';
+    position: absolute;
+    left: -18px;
+    color: var(--name-color-light);
+    font-weight: bold;
+}
+
+.blog-post-full .reference-link {
+    color: var(--name-color-light);
+    text-decoration: none;
+    transition: color 0.2s ease;
+    padding-bottom: 2px;
+    border-bottom: 1px dashed var(--name-color-light);
+}
+
+.blog-post-full .reference-link:hover {
+    color: var(--name-color-dark);
+    border-bottom-style: solid;
+}
+
+/* 深色模式下的引用框样式 */
+body.dark-mode .blog-post-full .blog-post-references {
+    background-color: rgba(142, 197, 252, 0.1); /* 深色模式下的背景 */
+    border-color: rgba(142, 197, 252, 0.3); /* 深色模式下的边框 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .blog-post-full .blog-post-references:before {
+    background-color: rgba(142, 197, 252, 0.1);
+    border-top-color: rgba(142, 197, 252, 0.3);
+    border-left-color: rgba(142, 197, 252, 0.3);
+}
+
+body.dark-mode .blog-post-full .blog-post-references h5 {
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .blog-post-full .reference-list li:before {
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .blog-post-full .reference-link {
+    color: var(--name-color-dark);
+    border-bottom-color: var(--name-color-dark);
+}
+
+body.dark-mode .blog-post-full .reference-link:hover {
+    color: var(--name-color-light);
+    border-bottom-color: var(--name-color-light);
+}
