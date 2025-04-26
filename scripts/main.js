@@ -352,6 +352,9 @@ function displayBlogPosts(allPosts) {
                          <a href="/blog/${post.id}" class="btn btn-outline-primary btn-sm me-2">
                             <i class="bi bi-book-half me-1"></i> 阅读
                         </a>
+                         <a href="#" class="btn btn-outline-secondary btn-sm me-2 copy-link-button" data-post-id="${post.id}" title="复制文章链接">
+                             <i class="bi bi-clipboard me-1"></i> 复制链接
+                         </a>
                         <a href="#" class="btn btn-outline-secondary btn-sm share-link-button" data-post-id="${post.id}" data-post-title="${escapeHTML(post.title)}">
                              <i class="bi bi-share-fill me-1"></i> 分享
                          </a>
@@ -379,7 +382,7 @@ function displayBlogPosts(allPosts) {
                         .then(() => console.log('分享成功'))
                         .catch((error) => console.error('分享失败:', error));
                     } else {
-                        // 回退到复制链接
+                        // 回退到复制链接 (这个可以移除或保留作为双重确认)
                         navigator.clipboard.writeText(shareUrl).then(() => {
                             alert('分享链接已复制到剪贴板！');
                         }).catch(err => {
@@ -389,6 +392,30 @@ function displayBlogPosts(allPosts) {
                     }
                 });
             }
+
+             // 为复制链接按钮添加事件
+             const copyButton = postElement.querySelector('.copy-link-button');
+             if (copyButton) {
+                 copyButton.addEventListener('click', (e) => {
+                     e.preventDefault();
+                     const postId = e.currentTarget.getAttribute('data-post-id');
+                     const urlToCopy = `${window.location.origin}/blog/${postId}`;
+                     navigator.clipboard.writeText(urlToCopy).then(() => {
+                         // 提示用户已复制 (短暂改变按钮文本)
+                         const originalText = copyButton.innerHTML;
+                         copyButton.innerHTML = '<i class="bi bi-check-lg"></i> 已复制!';
+                         // (可选) 禁用按钮片刻
+                         copyButton.disabled = true; 
+                         setTimeout(() => {
+                             copyButton.innerHTML = originalText;
+                             copyButton.disabled = false;
+                         }, 2000);
+                     }).catch(err => {
+                         console.error('无法复制链接:', err);
+                         alert('无法自动复制链接，请手动复制。');
+                     });
+                 });
+             }
         });
     }
 
