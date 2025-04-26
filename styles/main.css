@@ -471,8 +471,12 @@ body.dark-mode .blog-post-summary {
 /* Blog Post References */
 .blog-post-references {
     margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 1.2rem;
+    border-radius: 0.5rem;
+    background-color: rgba(79, 172, 254, 0.1); /* 浅蓝色背景 */
+    border: 1px solid rgba(79, 172, 254, 0.3); /* 蓝色边框 */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    position: relative;
 }
 
 .blog-post-references h5 {
@@ -480,16 +484,35 @@ body.dark-mode .blog-post-summary {
     font-size: 1rem;
     font-weight: 600;
     margin-bottom: 1rem;
-    color: var(--body-color-light);
+    color: var(--name-color-light);
+    /* 添加一个小图标 */
+    display: flex;
+    align-items: center;
+}
+
+.blog-post-references h5:before {
+    content: '📌';
+    margin-right: 0.5rem;
+    font-size: 1.2rem;
 }
 
 .reference-list {
     list-style: none;
-    padding-left: 0;
+    padding-left: 1rem;
+    margin-bottom: 0;
 }
 
 .reference-list li {
     margin-bottom: 0.5rem;
+    position: relative;
+    padding-left: 1rem;
+}
+
+.reference-list li:before {
+    content: '↪';
+    position: absolute;
+    left: -0.5rem;
+    color: var(--name-color-light);
 }
 
 .reference-link {
@@ -504,22 +527,38 @@ body.dark-mode .blog-post-summary {
     text-decoration: underline;
 }
 
+/* 内联引用样式 */
 .inline-reference {
     font-weight: 600;
-    border-bottom: 1px dashed var(--name-color-light);
+    background-color: rgba(79, 172, 254, 0.1); /* 浅蓝色背景 */
+    border: 1px solid rgba(79, 172, 254, 0.3); /* 蓝色边框 */
+    border-radius: 3px;
+    padding: 0.1rem 0.4rem;
+    text-decoration: none;
+    color: var(--name-color-light);
+    transition: all 0.2s ease;
 }
 
 .inline-reference:hover {
-    border-bottom-style: solid;
+    background-color: rgba(79, 172, 254, 0.2);
+    border-color: rgba(79, 172, 254, 0.5);
+    color: var(--name-color-dark);
+    text-decoration: none;
 }
 
 /* Dark Mode Blog References */
 body.dark-mode .blog-post-references {
-    border-top-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(142, 197, 252, 0.1); /* 暗模式下的背景色 */
+    border-color: rgba(142, 197, 252, 0.3); /* 暗模式下的边框色 */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 body.dark-mode .blog-post-references h5 {
-    color: var(--body-color-dark);
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .reference-list li:before {
+    color: var(--name-color-dark);
 }
 
 body.dark-mode .reference-link {
@@ -531,7 +570,15 @@ body.dark-mode .reference-link:hover {
 }
 
 body.dark-mode .inline-reference {
-    border-bottom-color: var(--name-color-dark);
+    background-color: rgba(142, 197, 252, 0.1);
+    border-color: rgba(142, 197, 252, 0.3);
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .inline-reference:hover {
+    background-color: rgba(142, 197, 252, 0.2);
+    border-color: rgba(142, 197, 252, 0.5);
+    color: var(--name-color-light);
 }
 
 /* Pagination Styles */
@@ -920,33 +967,83 @@ body.dark-mode .blog-post-header {
     margin-bottom: 25px;
 }
 
-.blog-post-full .blog-post-attachments,
+/* 修改详情页中的引用和附件容器样式 */
+.blog-post-full .blog-post-attachments {
+    margin-top: 25px;
+    padding: 1.2rem;
+    border-radius: 0.5rem;
+    background-color: rgba(255, 206, 86, 0.1); /* 浅黄色背景 - 与引用区分 */
+    border: 1px solid rgba(255, 206, 86, 0.3); /* 黄色边框 */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
 .blog-post-full .blog-post-references {
     margin-top: 25px;
-    padding: 15px;
-    border-radius: 4px;
-    background-color: var(--light-bg);
+    padding: 1.2rem;
+    border-radius: 0.5rem;
+    background-color: rgba(79, 172, 254, 0.1); /* 浅蓝色背景 */
+    border: 1px solid rgba(79, 172, 254, 0.3); /* 蓝色边框 */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .blog-post-full h5 {
     margin-bottom: 15px;
     color: var(--heading-color);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+/* 为标题添加小图标 */
+.blog-post-full .blog-post-references h5:before {
+    content: '📌';
+    margin-right: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.blog-post-full .blog-post-attachments h5:before {
+    content: '📎';
+    margin-right: 0.5rem;
+    font-size: 1.2rem;
 }
 
 .blog-post-full .attachment-list,
 .blog-post-full .reference-list {
-    padding-left: 20px;
+    padding-left: 1rem;
+    margin-bottom: 0;
 }
 
-.blog-post-full .attachment-item,
+.blog-post-full .attachment-item {
+    margin-bottom: 8px;
+    position: relative;
+    padding-left: 1rem;
+}
+
 .blog-post-full .reference-list li {
     margin-bottom: 8px;
+    position: relative;
+    padding-left: 1rem;
+}
+
+.blog-post-full .reference-list li:before {
+    content: '↪';
+    position: absolute;
+    left: -0.5rem;
+    color: var(--name-color-light);
+}
+
+.blog-post-full .attachment-item:before {
+    content: '⇢';
+    position: absolute;
+    left: -0.5rem;
+    color: #ffb700; /* 黄色，与附件容器颜色相符 */
 }
 
 .blog-post-full .attachment-image {
     max-width: 100%;
     border-radius: 4px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 8px;
 }
 
 .blog-post-full .reference-link {
@@ -957,6 +1054,25 @@ body.dark-mode .blog-post-header {
 
 .blog-post-full .reference-link:hover {
     text-decoration: underline;
+}
+
+/* 深色模式的调整 */
+body.dark-mode .blog-post-full .blog-post-attachments {
+    background-color: rgba(255, 206, 86, 0.05);
+    border-color: rgba(255, 206, 86, 0.2);
+}
+
+body.dark-mode .blog-post-full .blog-post-references {
+    background-color: rgba(142, 197, 252, 0.1);
+    border-color: rgba(142, 197, 252, 0.3);
+}
+
+body.dark-mode .blog-post-full .reference-list li:before {
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .blog-post-full .attachment-item:before {
+    color: #daa520; /* 深色模式下的金色 */
 }
 
 @media (max-width: 768px) {
