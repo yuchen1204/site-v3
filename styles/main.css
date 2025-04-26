@@ -351,7 +351,7 @@ body.dark-mode .blog-category-item.active::after {
 
 .blog-post-header {
     /* background-color: rgba(255, 255, 255, 0.3); */ /* 移除背景，让卡片背景统一 */
-    padding: 0; /* 移除header的内边距，由 .blog-post 控制 */
+    padding-left: 0.5rem; /* 为头部内容增加额外的左边距 */
     margin-bottom: 0.75rem; /* 调整标题和摘要的间距 */
     position: relative;
     /* cursor: pointer; */ /* 移除指针，因为头部不再可点击 */
