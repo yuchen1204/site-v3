@@ -53,10 +53,8 @@ export async function onRequestPost(context) {
 
     // 获取现有的评论列表
     let comments = [];
-    let isFirstComment = true; // 标记是否是该文章的第一条评论
     const existingCommentsJson = await env.blog_data.get(kvKey);
     if (existingCommentsJson) {
-      isFirstComment = false; // 如果已存在评论，则不是第一条
       try {
         comments = JSON.parse(existingCommentsJson);
       } catch (e) {
@@ -81,28 +79,6 @@ export async function onRequestPost(context) {
     // 将更新后的评论列表存回KV
     // 注意：KV写入是最终一致性的
     await env.blog_data.put(kvKey, JSON.stringify(comments));
-
-    // 如果是该文章的第一条评论，则更新 commented_post_ids 列表
-    if (isFirstComment) {
-      const listKey = 'commented_post_ids';
-      let commentedPostIds = [];
-      const existingListJson = await env.blog_data.get(listKey);
-      if (existingListJson) {
-        try {
-          commentedPostIds = JSON.parse(existingListJson);
-        } catch (e) {
-          console.error('Error parsing commented_post_ids:', e);
-          commentedPostIds = [];
-        }
-      }
-      // 确保ID不重复
-      if (!commentedPostIds.includes(postId)) {
-        commentedPostIds.push(postId);
-        // 按数字升序排序 (可选, 但保持一致性较好)
-        commentedPostIds.sort((a, b) => a - b);
-        await env.blog_data.put(listKey, JSON.stringify(commentedPostIds));
-      }
-    }
 
     // 返回成功响应，可以包含新评论的数据 - 确保包含 emailHash
     return new Response(JSON.stringify({ success: true, comment: newComment }), {
