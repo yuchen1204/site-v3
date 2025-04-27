@@ -842,6 +842,200 @@ body.dark-mode .data-source-indicator {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
+/* 深色模式下的标题区域 */
+body.dark-mode .blog-post-header {
+    background-color: rgba(0, 0, 0, 0.2); /* 半透明黑色背景 */
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 为博客文章标题链接添加样式 */
+.blog-post-title-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.blog-post-title-link:hover {
+    color: #0d6efd;
+    text-decoration: underline;
+}
+
+/* 阅读全文链接样式 */
+.blog-post-read-more {
+    margin-top: 15px;
+    text-align: right;
+}
+
+.read-more-link {
+    display: inline-block;
+    padding: 5px 15px;
+    background-color: #0d6efd;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.read-more-link:hover {
+    background-color: #0b5ed7;
+    color: white;
+}
+
+/* 博客文章详情页样式 */
+.blog-post-details {
+    margin-bottom: 30px;
+}
+
+.blog-post-full {
+    padding: 20px;
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.blog-post-full .blog-post-header {
+    margin-bottom: 20px;
+    /* border-bottom: 1px solid var(--border-color); */ /* 移除底部边框 */
+    padding-bottom: 15px;
+}
+
+.blog-post-full .blog-post-title {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    color: var(--heading-color);
+}
+
+.blog-post-full .blog-post-meta {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.blog-post-full .blog-post-content {
+    line-height: 1.8;
+    font-size: 1.1rem;
+    margin-bottom: 25px;
+}
+
+.blog-post-full .blog-post-attachments,
+.blog-post-full .blog-post-references {
+    margin-top: 25px;
+    padding: 15px;
+    border-radius: 4px;
+    background-color: var(--light-bg);
+}
+
+.blog-post-full h5 {
+    margin-bottom: 15px;
+    color: var(--heading-color);
+}
+
+.blog-post-full .attachment-list,
+.blog-post-full .reference-list {
+    padding-left: 20px;
+}
+
+.blog-post-full .attachment-item,
+.blog-post-full .reference-list li {
+    margin-bottom: 8px;
+}
+
+.blog-post-full .attachment-image {
+    max-width: 100%;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.blog-post-full .reference-link {
+    color: var(--link-color);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.blog-post-full .reference-link:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .blog-post-full .blog-post-title {
+        font-size: 1.8rem;
+    }
+    
+    .blog-post-full .blog-post-content {
+        font-size: 1rem;
+    }
+}
+
+/* 文章引用相关样式优化 */
+.blog-post-full .blog-post-references {
+    margin-top: 25px;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: rgba(79, 172, 254, 0.1); /* 浅蓝色背景 */
+    border: 2px solid rgba(79, 172, 254, 0.3); /* 蓝色边框 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.blog-post-full .blog-post-references:before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 30px;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(79, 172, 254, 0.1);
+    border-top: 2px solid rgba(79, 172, 254, 0.3);
+    border-left: 2px solid rgba(79, 172, 254, 0.3);
+    transform: rotate(45deg);
+}
+
+.blog-post-full .blog-post-references h5 {
+    margin-bottom: 15px;
+    color: var(--name-color-light);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.blog-post-full .reference-list {
+    padding-left: 20px;
+    margin-bottom: 0;
+}
+
+.blog-post-full .reference-list li {
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.blog-post-full .reference-list li:last-child {
+    margin-bottom: 0;
+}
+
+.blog-post-full .reference-list li:before {
+    content: '→';
+    position: absolute;
+    left: -18px;
+    color: var(--name-color-light);
+    font-weight: bold;
+}
+
+.blog-post-full .reference-link {
+    color: var(--name-color-light);
+    text-decoration: none;
+    transition: color 0.2s ease;
+    padding-bottom: 2px;
+    border-bottom: 1px dashed var(--name-color-light);
+}
+
+.blog-post-full .reference-link:hover {
+    color: var(--name-color-dark);
+    border-bottom-style: solid;
+}
+
 /* 深色模式下的引用框样式 */
 body.dark-mode .blog-post-full .blog-post-references {
     background-color: rgba(142, 197, 252, 0.1); /* 深色模式下的背景 */
@@ -910,113 +1104,227 @@ body.dark-mode .breadcrumb-item.active {
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.5); /* 添加文字阴影增强可读性 */
 }
 
-/* 评论区样式 */
-.comments-section {
-    padding-top: 2rem;
-    border-top: 1px solid var(--border-color);
-    margin-top: 2rem;
+/* 深色模式下的标题区域 */
+body.dark-mode .blog-post-header {
+    background-color: rgba(0, 0, 0, 0.2); /* 半透明黑色背景 */
+    border-bottom-color: rgba(255, 255, 255, 0.05);
 }
 
-.comments-title {
-    font-size: 1.8rem;
-    margin-bottom: 1.5rem;
-    color: var(--heading-color);
-    text-align: center;
+/* 为博客文章标题链接添加样式 */
+.blog-post-title-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.3s ease;
 }
 
-.comment-form-container {
-    padding: 1.5rem;
-    background-color: var(--light-bg);
+.blog-post-title-link:hover {
+    color: #0d6efd;
+    text-decoration: underline;
+}
+
+/* 阅读全文链接样式 */
+.blog-post-read-more {
+    margin-top: 15px;
+    text-align: right;
+}
+
+.read-more-link {
+    display: inline-block;
+    padding: 5px 15px;
+    background-color: #0d6efd;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.read-more-link:hover {
+    background-color: #0b5ed7;
+    color: white;
+}
+
+/* 博客文章详情页样式 */
+.blog-post-details {
+    margin-bottom: 30px;
+}
+
+.blog-post-full {
+    padding: 20px;
+    background-color: var(--card-bg);
     border-radius: 8px;
-    margin-bottom: 2rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.comment-form-container .form-label {
-    font-weight: 600;
-    color: var(--text-muted);
+.blog-post-full .blog-post-header {
+    margin-bottom: 20px;
+    /* border-bottom: 1px solid var(--border-color); */ /* 移除底部边框 */
+    padding-bottom: 15px;
 }
 
-.comment-form-container .form-control {
-    background-color: var(--input-bg);
-    color: var(--body-color-light);
-    border-color: var(--border-color);
-}
-
-.comment-form-container .form-control:focus {
-    background-color: var(--input-bg);
-    color: var(--body-color-light);
-    border-color: var(--name-color-light);
-    box-shadow: 0 0 0 0.25rem rgba(var(--name-rgb-light), 0.25);
-}
-
-.comment-submit-btn {
-    font-weight: 600;
-}
-
-/* 深色模式下的评论表单 */
-body.dark-mode .comment-form-container {
-    background-color: var(--profile-bg-dark); /* 使用profile背景色以区分 */
-}
-
-body.dark-mode .comment-form-container .form-control {
-    background-color: var(--body-bg-dark);
-    color: var(--body-color-dark);
-    border-color: var(--toggle-border-dark);
-}
-
-body.dark-mode .comment-form-container .form-control:focus {
-    background-color: var(--body-bg-dark);
-    color: var(--body-color-dark);
-    border-color: var(--name-color-dark);
-    box-shadow: 0 0 0 0.25rem rgba(var(--name-rgb-dark), 0.25);
-}
-
-.comment-list-title {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
+.blog-post-full .blog-post-title {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
     color: var(--heading-color);
 }
 
-.comment-list .comment-item {
-    padding: 1rem;
-    background-color: var(--light-bg);
-    border-radius: 6px;
-    margin-bottom: 1rem;
-    border-left: 3px solid var(--name-color-light);
-}
-
-.comment-item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-}
-
-.comment-author {
-    font-weight: 600;
-    color: var(--name-color-light);
-}
-
-.comment-date {
-    font-size: 0.85rem;
+.blog-post-full .blog-post-meta {
+    font-size: 0.9rem;
     color: var(--text-muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
-.comment-text {
-    color: var(--body-color-light);
-    line-height: 1.6;
+.blog-post-full .blog-post-content {
+    line-height: 1.8;
+    font-size: 1.1rem;
+    margin-bottom: 25px;
 }
 
-/* 深色模式下的评论列表 */
-body.dark-mode .comment-list .comment-item {
-    background-color: var(--profile-bg-dark);
-    border-left-color: var(--name-color-dark);
+.blog-post-full .blog-post-attachments,
+.blog-post-full .blog-post-references {
+    margin-top: 25px;
+    padding: 15px;
+    border-radius: 4px;
+    background-color: var(--light-bg);
 }
 
-body.dark-mode .comment-author {
+.blog-post-full h5 {
+    margin-bottom: 15px;
+    color: var(--heading-color);
+}
+
+.blog-post-full .attachment-list,
+.blog-post-full .reference-list {
+    padding-left: 20px;
+}
+
+.blog-post-full .attachment-item,
+.blog-post-full .reference-list li {
+    margin-bottom: 8px;
+}
+
+.blog-post-full .attachment-image {
+    max-width: 100%;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.blog-post-full .reference-link {
+    color: var(--link-color);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.blog-post-full .reference-link:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .blog-post-full .blog-post-title {
+        font-size: 1.8rem;
+    }
+    
+    .blog-post-full .blog-post-content {
+        font-size: 1rem;
+    }
+}
+
+/* 文章引用相关样式优化 */
+.blog-post-full .blog-post-references {
+    margin-top: 25px;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: rgba(79, 172, 254, 0.1); /* 浅蓝色背景 */
+    border: 2px solid rgba(79, 172, 254, 0.3); /* 蓝色边框 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.blog-post-full .blog-post-references:before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 30px;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(79, 172, 254, 0.1);
+    border-top: 2px solid rgba(79, 172, 254, 0.3);
+    border-left: 2px solid rgba(79, 172, 254, 0.3);
+    transform: rotate(45deg);
+}
+
+.blog-post-full .blog-post-references h5 {
+    margin-bottom: 15px;
+    color: var(--name-color-light);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.blog-post-full .reference-list {
+    padding-left: 20px;
+    margin-bottom: 0;
+}
+
+.blog-post-full .reference-list li {
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.blog-post-full .reference-list li:last-child {
+    margin-bottom: 0;
+}
+
+.blog-post-full .reference-list li:before {
+    content: '→';
+    position: absolute;
+    left: -18px;
+    color: var(--name-color-light);
+    font-weight: bold;
+}
+
+.blog-post-full .reference-link {
+    color: var(--name-color-light);
+    text-decoration: none;
+    transition: color 0.2s ease;
+    padding-bottom: 2px;
+    border-bottom: 1px dashed var(--name-color-light);
+}
+
+.blog-post-full .reference-link:hover {
+    color: var(--name-color-dark);
+    border-bottom-style: solid;
+}
+
+/* 深色模式下的引用框样式 */
+body.dark-mode .blog-post-full .blog-post-references {
+    background-color: rgba(142, 197, 252, 0.1); /* 深色模式下的背景 */
+    border-color: rgba(142, 197, 252, 0.3); /* 深色模式下的边框 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .blog-post-full .blog-post-references:before {
+    background-color: rgba(142, 197, 252, 0.1);
+    border-top-color: rgba(142, 197, 252, 0.3);
+    border-left-color: rgba(142, 197, 252, 0.3);
+}
+
+body.dark-mode .blog-post-full .blog-post-references h5 {
     color: var(--name-color-dark);
 }
 
-body.dark-mode .comment-text {
-    color: var(--body-color-dark);
+body.dark-mode .blog-post-full .reference-list li:before {
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .blog-post-full .reference-link {
+    color: var(--name-color-dark);
+    border-bottom-color: var(--name-color-dark);
+}
+
+body.dark-mode .blog-post-full .reference-link:hover {
+    color: var(--name-color-light);
+    border-bottom-color: var(--name-color-light);
 }
