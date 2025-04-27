@@ -1099,3 +1099,188 @@ body.dark-mode .breadcrumb-item.active {
     color: #ffffff; /* 纯白色，确保在深色背景下高对比度 */
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.5); /* 添加文字阴影增强可读性 */
 }
+
+/* 评论区样式 */
+.comments-section {
+    background-color: var(--profile-bg-light);
+    border-radius: 0.8rem;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.comments-title {
+    font-family: 'Maple Mono CN', monospace;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--name-color-light);
+    transition: color 0.3s ease;
+    text-align: center;
+    position: relative;
+}
+
+.comments-title:after {
+    content: '';
+    display: block;
+    width: 50px;
+    height: 3px;
+    background-color: var(--name-color-light);
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 3px;
+    transition: background-color 0.3s ease;
+}
+
+.comment-form-container {
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: background-color 0.3s ease;
+}
+
+.submit-comment-btn {
+    background-color: var(--name-color-light);
+    border-color: var(--name-color-light);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.submit-comment-btn:hover {
+    background-color: var(--name-color-dark);
+    border-color: var(--name-color-dark);
+    transform: translateY(-2px);
+}
+
+.comments-list-title {
+    font-family: 'Maple Mono CN', monospace;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--body-color-light);
+    transition: color 0.3s ease;
+}
+
+.comment-item {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    background-color: rgba(255, 255, 255, 0.7);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    border-left: 3px solid var(--name-color-light);
+}
+
+.comment-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.commenter-name {
+    font-weight: 600;
+    color: var(--name-color-light);
+    transition: color 0.3s ease;
+}
+
+.comment-date {
+    font-size: 0.85rem;
+    color: var(--motto-color-light);
+    transition: color 0.3s ease;
+}
+
+.comment-content {
+    line-height: 1.5;
+    color: var(--body-color-light);
+    transition: color 0.3s ease;
+}
+
+.load-more-btn {
+    background-color: transparent;
+    color: var(--name-color-light);
+    border-color: var(--name-color-light);
+    transition: all 0.3s ease;
+}
+
+.load-more-btn:hover {
+    background-color: var(--name-color-light);
+    color: white;
+}
+
+.no-comments-message {
+    padding: 2rem;
+    text-align: center;
+    color: var(--motto-color-light);
+    transition: color 0.3s ease;
+}
+
+/* 深色模式下的评论区样式 */
+body.dark-mode .comments-section {
+    background-color: var(--profile-bg-dark);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .comments-title {
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .comments-title:after {
+    background-color: var(--name-color-dark);
+}
+
+body.dark-mode .comment-form-container {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .submit-comment-btn {
+    background-color: var(--name-color-dark);
+    border-color: var(--name-color-dark);
+}
+
+body.dark-mode .submit-comment-btn:hover {
+    background-color: var(--name-color-light);
+    border-color: var(--name-color-light);
+}
+
+body.dark-mode .comments-list-title {
+    color: var(--body-color-dark);
+}
+
+body.dark-mode .comment-item {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-left-color: var(--name-color-dark);
+}
+
+body.dark-mode .commenter-name {
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .comment-date {
+    color: var(--motto-color-dark);
+}
+
+body.dark-mode .comment-content {
+    color: var(--body-color-dark);
+}
+
+body.dark-mode .load-more-btn {
+    color: var(--name-color-dark);
+    border-color: var(--name-color-dark);
+}
+
+body.dark-mode .load-more-btn:hover {
+    background-color: var(--name-color-dark);
+    color: var(--body-bg-dark);
+}
+
+body.dark-mode .no-comments-message {
+    color: var(--motto-color-dark);
+}
