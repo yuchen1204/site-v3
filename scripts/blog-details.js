@@ -372,58 +372,23 @@ function formatDate(date) {
 }
 
 /**
- * 计算字符串的 MD5 哈希值 (异步)
- * @param {string} str - 输入字符串
- * @returns {Promise<string>} - MD5 哈希值 (十六进制)
- */
-async function md5(str) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(str.trim().toLowerCase());
-    const hashBuffer = await crypto.subtle.digest('MD5', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
-}
-
-/**
  * 生成 Gravatar URL
  * @param {string} email - 邮箱地址
  * @param {number} [size=40] - 头像尺寸
- * @returns {Promise<string>} - Gravatar URL
+ * @returns {string} - Gravatar URL (Synchronous now)
  */
-async function getGravatarUrl(email, size = 40) {
+function getGravatarUrl(email, size = 40) {
     if (!email) {
         // 提供一个默认头像 URL，如果邮箱为空
         return `https://www.gravatar.com/avatar/?s=${size}&d=mp`; 
     }
     try {
-        const hash = await md5(email);
+        // 使用 js-md5 库 (现在是同步的)
+        const hash = md5(email.trim().toLowerCase()); // global md5 function from the library
         return `https://www.gravatar.com/avatar/${hash}?s=${size}&d=mp`; // d=mp 提供一个默认的神秘人头像
     } catch (error) {
-        console.error("MD5 hashing error:", error);
+        console.error("Gravatar URL generation error:", error);
         return `https://www.gravatar.com/avatar/?s=${size}&d=mp`; // 出错时也返回默认头像
-    }
-}
-
-/**
- * 加载评论列表
- * @param {number} postId - 文章ID
- */
-async function loadComments(postId) {
-    const commentsContainer = document.getElementById('comments-list');
-    if (!commentsContainer) return;
-
-    try {
-        const response = await fetch(`/api/blog/comments/${postId}`);
-        if (!response.ok) {
-            throw new Error('获取评论失败');
-        }
-
-        const comments = await response.json();
-        await displayComments(comments.filter(comment => comment.status === 'approved'));
-    } catch (error) {
-        console.error('加载评论失败:', error);
-        commentsContainer.innerHTML = '<div class="alert alert-warning">加载评论失败，请稍后重试。</div>';
     }
 }
 
@@ -431,7 +396,7 @@ async function loadComments(postId) {
  * 显示评论列表
  * @param {Array} comments - 评论数组
  */
-async function displayComments(comments) {
+function displayComments(comments) { 
     const commentsContainer = document.getElementById('comments-list');
     if (!commentsContainer) return;
 
@@ -440,9 +405,9 @@ async function displayComments(comments) {
         return;
     }
 
-    // 异步生成所有评论的 HTML
-    const commentsHTMLPromises = comments.map(async (comment) => {
-        const gravatarUrl = await getGravatarUrl(comment.email, 40); // 使用email生成头像URL
+    // 同步生成 HTML
+    const commentsHTML = comments.map(comment => {
+        const gravatarUrl = getGravatarUrl(comment.email, 40); // 直接调用同步函数
         return `
             <div class="comment-item d-flex" data-comment-id="${comment.id}">
                 <div class="flex-shrink-0 me-3">
@@ -457,11 +422,33 @@ async function displayComments(comments) {
                 </div>
             </div>
         `;
-    });
+    }).join('');
 
-    // 等待所有 HTML 片段生成完毕
-    const commentsHTML = (await Promise.all(commentsHTMLPromises)).join('');
     commentsContainer.innerHTML = commentsHTML;
+}
+
+/**
+ * 加载评论列表
+ * @param {number} postId - 文章ID
+ */
+function loadComments(postId) {
+    const commentsContainer = document.getElementById('comments-list');
+    if (!commentsContainer) return;
+
+    fetch(`/api/blog/comments/${postId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('获取评论失败');
+            }
+            return response.json();
+        })
+        .then(comments => {
+            displayComments(comments.filter(comment => comment.status === 'approved'));
+        })
+        .catch(error => {
+            console.error('加载评论失败:', error);
+            commentsContainer.innerHTML = '<div class="alert alert-warning">加载评论失败，请稍后重试。</div>';
+        });
 }
 
 /**
