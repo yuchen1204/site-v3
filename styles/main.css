@@ -1116,12 +1116,34 @@ body.dark-mode .breadcrumb-item.active {
     border-radius: 0.5rem;
     border-left: 3px solid var(--name-color-light);
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: flex; /* 使用 flex 布局 */
+    gap: 0.75rem; /* 头像和内容的间距 */
+}
+
+.comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0; /* 防止头像被压缩 */
+    object-fit: cover; /* 确保图片填满 */
+    background-color: #eee; /* 占位背景色 */
+}
+
+.comment-content {
+    flex-grow: 1; /* 内容区域占据剩余空间 */
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* 昵称和时间的间距 */
+    margin-bottom: 0.25rem; /* 调整头部和文本的间距 */
 }
 
 .comment-author {
     font-weight: 600;
     color: var(--body-color-light);
-    margin-right: 0.5rem;
+    /* margin-right: 0.5rem; */ /* 由 flex gap 控制 */
 }
 
 .comment-timestamp {
@@ -1152,6 +1174,10 @@ body.dark-mode .comment-item {
     background-color: var(--profile-bg-dark);
     border-left-color: var(--name-color-dark);
     box-shadow: 0 1px 3px rgba(255,255,255,0.05);
+}
+
+body.dark-mode .comment-avatar {
+    background-color: #444; /* 深色模式占位背景色 */
 }
 
 body.dark-mode .comment-author {

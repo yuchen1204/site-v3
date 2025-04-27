@@ -428,15 +428,26 @@ function displayComments(comments) {
         return;
     }
 
-    commentListContainer.innerHTML = comments.map(comment => `
+    commentListContainer.innerHTML = comments.map(comment => {
+        // 构建 Gravatar URL
+        const gravatarSize = 40;
+        const gravatarDefault = 'identicon'; // 可以换成 'mp', 'retro', 'robohash' 等
+        const gravatarUrl = comment.emailHash
+            ? `https://www.gravatar.com/avatar/${comment.emailHash}?s=${gravatarSize}&d=${encodeURIComponent(gravatarDefault)}`
+            : `https://www.gravatar.com/avatar/?s=${gravatarSize}&d=${encodeURIComponent(gravatarDefault)}`; // Fallback if no hash
+
+        return `
         <div class="comment-item">
-            <div class="comment-header">
-                <span class="comment-author">${escapeHtml(comment.author)}</span>
-                <span class="comment-timestamp">${formatRelativeTime(new Date(comment.timestamp))}</span>
+            <img src="${gravatarUrl}" alt="${escapeHtml(comment.author)} 头像" class="comment-avatar">
+            <div class="comment-content">
+                <div class="comment-header">
+                    <span class="comment-author">${escapeHtml(comment.author)}</span>
+                    <span class="comment-timestamp">${formatRelativeTime(new Date(comment.timestamp))}</span>
+                </div>
+                <div class="comment-text">${escapeHtml(comment.text)}</div>
             </div>
-            <div class="comment-text">${escapeHtml(comment.text)}</div>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 /**
@@ -446,20 +457,28 @@ function displayComments(comments) {
 function setupCommentForm(postId) {
     const commentForm = document.getElementById('comment-form');
     const authorInput = document.getElementById('comment-author');
+    const emailInput = document.getElementById('comment-email'); // 获取 email 输入框
     const textInput = document.getElementById('comment-text');
     const feedbackDiv = document.getElementById('comment-form-feedback');
     const submitButton = commentForm.querySelector('button[type="submit"]');
 
-    if (!commentForm || !authorInput || !textInput || !feedbackDiv || !submitButton) return;
+    if (!commentForm || !authorInput || !emailInput || !textInput || !feedbackDiv || !submitButton) return;
 
     commentForm.addEventListener('submit', async (event) => {
         event.preventDefault(); // 阻止表单默认提交行为
 
         const author = authorInput.value.trim();
+        const email = emailInput.value.trim(); // 获取 email 值
         const text = textInput.value.trim();
 
-        if (!author || !text) {
-            showFeedback('昵称和评论内容不能为空！', 'error');
+        if (!author || !email || !text) { // 检查 email 是否为空
+            showFeedback('昵称、邮箱和评论内容不能为空！', 'error');
+            return;
+        }
+
+        // 简单的客户端邮箱格式验证 (可选，后端已有验证)
+        if (!/\S+@\S+\.\S+/.test(email)) {
+            showFeedback('请输入有效的邮箱地址！', 'error');
             return;
         }
 
@@ -477,6 +496,7 @@ function setupCommentForm(postId) {
                 body: JSON.stringify({
                     postId: postId,
                     author: author,
+                    email: email, // 发送 email 到后端
                     text: text
                 }),
             });
@@ -488,15 +508,12 @@ function setupCommentForm(postId) {
 
             const result = await response.json();
 
-            if (result.success) {
+            if (result.success && result.comment) { // 确保 comment 对象存在
                 showFeedback('评论提交成功！', 'success');
                 commentForm.reset(); // 清空表单
-                // 重新加载评论列表，显示新评论
-                // 可以选择直接将新评论添加到列表顶部，而不是重新加载所有评论
-                // loadComments(postId);
                 addNewCommentToList(result.comment); // 优化：直接添加
             } else {
-                throw new Error('提交评论失败');
+                throw new Error(result.message || '提交评论失败，未返回评论数据');
             }
 
         } catch (error) {
@@ -512,25 +529,35 @@ function setupCommentForm(postId) {
 
 /**
  * 在评论列表顶部添加新评论
- * @param {object} comment - 新评论对象
+ * @param {object} comment - 新评论对象 (应包含 emailHash)
  */
 function addNewCommentToList(comment) {
     const commentListContainer = document.getElementById('comment-list');
     if (!commentListContainer) return;
 
-    // 如果之前是“暂无评论”，则清空
+    // 如果之前是"暂无评论"，则清空
     if (commentListContainer.querySelector('p.text-muted')) {
         commentListContainer.innerHTML = '';
     }
 
+    // 构建 Gravatar URL for new comment
+    const gravatarSize = 40;
+    const gravatarDefault = 'identicon';
+    const gravatarUrl = comment.emailHash
+        ? `https://www.gravatar.com/avatar/${comment.emailHash}?s=${gravatarSize}&d=${encodeURIComponent(gravatarDefault)}`
+        : `https://www.gravatar.com/avatar/?s=${gravatarSize}&d=${encodeURIComponent(gravatarDefault)}`; // Fallback
+
     const commentElement = document.createElement('div');
     commentElement.className = 'comment-item';
     commentElement.innerHTML = `
-        <div class="comment-header">
-            <span class="comment-author">${escapeHtml(comment.author)}</span>
-            <span class="comment-timestamp">刚刚</span>
+        <img src="${gravatarUrl}" alt="${escapeHtml(comment.author)} 头像" class="comment-avatar">
+        <div class="comment-content">
+            <div class="comment-header">
+                <span class="comment-author">${escapeHtml(comment.author)}</span>
+                <span class="comment-timestamp">刚刚</span>
+            </div>
+            <div class="comment-text">${escapeHtml(comment.text)}</div>
         </div>
-        <div class="comment-text">${escapeHtml(comment.text)}</div>
     `;
 
     // 将新评论添加到列表顶部
@@ -565,7 +592,7 @@ function escapeHtml(str) {
  }
 
 /**
- * 将日期格式化为相对时间（例如，“5分钟前”）
+ * 将日期格式化为相对时间（例如，"5分钟前"）
  * @param {Date} date - 日期对象
  * @returns {string} 相对时间字符串
  */

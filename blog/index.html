@@ -70,11 +70,15 @@
                             <!-- 评论表单 -->
                             <form id="comment-form" class="mb-4">
                                 <div class="mb-3">
-                                    <label for="comment-author" class="form-label">昵称</label>
+                                    <label for="comment-author" class="form-label">昵称 <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="comment-author" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="comment-text" class="form-label">评论内容</label>
+                                    <label for="comment-email" class="form-label">邮箱 <span class="text-danger">*</span> (用于获取头像, 不会公开显示)</label>
+                                    <input type="email" class="form-control" id="comment-email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="comment-text" class="form-label">评论内容 <span class="text-danger">*</span></label>
                                     <textarea class="form-control" id="comment-text" rows="3" required></textarea>
                                 </div>
                                 <button type="submit" class="btn btn-primary">提交评论</button>
