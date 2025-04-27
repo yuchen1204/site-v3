@@ -1100,17 +1100,31 @@ body.dark-mode .breadcrumb-item.active {
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.5); /* 添加文字阴影增强可读性 */
 }
 
-/* Comments Section Styles */
+/* 评论区样式 */
 .comments-section {
-    margin-top: 3rem;
-    padding-top: 2rem;
-    border-top: 1px solid var(--toggle-border-light);
+    margin-top: 3rem; /* 增加与文章内容的间距 */
+    padding: 2rem;
+    background-color: var(--profile-bg-light);
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px var(--profile-shadow-light);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+body.dark-mode .comments-section {
+    background-color: var(--profile-bg-dark);
+    box-shadow: 0 2px 4px var(--profile-shadow-dark);
 }
 
 .comments-title {
-    font-size: 1.5rem;
+    font-family: 'Maple Mono CN', monospace;
     margin-bottom: 1.5rem;
-    font-weight: 600;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--toggle-border-light);
+    transition: border-color 0.3s ease;
+}
+
+body.dark-mode .comments-title {
+    border-bottom-color: var(--toggle-border-dark);
 }
 
 .comments-list {
@@ -1119,17 +1133,21 @@ body.dark-mode .breadcrumb-item.active {
 
 .comment-item {
     padding: 1rem 0;
-    border-bottom: 1px solid var(--toggle-border-light);
+    border-bottom: 1px dashed var(--toggle-border-light); /* 使用虚线分隔 */
+    transition: border-color 0.3s ease;
 }
 
 .comment-item:last-child {
     border-bottom: none;
 }
 
+body.dark-mode .comment-item {
+    border-bottom-color: var(--toggle-border-dark);
+}
+
 .comment-avatar {
-    width: 40px; /* Match JS size */
-    height: 40px; /* Match JS size */
-    border-radius: 50%;
+    width: 40px;
+    height: 40px;
 }
 
 .comment-header {
@@ -1137,84 +1155,92 @@ body.dark-mode .breadcrumb-item.active {
 }
 
 .comment-author {
-    font-weight: bold;
-    margin-right: 0.5rem;
+    font-weight: 600; /* 加粗作者名 */
+    color: var(--name-color-light); /* 使用与 profile 名字相似的颜色 */
+    transition: color 0.3s ease;
+}
+
+body.dark-mode .comment-author {
+    color: var(--name-color-dark);
 }
 
 .comment-date {
-    font-size: 0.85em;
-    color: var(--motto-color-light);
+    font-size: 0.85em; /* 缩小日期字体 */
+    color: var(--motto-color-light); /* 使用与 motto 相似的颜色 */
+    transition: color 0.3s ease;
+}
+
+body.dark-mode .comment-date {
+    color: var(--body-color-dark); /* 深色模式下使用更亮的灰色 */
+    opacity: 0.7;
 }
 
 .comment-content {
-    font-size: 0.95em;
-    line-height: 1.6;
+    line-height: 1.6; /* 增加行高 */
+    word-wrap: break-word; /* 防止长单词溢出 */
 }
 
 .no-comments {
+    padding: 1rem;
+    text-align: center;
     color: var(--motto-color-light);
-    font-style: italic;
-    padding: 1rem 0;
+    border: 1px dashed var(--toggle-border-light);
+    border-radius: 0.25rem;
+    transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+body.dark-mode .no-comments {
+    color: var(--body-color-dark);
+    border-color: var(--toggle-border-dark);
+    opacity: 0.7;
+}
+
+/* 评论表单样式 */
+.comment-form-container {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--toggle-border-light);
+    transition: border-color 0.3s ease;
+}
+
+body.dark-mode .comment-form-container {
+    border-top-color: var(--toggle-border-dark);
 }
 
 .comment-form-container h4 {
-    font-size: 1.25rem;
+    font-family: 'Maple Mono CN', monospace;
     margin-bottom: 1rem;
 }
 
-.comment-form label {
+.comment-form .form-label {
+    font-size: 0.9rem;
     font-weight: 500;
 }
 
-.comment-form input,
-.comment-form textarea {
-    background-color: var(--profile-bg-light);
+.comment-form .form-control {
+    background-color: var(--body-bg-light);
     border-color: var(--toggle-border-light);
     color: var(--body-color-light);
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
-.comment-form input:focus,
-.comment-form textarea:focus {
-    background-color: var(--profile-bg-light);
-    color: var(--body-color-light);
-    border-color: #86b7fe; /* Bootstrap focus color */
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); /* Bootstrap focus shadow */
-}
-
-/* Dark Mode Comments Styles */
-body.dark-mode .comments-section {
-    border-top-color: var(--toggle-border-dark);
-}
-
-body.dark-mode .comment-item {
-    border-bottom-color: var(--toggle-border-dark);
-}
-
-body.dark-mode .comment-date {
-    color: #adb5bd; /* Lighter gray for dark mode date */
-}
-
-body.dark-mode .no-comments {
-    color: #adb5bd;
-}
-
-body.dark-mode .comment-form input,
-body.dark-mode .comment-form textarea {
-    background-color: var(--profile-bg-dark);
+body.dark-mode .comment-form .form-control {
+    background-color: var(--profile-bg-dark); /* 使用更深的背景 */
     border-color: var(--toggle-border-dark);
     color: var(--body-color-dark);
 }
 
-body.dark-mode .comment-form input::placeholder,
-body.dark-mode .comment-form textarea::placeholder {
-    color: #6c757d; /* Darker placeholder text for dark mode */
+.comment-form .form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(79, 172, 254, 0.25); /* 使用蓝色调的光晕 */
+    border-color: #4facfe; 
 }
 
-body.dark-mode .comment-form input:focus,
-body.dark-mode .comment-form textarea:focus {
-    background-color: var(--profile-bg-dark);
-    color: var(--body-color-dark);
-    border-color: #8ec5fc; /* Adjusted focus color for dark mode */
-    box-shadow: 0 0 0 0.25rem rgba(142, 197, 252, 0.25); /* Adjusted focus shadow for dark mode */
+body.dark-mode .comment-form .form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(142, 197, 252, 0.25); /* 深色模式下使用浅蓝色光晕 */
+    border-color: #8ec5fc;
+}
+
+#comment-status {
+    font-size: 0.85rem;
+    font-style: italic;
 }
