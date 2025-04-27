@@ -3,6 +3,11 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeAdminSidebar();
     initializeProfileEditor(); // 初始化个人资料编辑器
     initializeBlogEditor(); // 初始化博客编辑器
+    // 如果当前页面是评论管理页面，则初始化评论管理功能
+    const commentsSection = document.getElementById('manage-comments');
+    if (commentsSection && typeof initializeCommentManagement === 'function') {
+        initializeCommentManagement();
+    }
 });
 
 /**
@@ -774,4 +779,14 @@ function escapeHTML(str) {
         };
         return entityMap[s];
     });
+}
+
+/**
+ * 显示通知提示
+ * @param {string} title - 标题
+ * @param {string} message - 消息内容
+ * @param {string} type - 提示类型（success, error, warning, info）
+ */
+function showToast(title, message, type = 'info') {
+    createToast(`<strong>${title}</strong>: ${message}`, type);
 } 
