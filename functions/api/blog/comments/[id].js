@@ -30,23 +30,6 @@ function jsonResponse(data, status = 200, headers = {}) {
     });
 }
 
-// Helper function to get a single post's data
-async function getPostData(env, postId) {
-    const key = `post:${postId}`; // Assuming posts might be stored individually or use a function to fetch from the main 'blog' key
-    // This needs to be adapted based on how you actually fetch *single* post data efficiently
-    // For now, let's fetch all posts and find the specific one. Not ideal for performance.
-    const blogKey = 'blog';
-    const postsJson = await env.blog_data.get(blogKey);
-    if (!postsJson) return null;
-    try {
-        const posts = JSON.parse(postsJson);
-        return posts.find(p => p.id === postId);
-    } catch (e) {
-        console.error("Error parsing blog data for getPostData:", e);
-        return null;
-    }
-}
-
 // Handle GET request - Fetch comments for a post
 async function handleGetComments(context) {
     const { env, params } = context;
@@ -75,19 +58,6 @@ async function handleAddComment(context) {
     }
 
     try {
-        // --- 检查文章评论设置 ---
-        const post = await getPostData(env, postId);
-        if (!post) {
-            return jsonResponse({ error: '找不到关联的文章' }, 404);
-        }
-        // 检查评论是否启用 (使用 ?? true 处理旧数据)
-        if (!(post.commentsEnabled ?? true)) { 
-            return jsonResponse({ error: '此文章已关闭评论' }, 403); // 403 Forbidden
-        }
-        // 确定是否需要审核 (使用 ?? true 处理旧数据)
-        const needsModeration = post.moderationEnabled ?? true;
-        // ------
-
         const { name, email, content } = await request.json();
 
         // 基本验证
@@ -119,8 +89,7 @@ async function handleAddComment(context) {
             email, // 邮箱将被保存但不会返回给前端
             content,
             createdAt: new Date().toISOString(),
-            // 根据文章设置决定初始状态
-            status: needsModeration ? 'pending' : 'approved' 
+            status: 'pending' // 新评论默认为待审核状态
         };
 
         // 添加新评论

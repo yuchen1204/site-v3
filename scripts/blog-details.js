@@ -110,6 +110,7 @@ async function loadPostDetails() {
     const postDetailsContainer = document.getElementById('blog-post-details');
     if (!postDetailsContainer) return;
     
+    // 从URL中获取文章ID
     const urlParams = new URLSearchParams(window.location.search);
     const postId = parseInt(urlParams.get('id'), 10);
     
@@ -118,42 +119,47 @@ async function loadPostDetails() {
         return;
     }
     
-    let postData = null; // 用于存储文章数据
-
     try {
-        // 尝试从 API 加载
-        const response = await fetch(`/api/blog/post/${postId}`); // 假设这个 API 返回完整的 post 数据，包括新设置
-        if (!response.ok) throw new Error('API响应异常');
-        postData = await response.json();
+        // 先尝试从KV数据库API加载
+        const response = await fetch(`/api/blog/post/${postId}`);
+        
+        if (!response.ok) {
+            throw new Error('API响应异常');
+        }
+        
+        const post = await response.json();
         blogDataSource = 'kv';
+        updateDataSourceIndicator();
+        displayPostDetails(post);
+        // 加载评论并初始化评论表单
+        await loadComments(postId);
+        initializeCommentForm(postId);
     } catch (error) {
-        console.warn('从API加载文章失败，尝试从JSON文件加载:', error);
+        console.warn('从KV数据库加载文章失败，尝试从JSON文件加载:', error);
+        
         try {
-            // 从本地 JSON 加载
+            // 如果从KV加载失败，则从本地JSON文件加载所有文章
             const response = await fetch('../data/blog.json');
-            if (!response.ok) throw new Error('JSON文件响应异常');
+            
+            if (!response.ok) {
+                throw new Error('JSON文件响应异常');
+            }
+            
             const allPosts = await response.json();
-            postData = allPosts.find(p => p.id === postId);
-            if (!postData) throw new Error('在JSON中找不到指定ID的文章');
+            const post = allPosts.find(p => p.id === postId);
+            
+            if (!post) {
+                throw new Error('找不到指定ID的文章');
+            }
+            
             blogDataSource = 'json';
-        } catch (jsonError) {
-            console.error('加载文章详情失败:', jsonError);
+            updateDataSourceIndicator();
+            displayPostDetails(post);
+        } catch (error) {
+            console.error('加载文章详情失败:', error);
             showError('找不到指定的文章或加载出错', postDetailsContainer);
-            return; // 加载失败，直接返回
         }
     }
-
-    // 确保有 postData
-    if (!postData) {
-         showError('无法加载文章数据', postDetailsContainer);
-         return;
-    }
-    
-    // 更新数据源指示器
-    updateDataSourceIndicator();
-    // 显示文章详情及处理评论区
-    displayPostDetails(postData); 
-    // 不再在这里单独调用 loadComments 和 initializeCommentForm
 }
 
 /**
@@ -162,10 +168,7 @@ async function loadPostDetails() {
  */
 function displayPostDetails(post) {
     const postDetailsContainer = document.getElementById('blog-post-details');
-    const commentsSection = document.getElementById('comments-section'); // 获取整个评论区
-    const commentFormContainer = document.getElementById('comment-form')?.parentElement; // 获取评论表单的容器
-
-    if (!postDetailsContainer || !commentsSection) return;
+    if (!postDetailsContainer) return;
     
     // 更新页面标题
     document.title = `${post.title} - 个人网站`;
@@ -245,27 +248,6 @@ function displayPostDetails(post) {
         // 这部分需要额外加载所有文章数据
         loadRelatedPosts(post.references);
     }
-
-    // --- 控制评论区显示 ---
-    const commentsEnabled = post.commentsEnabled ?? true; // 处理旧数据
-    if (commentsEnabled) {
-        commentsSection.style.display = 'block'; // 显示整个评论区
-        if (commentFormContainer) {
-            commentFormContainer.style.display = 'block'; // 显示评论表单
-        }
-        // 异步加载评论并初始化表单
-        loadComments(post.id);
-        initializeCommentForm(post.id);
-    } else {
-        commentsSection.style.display = 'block'; // 仍然显示评论区标题和列表
-        if (commentFormContainer) {
-            commentFormContainer.innerHTML = '<div class="alert alert-info">此文章已关闭评论。</div>'; // 隐藏表单并显示提示
-            commentFormContainer.style.display = 'block';
-        }
-        // 只加载已有的评论，不初始化表单
-        loadComments(post.id);
-    }
-    // ------
 }
 
 /**

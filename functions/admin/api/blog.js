@@ -83,10 +83,7 @@ async function handleCreate(context) {
             date: new Date(newPostData.date).toISOString(), 
              // Ensure attachments and references are arrays if not provided
             attachments: newPostData.attachments || [],
-            references: newPostData.references || [],
-            // 设置评论和审核的默认值（如果前端未提供）
-            commentsEnabled: newPostData.commentsEnabled ?? true, 
-            moderationEnabled: newPostData.moderationEnabled ?? true
+            references: newPostData.references || []
         };
 
         posts.push(newPost);
