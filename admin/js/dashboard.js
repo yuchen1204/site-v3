@@ -370,12 +370,15 @@ function showBlogEditor(post = null) {
     const categoryInput = document.getElementById('blog-category');
     const dateInput = document.getElementById('blog-date');
     const contentInput = document.getElementById('blog-content');
+    const commentsEnabledInput = document.getElementById('blog-comments-enabled');
+    const moderationEnabledInput = document.getElementById('blog-moderation-enabled');
     const attachmentsEditor = document.getElementById('blog-attachments-editor');
     const referencesEditor = document.getElementById('blog-references-editor');
     const saveStatus = document.getElementById('blog-save-status');
 
     if (!listContainer || !editorContainer || !editorTitle || !form || !blogIdInput || 
         !titleInput || !categoryInput || !dateInput || !contentInput || 
+        !commentsEnabledInput || !moderationEnabledInput || // 检查新元素
         !attachmentsEditor || !referencesEditor || !saveStatus) return;
 
     listContainer.style.display = 'none';
@@ -394,6 +397,10 @@ function showBlogEditor(post = null) {
         dateInput.value = post.date ? new Date(post.date).toISOString().slice(0, 16) : '';
         contentInput.value = post.content || '';
 
+        // 加载评论设置，处理旧数据可能没有这些字段的情况
+        commentsEnabledInput.checked = post.commentsEnabled ?? true; 
+        moderationEnabledInput.checked = post.moderationEnabled ?? true;
+
         // 填充附件
         if (post.attachments && Array.isArray(post.attachments)) {
             post.attachments.forEach(att => addAttachmentInputGroup(attachmentsEditor, att.url, att.type, att.filename));
@@ -410,6 +417,9 @@ function showBlogEditor(post = null) {
         blogIdInput.value = ''; // 确保 ID 为空
         // 可以设置默认日期为当前时间
         dateInput.value = new Date().toISOString().slice(0, 16);
+        // 设置评论开关的默认状态为 true
+        commentsEnabledInput.checked = true;
+        moderationEnabledInput.checked = true;
         // 添加一个空的附件和引用输入（可选）
         // addAttachmentInputGroup(attachmentsEditor);
         // addReferenceInputGroup(referencesEditor);
