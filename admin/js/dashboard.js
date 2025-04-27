@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeAdminSidebar();
     initializeProfileEditor(); // 初始化个人资料编辑器
     initializeBlogEditor(); // 初始化博客编辑器
+    initializeCommentManager(); // 初始化评论管理功能
 });
 
 /**
@@ -774,4 +775,278 @@ function escapeHTML(str) {
         };
         return entityMap[s];
     });
+}
+
+// 评论管理相关代码
+let commentsState = {
+    comments: [],
+    filteredComments: [],
+    currentPage: 1,
+    itemsPerPage: 10,
+    totalPages: 1,
+    totalItems: 0,
+    searchKeyword: ''
+};
+
+/**
+ * 初始化评论管理功能
+ */
+function initializeCommentManager() {
+    // 检查评论管理区域是否存在
+    const commentsSection = document.getElementById('manage-comments');
+    if (!commentsSection) return;
+
+    // 初始化按钮和事件监听器
+    const refreshButton = document.getElementById('refresh-comments-button');
+    const prevPageButton = document.getElementById('prev-page-button');
+    const nextPageButton = document.getElementById('next-page-button');
+    const searchInput = document.getElementById('comment-search');
+    const searchButton = document.getElementById('comment-search-button');
+
+    if (refreshButton) {
+        refreshButton.addEventListener('click', () => {
+            loadComments(1);
+        });
+    }
+
+    if (prevPageButton) {
+        prevPageButton.addEventListener('click', () => {
+            if (commentsState.currentPage > 1) {
+                loadComments(commentsState.currentPage - 1);
+            }
+        });
+    }
+
+    if (nextPageButton) {
+        nextPageButton.addEventListener('click', () => {
+            if (commentsState.currentPage < commentsState.totalPages) {
+                loadComments(commentsState.currentPage + 1);
+            }
+        });
+    }
+
+    if (searchInput && searchButton) {
+        // 搜索按钮点击事件
+        searchButton.addEventListener('click', () => {
+            commentsState.searchKeyword = searchInput.value.trim().toLowerCase();
+            filterAndDisplayComments();
+        });
+
+        // 搜索框回车事件
+        searchInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                commentsState.searchKeyword = searchInput.value.trim().toLowerCase();
+                filterAndDisplayComments();
+            }
+        });
+    }
+
+    // 检查激活的区域，如果是评论管理区域则加载评论
+    const activeSectionId = document.querySelector('.admin-section.active')?.id;
+    if (activeSectionId === 'manage-comments') {
+        loadComments(1);
+    }
+}
+
+/**
+ * 加载评论列表
+ * @param {number} page - 页码
+ */
+async function loadComments(page = 1) {
+    const commentsListTbody = document.getElementById('comments-list-tbody');
+    if (!commentsListTbody) return;
+
+    // 显示加载中
+    commentsListTbody.innerHTML = '<tr><td colspan="6" class="text-center">加载中...</td></tr>';
+    commentsState.currentPage = page;
+
+    try {
+        // 从 API 获取评论数据
+        const response = await fetch(`/api/comments/all?page=${page}&limit=${commentsState.itemsPerPage}`);
+        if (!response.ok) {
+            throw new Error(`加载评论失败: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        commentsState.comments = data.comments;
+        commentsState.totalItems = data.pagination.total;
+        commentsState.totalPages = data.pagination.totalPages;
+
+        // 应用过滤器
+        filterAndDisplayComments();
+
+        // 更新分页信息
+        updatePaginationControls();
+
+    } catch (error) {
+        console.error('加载评论失败:', error);
+        commentsListTbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
+    }
+}
+
+/**
+ * 根据搜索关键词过滤并显示评论
+ */
+function filterAndDisplayComments() {
+    const commentsListTbody = document.getElementById('comments-list-tbody');
+    if (!commentsListTbody) return;
+
+    // 过滤评论
+    if (commentsState.searchKeyword) {
+        commentsState.filteredComments = commentsState.comments.filter(comment => {
+            const searchFields = [
+                comment.author,
+                comment.text,
+                comment.postTitle
+            ].map(field => (field || '').toLowerCase());
+
+            return searchFields.some(field => field.includes(commentsState.searchKeyword));
+        });
+    } else {
+        commentsState.filteredComments = [...commentsState.comments];
+    }
+
+    // 如果没有评论
+    if (commentsState.filteredComments.length === 0) {
+        commentsListTbody.innerHTML = '<tr><td colspan="6" class="text-center">没有找到评论</td></tr>';
+        return;
+    }
+
+    // 显示过滤后的评论
+    commentsListTbody.innerHTML = commentsState.filteredComments.map((comment, index) => {
+        // 格式化日期
+        const date = new Date(comment.timestamp);
+        const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+        // 截断评论内容，如果太长
+        const maxContentLength = 100;
+        let displayContent = escapeHTML(comment.text || '');
+        if (displayContent.length > maxContentLength) {
+            displayContent = displayContent.substring(0, maxContentLength) + '...';
+        }
+
+        // 构建评论显示行
+        return `
+            <tr data-comment-id="${comment.id}" data-post-id="${comment.postId}">
+                <td>${(commentsState.currentPage - 1) * commentsState.itemsPerPage + index + 1}</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        ${comment.emailHash ? 
+                            `<img src="https://www.gravatar.com/avatar/${comment.emailHash}?s=30&d=identicon" 
+                                 class="rounded-circle me-2" alt="${escapeHTML(comment.author)}" width="30" height="30">` : ''}
+                        <span>${escapeHTML(comment.author || '')}</span>
+                    </div>
+                </td>
+                <td>
+                    <a href="/blog/index.html?id=${comment.postId}" target="_blank" class="link-primary">
+                        ${escapeHTML(comment.postTitle || `文章 #${comment.postId}`)}
+                    </a>
+                </td>
+                <td>${displayContent}</td>
+                <td>${formattedDate}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger delete-comment-btn" 
+                            data-comment-id="${comment.id}" data-post-id="${comment.postId}"
+                            data-comment-author="${escapeHTML(comment.author || '')}">
+                        <i class="bi bi-trash"></i> 删除
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    // 添加删除按钮的事件监听器
+    attachDeleteCommentListeners();
+}
+
+/**
+ * 更新分页控件
+ */
+function updatePaginationControls() {
+    // 更新页码显示
+    const currentPageElement = document.getElementById('current-page');
+    const totalPagesElement = document.getElementById('total-pages');
+    if (currentPageElement) currentPageElement.textContent = commentsState.currentPage;
+    if (totalPagesElement) totalPagesElement.textContent = commentsState.totalPages;
+
+    // 更新分页范围信息
+    const startElement = document.getElementById('pagination-start');
+    const endElement = document.getElementById('pagination-end');
+    const totalElement = document.getElementById('pagination-total');
+
+    if (startElement && endElement && totalElement && commentsState.filteredComments.length > 0) {
+        const start = (commentsState.currentPage - 1) * commentsState.itemsPerPage + 1;
+        const end = Math.min(start + commentsState.filteredComments.length - 1, commentsState.totalItems);
+        
+        startElement.textContent = start;
+        endElement.textContent = end;
+        totalElement.textContent = commentsState.totalItems;
+    }
+
+    // 更新上一页/下一页按钮状态
+    const prevButton = document.getElementById('prev-page-button');
+    const nextButton = document.getElementById('next-page-button');
+
+    if (prevButton) {
+        prevButton.disabled = commentsState.currentPage <= 1;
+    }
+
+    if (nextButton) {
+        nextButton.disabled = commentsState.currentPage >= commentsState.totalPages;
+    }
+}
+
+/**
+ * 添加删除评论按钮的事件监听器
+ */
+function attachDeleteCommentListeners() {
+    const deleteButtons = document.querySelectorAll('.delete-comment-btn');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', async function() {
+            const commentId = this.getAttribute('data-comment-id');
+            const postId = this.getAttribute('data-post-id');
+            const author = this.getAttribute('data-comment-author');
+
+            // 使用确认对话框
+            if (window.confirm(`确定要删除 ${author} 的评论吗？此操作不可撤销。`)) {
+                await deleteComment(postId, commentId);
+            }
+        });
+    });
+}
+
+/**
+ * 删除评论
+ * @param {string} postId - 文章ID
+ * @param {string} commentId - 评论ID
+ */
+async function deleteComment(postId, commentId) {
+    try {
+        const response = await fetch('/api/comments/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ postId, commentId })
+        });
+
+        if (!response.ok) {
+            throw new Error(`删除失败: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+            // 显示成功消息
+            createToast('评论已成功删除', 'success');
+            
+            // 重新加载当前页的评论
+            loadComments(commentsState.currentPage);
+        } else {
+            throw new Error(result.message || '删除失败');
+        }
+    } catch (error) {
+        console.error('删除评论时出错:', error);
+        createToast(`删除失败: ${error.message}`, 'danger');
+    }
 } 
