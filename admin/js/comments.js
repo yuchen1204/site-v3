@@ -4,6 +4,52 @@ let currentPage = 1;
 const PAGE_SIZE = 10;
 let allComments = [];
 
+/**
+ * 显示通知提示
+ * @param {string} title - 标题
+ * @param {string} message - 消息内容
+ * @param {string} type - 提示类型（success, error, warning, info）
+ */
+function showToast(title, message, type = 'info') {
+    // 检查是否已经存在全局showToast函数
+    if (window.showToast && typeof window.showToast === 'function') {
+        window.showToast(title, message, type);
+        return;
+    }
+    
+    // 创建自己的toast元素
+    const toastContainer = document.createElement('div');
+    toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+    toastContainer.style.zIndex = '9999';
+    
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <strong>${title}</strong>: ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="关闭"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    document.body.appendChild(toastContainer);
+    
+    // 初始化 Toast
+    const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+    bsToast.show();
+    
+    // 设置自动移除
+    setTimeout(() => {
+        toastContainer.remove();
+    }, 3500);
+}
+
 // 初始化评论管理功能
 async function initializeCommentManagement() {
     // 绑定筛选按钮事件
@@ -28,7 +74,8 @@ async function initializeCommentManagement() {
 // 加载所有评论
 async function loadAllComments() {
     try {
-        const response = await fetch('/api/blog/posts');
+        // 先加载文章列表
+        const response = await fetch('/admin/api/blog');
         if (!response.ok) throw new Error('加载文章列表失败');
         const posts = await response.json();
         
@@ -47,7 +94,8 @@ async function loadAllComments() {
             }
         }
     } catch (error) {
-        showToast('错误', '加载评论失败：' + error.message);
+        console.error('加载评论失败:', error);
+        showToast('错误', '加载评论失败：' + error.message, 'danger');
     }
 }
 
@@ -72,7 +120,7 @@ function displayFilteredComments() {
             <td>${escapeHtml(comment.postTitle)}</td>
             <td>${escapeHtml(comment.name)}</td>
             <td>${escapeHtml(comment.content)}</td>
-            <td>${new Date(comment.timestamp).toLocaleString()}</td>
+            <td>${new Date(comment.createdAt || comment.timestamp).toLocaleString()}</td>
             <td>
                 <span class="badge ${getStatusBadgeClass(comment.status)}">
                     ${getStatusText(comment.status)}
@@ -109,8 +157,8 @@ function bindCommentActions() {
     document.querySelectorAll('.btn-approve').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const row = e.target.closest('tr');
-            const commentId = row.dataset.commentId;
-            const postId = row.dataset.postId;
+            const commentId = parseInt(row.dataset.commentId);
+            const postId = parseInt(row.dataset.postId);
             await updateCommentStatus(postId, commentId, 'approved');
         });
     });
@@ -119,8 +167,8 @@ function bindCommentActions() {
     document.querySelectorAll('.btn-reject').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const row = e.target.closest('tr');
-            const commentId = row.dataset.commentId;
-            const postId = row.dataset.postId;
+            const commentId = parseInt(row.dataset.commentId);
+            const postId = parseInt(row.dataset.postId);
             await updateCommentStatus(postId, commentId, 'rejected');
         });
     });
@@ -131,8 +179,8 @@ function bindCommentActions() {
             if (!confirm('确定要删除这条评论吗？')) return;
             
             const row = e.target.closest('tr');
-            const commentId = row.dataset.commentId;
-            const postId = row.dataset.postId;
+            const commentId = parseInt(row.dataset.commentId);
+            const postId = parseInt(row.dataset.postId);
             await deleteComment(postId, commentId);
         });
     });
@@ -155,15 +203,17 @@ async function updateCommentStatus(postId, commentId, status) {
         
         // 刷新显示
         displayFilteredComments();
-        showToast('成功', '评论状态已更新');
+        showToast('成功', '评论状态已更新', 'success');
     } catch (error) {
-        showToast('错误', error.message);
+        console.error('更新评论状态失败:', error);
+        showToast('错误', error.message, 'danger');
     }
 }
 
 // 删除评论
 async function deleteComment(postId, commentId) {
     try {
+        // 使用URL参数传递commentId
         const response = await fetch(`/admin/api/blog/comments/${postId}?commentId=${commentId}`, {
             method: 'DELETE'
         });
@@ -171,13 +221,14 @@ async function deleteComment(postId, commentId) {
         if (!response.ok) throw new Error('删除评论失败');
         
         // 更新本地数据
-        allComments = allComments.filter(c => c.id !== commentId);
+        allComments = allComments.filter(c => c.id !== parseInt(commentId));
         
         // 刷新显示
         displayFilteredComments();
-        showToast('成功', '评论已删除');
+        showToast('成功', '评论已删除', 'success');
     } catch (error) {
-        showToast('错误', error.message);
+        console.error('删除评论失败:', error);
+        showToast('错误', error.message, 'danger');
     }
 }
 
