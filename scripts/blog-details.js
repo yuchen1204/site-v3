@@ -131,6 +131,9 @@ async function loadPostDetails() {
         blogDataSource = 'kv';
         updateDataSourceIndicator();
         displayPostDetails(post);
+        // 加载评论并初始化评论表单
+        await loadComments(postId);
+        initializeCommentForm(postId);
     } catch (error) {
         console.warn('从KV数据库加载文章失败，尝试从JSON文件加载:', error);
         
@@ -366,6 +369,113 @@ function formatDate(date) {
         console.error('日期格式化出错:', e);
         return '';
     }
+}
+
+/**
+ * 加载评论列表
+ * @param {number} postId - 文章ID
+ */
+async function loadComments(postId) {
+    const commentsContainer = document.getElementById('comments-list');
+    if (!commentsContainer) return;
+
+    try {
+        const response = await fetch(`/api/blog/comments/${postId}`);
+        if (!response.ok) {
+            throw new Error('获取评论失败');
+        }
+
+        const comments = await response.json();
+        displayComments(comments.filter(comment => comment.status === 'approved'));
+    } catch (error) {
+        console.error('加载评论失败:', error);
+        commentsContainer.innerHTML = '<div class="alert alert-warning">加载评论失败，请稍后重试。</div>';
+    }
+}
+
+/**
+ * 显示评论列表
+ * @param {Array} comments - 评论数组
+ */
+function displayComments(comments) {
+    const commentsContainer = document.getElementById('comments-list');
+    if (!commentsContainer) return;
+
+    if (comments.length === 0) {
+        commentsContainer.innerHTML = '<div class="no-comments">暂无评论，来说两句吧~</div>';
+        return;
+    }
+
+    const commentsHTML = comments.map(comment => `
+        <div class="comment-item" data-comment-id="${comment.id}">
+            <div class="comment-header">
+                <span class="comment-author">${escapeHTML(comment.name)}</span>
+                <span class="comment-date">${formatDate(new Date(comment.createdAt))}</span>
+            </div>
+            <div class="comment-content">${escapeHTML(comment.content)}</div>
+        </div>
+    `).join('');
+
+    commentsContainer.innerHTML = commentsHTML;
+}
+
+/**
+ * 初始化评论表单
+ * @param {number} postId - 文章ID
+ */
+function initializeCommentForm(postId) {
+    const form = document.getElementById('comment-form');
+    const statusSpan = document.getElementById('comment-status');
+
+    if (!form || !statusSpan) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const nameInput = document.getElementById('commenter-name');
+        const emailInput = document.getElementById('commenter-email');
+        const contentInput = document.getElementById('comment-content');
+        const submitButton = form.querySelector('button[type="submit"]');
+
+        if (!nameInput || !emailInput || !contentInput) return;
+
+        // 禁用表单
+        submitButton.disabled = true;
+        statusSpan.textContent = '提交中...';
+
+        try {
+            const response = await fetch(`/api/blog/comments/${postId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: nameInput.value.trim(),
+                    email: emailInput.value.trim(),
+                    content: contentInput.value.trim()
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || '提交评论失败');
+            }
+
+            // 清空表单
+            form.reset();
+            statusSpan.textContent = '评论提交成功，等待审核';
+            setTimeout(() => {
+                statusSpan.textContent = '';
+            }, 3000);
+
+        } catch (error) {
+            console.error('提交评论失败:', error);
+            statusSpan.textContent = error.message;
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
 }
 
 // SVG Icons - 添加图标

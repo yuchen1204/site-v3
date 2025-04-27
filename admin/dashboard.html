@@ -58,6 +58,12 @@
                         <span class="admin-sidebar-text">编辑博客文章</span>
                     </a>
                 </li>
+                <li class="admin-sidebar-item">
+                    <a href="#" class="admin-sidebar-link" data-section="manage-comments">
+                        <i class="bi bi-chat-dots admin-sidebar-icon"></i>
+                        <span class="admin-sidebar-text">评论管理</span>
+                    </a>
+                </li>
             </ul>
         </nav>
     </aside>
@@ -194,6 +200,44 @@
                     </form>
                 </div>
 
+            </section>
+
+            <!-- 评论管理部分 -->
+            <section id="manage-comments" class="admin-section">
+                <h1 class="h2">评论管理</h1>
+                
+                <!-- 评论筛选 -->
+                <div class="mb-3">
+                    <div class="btn-group" role="group" aria-label="评论状态筛选">
+                        <button type="button" class="btn btn-outline-primary active" data-filter="all">全部</button>
+                        <button type="button" class="btn btn-outline-warning" data-filter="pending">待审核</button>
+                        <button type="button" class="btn btn-outline-success" data-filter="approved">已通过</button>
+                        <button type="button" class="btn btn-outline-danger" data-filter="rejected">已拒绝</button>
+                    </div>
+                </div>
+
+                <!-- 评论列表 -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>文章</th>
+                                <th>评论者</th>
+                                <th>内容</th>
+                                <th>时间</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comments-list-tbody">
+                            <!-- 评论列表将动态加载到这里 -->
+                            <tr><td colspan="6" class="text-center">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 分页控件 -->
+                <div id="comments-pagination" class="d-flex justify-content-center mt-3"></div>
             </section>
         </div>
     </main>
