@@ -1101,93 +1101,142 @@ body.dark-mode .breadcrumb-item.active {
 }
 
 /* 评论区样式 */
-#comment-section {
-    /* 可以在这里添加特定于评论区的背景色或边框等 */
+.comments-section {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    background-color: var(--blog-post-bg-light);
+    border-radius: 0.8rem;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+    transition: background-color 0.3s ease;
 }
 
-.comment-list {
-    /* 评论列表容器样式 */
+body.dark-mode .comments-section {
+    background-color: var(--blog-post-bg-dark);
+}
+
+.comments-title {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-color-light);
+    border-left: 4px solid var(--name-color-light);
+    padding-left: 1rem;
+}
+
+body.dark-mode .comments-title {
+    color: var(--text-color-dark);
+    border-left-color: var(--name-color-dark);
+}
+
+.comment-form-container {
+    padding: 1.5rem;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+body.dark-mode .comment-form-container {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.comment-form label {
+    color: var(--text-color-light);
+    font-weight: 500;
+}
+
+body.dark-mode .comment-form label {
+    color: var(--text-color-dark);
 }
 
 .comment-item {
     padding: 1rem;
     margin-bottom: 1rem;
-    background-color: var(--profile-bg-light);
     border-radius: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.02);
     border-left: 3px solid var(--name-color-light);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    display: flex; /* 使用 flex 布局 */
-    gap: 0.75rem; /* 头像和内容的间距 */
+    transition: background-color 0.3s ease;
 }
 
-.comment-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    flex-shrink: 0; /* 防止头像被压缩 */
-    object-fit: cover; /* 确保图片填满 */
-    background-color: #eee; /* 占位背景色 */
-}
-
-.comment-content {
-    flex-grow: 1; /* 内容区域占据剩余空间 */
+body.dark-mode .comment-item {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-left-color: var(--name-color-dark);
 }
 
 .comment-header {
     display: flex;
-    align-items: center;
-    gap: 0.5rem; /* 昵称和时间的间距 */
-    margin-bottom: 0.25rem; /* 调整头部和文本的间距 */
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
 }
 
 .comment-author {
     font-weight: 600;
-    color: var(--body-color-light);
-    /* margin-right: 0.5rem; */ /* 由 flex gap 控制 */
-}
-
-.comment-timestamp {
-    font-size: 0.8rem;
-    color: var(--motto-color-light);
-}
-
-.comment-text {
-    margin-top: 0.5rem;
-    line-height: 1.6;
-    color: var(--body-color-light);
-}
-
-#comment-form-feedback {
-    font-size: 0.9rem;
-}
-
-#comment-form-feedback.success {
-    color: green;
-}
-
-#comment-form-feedback.error {
-    color: red;
-}
-
-/* 深色模式评论区 */
-body.dark-mode .comment-item {
-    background-color: var(--profile-bg-dark);
-    border-left-color: var(--name-color-dark);
-    box-shadow: 0 1px 3px rgba(255,255,255,0.05);
-}
-
-body.dark-mode .comment-avatar {
-    background-color: #444; /* 深色模式占位背景色 */
+    color: var(--name-color-light);
 }
 
 body.dark-mode .comment-author {
-    color: var(--body-color-dark);
+    color: var(--name-color-dark);
 }
 
-body.dark-mode .comment-timestamp {
-    color: var(--motto-color-dark);
+.comment-date {
+    color: var(--text-secondary-light);
+    font-size: 0.85rem;
 }
 
-body.dark-mode .comment-text {
-    color: var(--body-color-dark);
+body.dark-mode .comment-date {
+    color: var(--text-secondary-dark);
+}
+
+.comment-content {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--text-color-light);
+    word-break: break-word;
+}
+
+body.dark-mode .comment-content {
+    color: var(--text-color-dark);
+}
+
+.comments-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+.comments-pagination .pagination {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.comments-pagination .page-link {
+    color: var(--text-color-light);
+    background-color: rgba(0, 0, 0, 0.03);
+    border: none;
+    border-radius: 0.3rem;
+    padding: 0.4rem 0.8rem;
+}
+
+body.dark-mode .comments-pagination .page-link {
+    color: var(--text-color-dark);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.comments-pagination .page-item.active .page-link {
+    color: #fff;
+    background-color: var(--name-color-light);
+}
+
+body.dark-mode .comments-pagination .page-item.active .page-link {
+    background-color: var(--name-color-dark);
+}
+
+.no-comments-message {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary-light);
+    font-style: italic;
+}
+
+body.dark-mode .no-comments-message {
+    color: var(--text-secondary-dark);
 }

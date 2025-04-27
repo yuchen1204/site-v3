@@ -62,42 +62,45 @@
                                 </div>
                             </div>
                         </div>
-
+                        
                         <!-- 评论区 -->
-                        <div id="comment-section" class="mt-5 pt-4 border-top">
-                            <h3 class="mb-4">评论区</h3>
-
-                            <!-- 评论表单 -->
-                            <form id="comment-form" class="mb-4">
-                                <div class="mb-3">
-                                    <label for="comment-author" class="form-label">昵称 <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="comment-author" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="comment-email" class="form-label">邮箱 <span class="text-danger">*</span> (用于获取头像, 不会公开显示)</label>
-                                    <input type="email" class="form-control" id="comment-email" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="comment-text" class="form-label">评论内容 <span class="text-danger">*</span></label>
-                                    <textarea class="form-control" id="comment-text" rows="3" required></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-primary">提交评论</button>
-                                <div id="comment-form-feedback" class="mt-2"></div>
-                            </form>
-
+                        <div id="comments-section" class="comments-section mt-5">
+                            <h3 class="comments-title">评论</h3>
+                            
+                            <!-- 发表评论表单 -->
+                            <div class="comment-form-container">
+                                <form id="comment-form" class="comment-form">
+                                    <div class="mb-3">
+                                        <label for="comment-name" class="form-label">昵称</label>
+                                        <input type="text" class="form-control" id="comment-name" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="comment-email" class="form-label">邮箱（不会公开）</label>
+                                        <input type="email" class="form-control" id="comment-email" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="comment-content" class="form-label">评论内容</label>
+                                        <textarea class="form-control" id="comment-content" rows="3" required></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">提交评论</button>
+                                </form>
+                            </div>
+                            
                             <!-- 评论列表 -->
-                            <h4>已有评论</h4>
-                            <div id="comment-list" class="comment-list">
+                            <div id="comments-list" class="comments-list mt-4">
                                 <!-- 评论将通过 JavaScript 动态加载 -->
-                                <div class="text-center my-3">
+                                <div class="text-center my-3 comments-loading">
                                     <div class="spinner-border spinner-border-sm text-secondary" role="status">
                                         <span class="visually-hidden">加载评论中...</span>
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- 分页控制 -->
+                            <div id="comments-pagination" class="comments-pagination mt-3">
+                                <!-- 分页将通过 JavaScript 动态加载 -->
+                            </div>
                         </div>
-                        <!-- 评论区结束 -->
-
                     </div>
                 </div>
             </div>

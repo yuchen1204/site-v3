@@ -4,11 +4,13 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeThemeToggle(); // 初始化主题切换按钮
     initializeSidebar(); // 初始化侧边栏
     loadPostDetails(); // 加载文章详情
+    initializeComments(); // 初始化评论区
 });
 
 // 跟踪数据来源
 let blogDataSource = '';
-let currentPostId = null; // 全局变量存储当前文章ID
+// 当前文章ID
+let currentPostId = null;
 
 /**
  * 初始化主题切换功能
@@ -105,7 +107,7 @@ function setupSidebarLinks() {
 }
 
 /**
- * 从URL中获取文章ID并加载文章详情和评论
+ * 从URL中获取文章ID并加载文章详情
  */
 async function loadPostDetails() {
     const postDetailsContainer = document.getElementById('blog-post-details');
@@ -114,7 +116,7 @@ async function loadPostDetails() {
     // 从URL中获取文章ID
     const urlParams = new URLSearchParams(window.location.search);
     const postId = parseInt(urlParams.get('id'), 10);
-    currentPostId = postId; // 存储文章ID
+    currentPostId = postId;
     
     if (isNaN(postId)) {
         showError('无效的文章ID', postDetailsContainer);
@@ -122,7 +124,7 @@ async function loadPostDetails() {
     }
     
     try {
-        // 先尝试从KV数据库API加载文章
+        // 先尝试从KV数据库API加载
         const response = await fetch(`/api/blog/post/${postId}`);
         
         if (!response.ok) {
@@ -132,9 +134,7 @@ async function loadPostDetails() {
         const post = await response.json();
         blogDataSource = 'kv';
         updateDataSourceIndicator();
-        displayPostDetails(post); // 显示文章详情
-        loadComments(postId); // 加载评论
-        setupCommentForm(postId); // 设置评论表单
+        displayPostDetails(post);
     } catch (error) {
         console.warn('从KV数据库加载文章失败，尝试从JSON文件加载:', error);
         
@@ -155,13 +155,10 @@ async function loadPostDetails() {
             
             blogDataSource = 'json';
             updateDataSourceIndicator();
-            displayPostDetails(post); // 显示文章详情
-            // 注意：从JSON加载时，评论功能可能不可用，因为没有后端API
-            disableCommentSection("评论功能仅在API模式下可用");
+            displayPostDetails(post);
         } catch (error) {
             console.error('加载文章详情失败:', error);
             showError('找不到指定的文章或加载出错', postDetailsContainer);
-            disableCommentSection("文章加载失败，无法使用评论功能");
         }
     }
 }
@@ -375,253 +372,6 @@ function formatDate(date) {
     }
 }
 
-/**
- * 禁用评论区
- * @param {string} message - 显示的消息
- */
-function disableCommentSection(message) {
-    const commentSection = document.getElementById('comment-section');
-    if (commentSection) {
-        commentSection.innerHTML = `<p class="text-muted text-center"><em>${message}</em></p>`;
-    }
-}
-
-/**
- * 加载指定文章的评论
- * @param {number} postId - 文章ID
- */
-async function loadComments(postId) {
-    const commentListContainer = document.getElementById('comment-list');
-    if (!commentListContainer) return;
-
-    commentListContainer.innerHTML = `
-        <div class="text-center my-3">
-            <div class="spinner-border spinner-border-sm text-secondary" role="status">
-                <span class="visually-hidden">加载评论中...</span>
-            </div>
-        </div>
-    `;
-
-    try {
-        const response = await fetch(`/api/comments/${postId}`);
-        if (!response.ok) {
-            throw new Error('获取评论失败');
-        }
-        const comments = await response.json();
-        displayComments(comments);
-    } catch (error) {
-        console.error('加载评论出错:', error);
-        commentListContainer.innerHTML = '<p class="text-danger">加载评论失败，请稍后重试。</p>';
-    }
-}
-
-/**
- * 显示评论列表
- * @param {Array} comments - 评论数组
- */
-function displayComments(comments) {
-    const commentListContainer = document.getElementById('comment-list');
-    if (!commentListContainer) return;
-
-    if (!comments || comments.length === 0) {
-        commentListContainer.innerHTML = '<p class="text-muted">暂无评论，快来抢沙发吧！</p>';
-        return;
-    }
-
-    commentListContainer.innerHTML = comments.map(comment => {
-        // 构建 Gravatar URL
-        const gravatarSize = 40;
-        const gravatarDefault = 'identicon'; // 可以换成 'mp', 'retro', 'robohash' 等
-        const gravatarUrl = comment.emailHash
-            ? `https://www.gravatar.com/avatar/${comment.emailHash}?s=${gravatarSize}&d=${encodeURIComponent(gravatarDefault)}`
-            : `https://www.gravatar.com/avatar/?s=${gravatarSize}&d=${encodeURIComponent(gravatarDefault)}`; // Fallback if no hash
-
-        return `
-        <div class="comment-item">
-            <img src="${gravatarUrl}" alt="${escapeHtml(comment.author)} 头像" class="comment-avatar">
-            <div class="comment-content">
-                <div class="comment-header">
-                    <span class="comment-author">${escapeHtml(comment.author)}</span>
-                    <span class="comment-timestamp">${formatRelativeTime(new Date(comment.timestamp))}</span>
-                </div>
-                <div class="comment-text">${escapeHtml(comment.text)}</div>
-            </div>
-        </div>
-    `}).join('');
-}
-
-/**
- * 设置评论表单提交事件
- * @param {number} postId - 文章ID
- */
-function setupCommentForm(postId) {
-    const commentForm = document.getElementById('comment-form');
-    const authorInput = document.getElementById('comment-author');
-    const emailInput = document.getElementById('comment-email'); // 获取 email 输入框
-    const textInput = document.getElementById('comment-text');
-    const feedbackDiv = document.getElementById('comment-form-feedback');
-    const submitButton = commentForm.querySelector('button[type="submit"]');
-
-    if (!commentForm || !authorInput || !emailInput || !textInput || !feedbackDiv || !submitButton) return;
-
-    commentForm.addEventListener('submit', async (event) => {
-        event.preventDefault(); // 阻止表单默认提交行为
-
-        const author = authorInput.value.trim();
-        const email = emailInput.value.trim(); // 获取 email 值
-        const text = textInput.value.trim();
-
-        if (!author || !email || !text) { // 检查 email 是否为空
-            showFeedback('昵称、邮箱和评论内容不能为空！', 'error');
-            return;
-        }
-
-        // 简单的客户端邮箱格式验证 (可选，后端已有验证)
-        if (!/\S+@\S+\.\S+/.test(email)) {
-            showFeedback('请输入有效的邮箱地址！', 'error');
-            return;
-        }
-
-        // 禁用按钮，防止重复提交
-        submitButton.disabled = true;
-        submitButton.textContent = '提交中...';
-        showFeedback('', ''); // 清除之前的反馈
-
-        try {
-            const response = await fetch('/api/comments', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    postId: postId,
-                    author: author,
-                    email: email, // 发送 email 到后端
-                    text: text
-                }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.text();
-                throw new Error(errorData || '提交评论失败');
-            }
-
-            const result = await response.json();
-
-            if (result.success && result.comment) { // 确保 comment 对象存在
-                showFeedback('评论提交成功！', 'success');
-                commentForm.reset(); // 清空表单
-                addNewCommentToList(result.comment); // 优化：直接添加
-            } else {
-                throw new Error(result.message || '提交评论失败，未返回评论数据');
-            }
-
-        } catch (error) {
-            console.error('提交评论出错:', error);
-            showFeedback(`评论失败: ${error.message}`, 'error');
-        } finally {
-            // 重新启用按钮
-            submitButton.disabled = false;
-            submitButton.textContent = '提交评论';
-        }
-    });
-}
-
-/**
- * 在评论列表顶部添加新评论
- * @param {object} comment - 新评论对象 (应包含 emailHash)
- */
-function addNewCommentToList(comment) {
-    const commentListContainer = document.getElementById('comment-list');
-    if (!commentListContainer) return;
-
-    // 如果之前是"暂无评论"，则清空
-    if (commentListContainer.querySelector('p.text-muted')) {
-        commentListContainer.innerHTML = '';
-    }
-
-    // 构建 Gravatar URL for new comment
-    const gravatarSize = 40;
-    const gravatarDefault = 'identicon';
-    const gravatarUrl = comment.emailHash
-        ? `https://www.gravatar.com/avatar/${comment.emailHash}?s=${gravatarSize}&d=${encodeURIComponent(gravatarDefault)}`
-        : `https://www.gravatar.com/avatar/?s=${gravatarSize}&d=${encodeURIComponent(gravatarDefault)}`; // Fallback
-
-    const commentElement = document.createElement('div');
-    commentElement.className = 'comment-item';
-    commentElement.innerHTML = `
-        <img src="${gravatarUrl}" alt="${escapeHtml(comment.author)} 头像" class="comment-avatar">
-        <div class="comment-content">
-            <div class="comment-header">
-                <span class="comment-author">${escapeHtml(comment.author)}</span>
-                <span class="comment-timestamp">刚刚</span>
-            </div>
-            <div class="comment-text">${escapeHtml(comment.text)}</div>
-        </div>
-    `;
-
-    // 将新评论添加到列表顶部
-    commentListContainer.insertBefore(commentElement, commentListContainer.firstChild);
-}
-
-/**
- * 显示表单反馈信息
- * @param {string} message - 反馈信息
- * @param {'success'|'error'|''} type - 信息类型
- */
-function showFeedback(message, type) {
-    const feedbackDiv = document.getElementById('comment-form-feedback');
-    if (!feedbackDiv) return;
-    feedbackDiv.textContent = message;
-    feedbackDiv.className = `mt-2 ${type}`;
-}
-
-/**
- * 简单的HTML转义函数，防止XSS
- * @param {string} str - 需要转义的字符串
- * @returns {string} 转义后的字符串
- */
-function escapeHtml(str) {
-    if (!str) return '';
-    return str
-         .replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#039;");
- }
-
-/**
- * 将日期格式化为相对时间（例如，"5分钟前"）
- * @param {Date} date - 日期对象
- * @returns {string} 相对时间字符串
- */
-function formatRelativeTime(date) {
-    if (!(date instanceof Date) || isNaN(date)) {
-        return '';
-    }
-    const now = new Date();
-    const diffInSeconds = Math.floor((now - date) / 1000);
-
-    const rtf = new Intl.RelativeTimeFormat('zh-CN', { numeric: 'auto' });
-
-    if (diffInSeconds < 60) {
-        return rtf.format(-diffInSeconds, 'second');
-    } else if (diffInSeconds < 3600) {
-        return rtf.format(-Math.floor(diffInSeconds / 60), 'minute');
-    } else if (diffInSeconds < 86400) {
-        return rtf.format(-Math.floor(diffInSeconds / 3600), 'hour');
-    } else if (diffInSeconds < 2592000) { // 30 days
-        return rtf.format(-Math.floor(diffInSeconds / 86400), 'day');
-    } else if (diffInSeconds < 31536000) { // 365 days
-        return rtf.format(-Math.floor(diffInSeconds / 2592000), 'month');
-    } else {
-        return rtf.format(-Math.floor(diffInSeconds / 31536000), 'year');
-    }
-    // 对于更早的日期，可以考虑显示具体日期
-    // return formatDate(date); // 使用之前的绝对日期格式化
-}
-
 // SVG Icons - 添加图标
 const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-brightness-high-fill" viewBox="0 0 16 16">
 <path d="M12 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708"/>
@@ -629,4 +379,344 @@ const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
 const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-moon-stars-fill" viewBox="0 0 16 16">
 <path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278"/>
 <path d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.73 1.73 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.73 1.73 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.73 1.73 0 0 0 1.097-1.097zM13.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.73 1.73 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162a1.73 1.73 0 0 0-1.097-1.097l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.73 1.73 0 0 0 1.097-1.097z"/>
-</svg>`; 
+</svg>`;
+
+/**
+ * 初始化评论区功能
+ */
+function initializeComments() {
+    // 获取评论表单
+    const commentForm = document.getElementById('comment-form');
+    if (!commentForm) return;
+    
+    // 监听表单提交事件
+    commentForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        submitComment();
+    });
+    
+    // 加载评论（在loadPostDetails成功后调用）
+    // 这里不主动调用，因为需要等postId加载完毕
+}
+
+/**
+ * 加载评论列表
+ * @param {number} page - 页码，默认为1
+ */
+async function loadComments(page = 1) {
+    if (!currentPostId) return;
+    
+    const commentsListElement = document.getElementById('comments-list');
+    const paginationElement = document.getElementById('comments-pagination');
+    
+    if (!commentsListElement) return;
+    
+    // 显示加载中状态
+    commentsListElement.innerHTML = `
+        <div class="text-center my-3">
+            <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                <span class="visually-hidden">加载评论中...</span>
+            </div>
+        </div>
+    `;
+    
+    try {
+        // 从API获取评论
+        const response = await fetch(`/api/blog/comments?postId=${currentPostId}&page=${page}&limit=10`);
+        
+        if (!response.ok) {
+            throw new Error('加载评论失败');
+        }
+        
+        const commentsData = await response.json();
+        
+        if (!commentsData.comments || commentsData.comments.length === 0) {
+            commentsListElement.innerHTML = '<p class="text-muted">暂无评论，快来发表第一条评论吧！</p>';
+            if (paginationElement) {
+                paginationElement.innerHTML = '';
+            }
+            return;
+        }
+        
+        // 渲染评论列表
+        displayComments(commentsData.comments, commentsListElement);
+        
+        // 渲染分页
+        if (paginationElement && commentsData.totalPages > 1) {
+            renderPagination(page, commentsData.totalPages, paginationElement);
+        } else if (paginationElement) {
+            paginationElement.innerHTML = '';
+        }
+    } catch (error) {
+        console.error('加载评论失败:', error);
+        commentsListElement.innerHTML = '<p class="text-danger">加载评论失败，请稍后再试。</p>';
+    }
+}
+
+/**
+ * 提交评论
+ */
+async function submitComment() {
+    if (!currentPostId) {
+        showNotification('错误', '无法提交评论：找不到文章ID', 'danger');
+        return;
+    }
+    
+    const nameInput = document.getElementById('comment-name');
+    const emailInput = document.getElementById('comment-email');
+    const contentInput = document.getElementById('comment-content');
+    const submitButton = document.querySelector('#comment-form button[type="submit"]');
+    
+    if (!nameInput || !emailInput || !contentInput || !submitButton) {
+        return;
+    }
+    
+    // 表单验证
+    if (!nameInput.value.trim()) {
+        showNotification('错误', '请输入您的昵称', 'danger');
+        nameInput.focus();
+        return;
+    }
+    
+    if (!emailInput.value.trim() || !isValidEmail(emailInput.value.trim())) {
+        showNotification('错误', '请输入有效的邮箱地址', 'danger');
+        emailInput.focus();
+        return;
+    }
+    
+    if (!contentInput.value.trim()) {
+        showNotification('错误', '请输入评论内容', 'danger');
+        contentInput.focus();
+        return;
+    }
+    
+    // 禁用提交按钮，防止重复提交
+    submitButton.disabled = true;
+    submitButton.innerHTML = `
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        提交中...
+    `;
+    
+    // 准备评论数据
+    const commentData = {
+        postId: currentPostId,
+        name: nameInput.value.trim(),
+        email: emailInput.value.trim(),
+        content: contentInput.value.trim(),
+        date: new Date().toISOString()
+    };
+    
+    try {
+        // 发送评论到API
+        const response = await fetch('/api/blog/comments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(commentData)
+        });
+        
+        if (!response.ok) {
+            throw new Error('提交评论失败');
+        }
+        
+        // 清空表单
+        nameInput.value = '';
+        emailInput.value = '';
+        contentInput.value = '';
+        
+        // 显示成功消息
+        showNotification('成功', '评论已提交，正在等待审核', 'success');
+        
+        // 重新加载评论列表
+        loadComments();
+    } catch (error) {
+        console.error('提交评论失败:', error);
+        showNotification('错误', '提交评论失败，请稍后再试', 'danger');
+    } finally {
+        // 恢复提交按钮
+        submitButton.disabled = false;
+        submitButton.textContent = '提交评论';
+    }
+}
+
+/**
+ * 显示评论列表
+ * @param {Array} comments - 评论数据数组
+ * @param {HTMLElement} container - 容器元素
+ */
+function displayComments(comments, container) {
+    if (!comments || !container) return;
+    
+    container.innerHTML = '';
+    
+    // 创建评论列表
+    const commentsList = document.createElement('div');
+    commentsList.className = 'comments-list-inner';
+    
+    comments.forEach(comment => {
+        const commentDate = formatDate(new Date(comment.date));
+        const commentElement = document.createElement('div');
+        commentElement.className = 'comment-item';
+        commentElement.innerHTML = `
+            <div class="comment-header">
+                <div class="comment-author">${comment.name}</div>
+                <div class="comment-date text-muted">${commentDate}</div>
+            </div>
+            <div class="comment-content">${comment.content}</div>
+        `;
+        commentsList.appendChild(commentElement);
+    });
+    
+    container.appendChild(commentsList);
+}
+
+/**
+ * 渲染分页
+ * @param {number} currentPage - 当前页码
+ * @param {number} totalPages - 总页数
+ * @param {HTMLElement} container - 容器元素
+ */
+function renderPagination(currentPage, totalPages, container) {
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    const pagination = document.createElement('nav');
+    pagination.setAttribute('aria-label', '评论分页');
+    
+    const pageList = document.createElement('ul');
+    pageList.className = 'pagination pagination-sm justify-content-center';
+    
+    // 添加"上一页"按钮
+    const prevItem = document.createElement('li');
+    prevItem.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    const prevLink = document.createElement('a');
+    prevLink.className = 'page-link';
+    prevLink.href = '#';
+    prevLink.innerHTML = '&laquo;';
+    
+    if (currentPage > 1) {
+        prevLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadComments(currentPage - 1);
+        });
+    }
+    
+    prevItem.appendChild(prevLink);
+    pageList.appendChild(prevItem);
+    
+    // 页码按钮
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    
+    if (endPage - startPage < 4 && startPage > 1) {
+        startPage = Math.max(1, endPage - 4);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const pageItem = document.createElement('li');
+        pageItem.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        
+        const pageLink = document.createElement('a');
+        pageLink.className = 'page-link';
+        pageLink.href = '#';
+        pageLink.textContent = i;
+        
+        if (i !== currentPage) {
+            pageLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                loadComments(i);
+            });
+        }
+        
+        pageItem.appendChild(pageLink);
+        pageList.appendChild(pageItem);
+    }
+    
+    // 添加"下一页"按钮
+    const nextItem = document.createElement('li');
+    nextItem.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    const nextLink = document.createElement('a');
+    nextLink.className = 'page-link';
+    nextLink.href = '#';
+    nextLink.innerHTML = '&raquo;';
+    
+    if (currentPage < totalPages) {
+        nextLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadComments(currentPage + 1);
+        });
+    }
+    
+    nextItem.appendChild(nextLink);
+    pageList.appendChild(nextItem);
+    
+    pagination.appendChild(pageList);
+    container.appendChild(pagination);
+}
+
+/**
+ * 显示通知消息
+ * @param {string} title - 消息标题
+ * @param {string} message - 消息内容
+ * @param {string} type - 消息类型（success, danger, warning, info）
+ */
+function showNotification(title, message, type = 'info') {
+    // 创建通知元素
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-header">
+            <strong>${title}</strong>
+            <button type="button" class="btn-close" aria-label="Close"></button>
+        </div>
+        <div class="notification-body">${message}</div>
+    `;
+    
+    // 添加到页面
+    document.body.appendChild(notification);
+    
+    // 添加动画
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 10);
+    
+    // 添加关闭按钮事件
+    const closeButton = notification.querySelector('.btn-close');
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            closeNotification(notification);
+        });
+    }
+    
+    // 自动关闭（5秒后）
+    setTimeout(() => {
+        closeNotification(notification);
+    }, 5000);
+}
+
+/**
+ * 关闭通知
+ * @param {HTMLElement} notification - 通知元素
+ */
+function closeNotification(notification) {
+    notification.classList.remove('show');
+    
+    // 动画结束后移除元素
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 300);
+}
+
+/**
+ * 验证邮箱地址
+ * @param {string} email - 邮箱地址
+ * @returns {boolean} 是否有效
+ */
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+} 
