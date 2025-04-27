@@ -1096,6 +1096,291 @@ body.dark-mode .breadcrumb-item a:hover {
 }
 
 body.dark-mode .breadcrumb-item.active {
-    color: #ffffff; /* 纯白色，确保在深色背景下高对比度 */
-    text-shadow: 0 0 2px rgba(0, 0, 0, 0.5); /* 添加文字阴影增强可读性 */
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* 评论区样式 */
+.comments-section {
+    margin-top: 3rem;
+    position: relative;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.comments-title {
+    font-family: 'Maple Mono CN', monospace;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    display: inline-block;
+    color: var(--name-color-light);
+}
+
+.comments-title::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--name-color-light), transparent);
+    border-radius: 3px;
+}
+
+.comments-list {
+    margin-bottom: 2rem;
+}
+
+.no-comments {
+    padding: 1.5rem;
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: 10px;
+    text-align: center;
+    color: var(--motto-color-light);
+    font-style: italic;
+}
+
+.comment-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+    padding: 1.2rem 1.5rem;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--name-color-light);
+    backdrop-filter: blur(5px);
+}
+
+.comment-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.comment-author {
+    font-weight: 600;
+    color: var(--name-color-light);
+    display: flex;
+    align-items: center;
+}
+
+.comment-author::before {
+    content: '\F4E1'; /* Bootstrap 图标的用户图标编码 */
+    font-family: "bootstrap-icons";
+    margin-right: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.comment-date {
+    font-size: 0.85rem;
+    color: var(--motto-color-light);
+    display: flex;
+    align-items: center;
+}
+
+.comment-date::before {
+    content: '\F272'; /* Bootstrap 图标的时钟图标编码 */
+    font-family: "bootstrap-icons";
+    margin-right: 0.3rem;
+}
+
+.comment-content {
+    font-size: 1rem;
+    line-height: 1.6;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    color: var(--body-color-light);
+    padding: 0.5rem 0;
+    white-space: pre-line; /* 保留换行 */
+}
+
+/* 评论表单样式 */
+.comment-form-container {
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(5px);
+    border-top: 4px solid var(--name-color-light);
+    transition: all 0.3s ease;
+}
+
+.comment-form-container h4 {
+    font-family: 'Maple Mono CN', monospace;
+    margin-bottom: 1.2rem;
+    color: var(--name-color-light);
+    position: relative;
+    display: inline-block;
+}
+
+.comment-form-container h4::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--name-color-light), transparent);
+    border-radius: 2px;
+}
+
+.comment-form .form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--body-color-light);
+}
+
+.comment-form .form-control {
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+.comment-form .form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(79, 172, 254, 0.25);
+    border-color: var(--name-color-light);
+}
+
+.comment-form textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.comment-form button[type="submit"] {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.comment-form button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, #4facfe 0%, #00d4fe 100%);
+}
+
+#comment-status {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #28a745;
+    transition: opacity 0.3s ease;
+}
+
+/* 深色模式下的评论区样式 */
+body.dark-mode .comments-section {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .comments-title {
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .comments-title::after {
+    background: linear-gradient(90deg, var(--name-color-dark), transparent);
+}
+
+body.dark-mode .no-comments {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--motto-color-dark);
+}
+
+body.dark-mode .comment-item {
+    background-color: rgba(50, 50, 50, 0.7);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    border-left-color: var(--name-color-dark);
+}
+
+body.dark-mode .comment-header {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .comment-author {
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .comment-date {
+    color: var(--motto-color-dark);
+}
+
+body.dark-mode .comment-content {
+    color: var(--body-color-dark);
+}
+
+body.dark-mode .comment-form-container {
+    background-color: rgba(50, 50, 50, 0.8);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    border-top-color: var(--name-color-dark);
+}
+
+body.dark-mode .comment-form-container h4 {
+    color: var(--name-color-dark);
+}
+
+body.dark-mode .comment-form-container h4::after {
+    background: linear-gradient(90deg, var(--name-color-dark), transparent);
+}
+
+body.dark-mode .comment-form .form-label {
+    color: var(--body-color-dark);
+}
+
+body.dark-mode .comment-form .form-control {
+    background-color: rgba(70, 70, 70, 0.9);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--body-color-dark);
+}
+
+body.dark-mode .comment-form .form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(79, 172, 254, 0.25);
+    border-color: var(--name-color-dark);
+}
+
+body.dark-mode .comment-form button[type="submit"] {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+body.dark-mode .comment-form button[type="submit"]:hover {
+    background: linear-gradient(135deg, #4facfe 0%, #00d4fe 100%);
+}
+
+body.dark-mode #comment-status {
+    color: #48d368;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .comments-title {
+        font-size: 1.3rem;
+    }
+    
+    .comment-item {
+        padding: 1rem;
+    }
+    
+    .comment-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .comment-date {
+        margin-top: 0.3rem;
+        font-size: 0.8rem;
+    }
+    
+    .comment-form-container {
+        padding: 1.2rem;
+    }
 }
