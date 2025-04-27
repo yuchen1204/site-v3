@@ -62,48 +62,6 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- 评论区 -->
-                        <div id="comments-section" class="comments-section mt-5">
-                            <h3 class="comments-title">评论区</h3>
-                            
-                            <!-- 评论表单 -->
-                            <div class="comment-form-container">
-                                <form id="comment-form" class="comment-form">
-                                    <div class="mb-3">
-                                        <label for="commenter-name" class="form-label">昵称</label>
-                                        <input type="text" class="form-control" id="commenter-name" placeholder="输入您的昵称" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="comment-content" class="form-label">评论内容</label>
-                                        <textarea class="form-control" id="comment-content" rows="3" placeholder="写下您的想法..." required></textarea>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary submit-comment-btn">提交评论</button>
-                                </form>
-                            </div>
-                            
-                            <!-- 评论列表 -->
-                            <div class="comments-list-container mt-4">
-                                <h4 class="comments-list-title">全部评论 (<span id="comments-count">0</span>)</h4>
-                                <div id="comments-list" class="comments-list">
-                                    <!-- 评论将通过 JavaScript 动态加载 -->
-                                    <div class="text-center py-4" id="comments-loading">
-                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                            <span class="visually-hidden">加载中...</span>
-                                        </div>
-                                        <p class="text-muted mt-2">加载评论中...</p>
-                                    </div>
-                                    <div id="no-comments-message" class="no-comments-message d-none">
-                                        <p class="text-muted text-center">暂无评论，快来发表第一条评论吧！</p>
-                                    </div>
-                                </div>
-                                
-                                <!-- 加载更多评论按钮 -->
-                                <div class="load-more-container text-center mt-3 d-none" id="load-more-container">
-                                    <button id="load-more-btn" class="btn btn-outline-primary">加载更多评论</button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>

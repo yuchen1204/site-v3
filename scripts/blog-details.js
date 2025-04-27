@@ -4,17 +4,10 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeThemeToggle(); // 初始化主题切换按钮
     initializeSidebar(); // 初始化侧边栏
     loadPostDetails(); // 加载文章详情
-    initializeCommentsSection(); // 初始化评论区
 });
 
 // 跟踪数据来源
 let blogDataSource = '';
-// 当前文章ID
-let currentPostId = null;
-// 评论分页
-let commentPage = 1;
-const commentsPerPage = 5;
-let hasMoreComments = false;
 
 /**
  * 初始化主题切换功能
@@ -120,7 +113,6 @@ async function loadPostDetails() {
     // 从URL中获取文章ID
     const urlParams = new URLSearchParams(window.location.search);
     const postId = parseInt(urlParams.get('id'), 10);
-    currentPostId = postId; // 保存当前文章ID
     
     if (isNaN(postId)) {
         showError('无效的文章ID', postDetailsContainer);
@@ -139,9 +131,6 @@ async function loadPostDetails() {
         blogDataSource = 'kv';
         updateDataSourceIndicator();
         displayPostDetails(post);
-        
-        // 加载评论
-        loadComments(postId);
     } catch (error) {
         console.warn('从KV数据库加载文章失败，尝试从JSON文件加载:', error);
         
@@ -163,9 +152,6 @@ async function loadPostDetails() {
             blogDataSource = 'json';
             updateDataSourceIndicator();
             displayPostDetails(post);
-            
-            // 加载评论
-            loadComments(postId);
         } catch (error) {
             console.error('加载文章详情失败:', error);
             showError('找不到指定的文章或加载出错', postDetailsContainer);
@@ -389,227 +375,4 @@ const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
 const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-moon-stars-fill" viewBox="0 0 16 16">
 <path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278"/>
 <path d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.73 1.73 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.73 1.73 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.73 1.73 0 0 0 1.097-1.097zM13.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.73 1.73 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162a1.73 1.73 0 0 0-1.097-1.097l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.73 1.73 0 0 0 1.097-1.097z"/>
-</svg>`;
-
-/**
- * 加载文章的评论
- * @param {number} postId - 文章ID
- * @param {boolean} append - 是否追加而不是替换评论
- */
-async function loadComments(postId, append = false) {
-    if (!postId) return;
-    
-    const commentsLoading = document.getElementById('comments-loading');
-    const noCommentsMessage = document.getElementById('no-comments-message');
-    const commentsList = document.getElementById('comments-list');
-    const loadMoreContainer = document.getElementById('load-more-container');
-    
-    if (!append) {
-        // 重置评论区状态
-        commentsLoading.classList.remove('d-none');
-        noCommentsMessage.classList.add('d-none');
-        // 重置分页
-        commentPage = 1;
-        // 只保留加载提示和无评论提示
-        while (commentsList.children.length > 2) {
-            commentsList.removeChild(commentsList.lastChild);
-        }
-    }
-    
-    try {
-        const response = await fetch(`/api/comments/${postId}?page=${commentPage}&limit=${commentsPerPage}`);
-        
-        if (!response.ok) {
-            throw new Error('加载评论失败');
-        }
-        
-        const data = await response.json();
-        const comments = data.comments || [];
-        const total = data.total || 0;
-        
-        // 更新评论计数
-        document.getElementById('comments-count').textContent = total;
-        
-        // 隐藏加载中提示
-        commentsLoading.classList.add('d-none');
-        
-        if (comments.length === 0 && !append) {
-            // 没有评论且不是加载更多操作
-            noCommentsMessage.classList.remove('d-none');
-            loadMoreContainer.classList.add('d-none');
-        } else {
-            noCommentsMessage.classList.add('d-none');
-            
-            // 渲染评论
-            comments.forEach(comment => {
-                const commentElement = createCommentElement(comment);
-                commentsList.appendChild(commentElement);
-            });
-            
-            // 判断是否还有更多评论
-            hasMoreComments = comments.length >= commentsPerPage && (commentPage * commentsPerPage) < total;
-            if (hasMoreComments) {
-                loadMoreContainer.classList.remove('d-none');
-            } else {
-                loadMoreContainer.classList.add('d-none');
-            }
-        }
-    } catch (error) {
-        console.error('加载评论失败:', error);
-        commentsLoading.classList.add('d-none');
-        
-        // 显示加载错误消息
-        const errorElement = document.createElement('div');
-        errorElement.className = 'alert alert-danger';
-        errorElement.textContent = '加载评论时出错，请稍后再试';
-        commentsList.appendChild(errorElement);
-    }
-}
-
-/**
- * 创建评论元素
- * @param {Object} comment - 评论数据
- * @returns {HTMLElement} 评论DOM元素
- */
-function createCommentElement(comment) {
-    const commentElement = document.createElement('div');
-    commentElement.className = 'comment-item';
-    commentElement.dataset.id = comment.id;
-    
-    const commentDate = comment.createdAt ? formatDate(new Date(comment.createdAt)) : '未知时间';
-    
-    commentElement.innerHTML = `
-        <div class="comment-header">
-            <span class="commenter-name">${escapeHTML(comment.name)}</span>
-            <span class="comment-date">${commentDate}</span>
-        </div>
-        <div class="comment-content">${escapeHTML(comment.content)}</div>
-    `;
-    
-    return commentElement;
-}
-
-/**
- * 转义HTML特殊字符，防止XSS攻击
- * @param {string} text - 需要转义的文本
- * @returns {string} 转义后的安全文本
- */
-function escapeHTML(text) {
-    if (!text) return '';
-    
-    return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
-/**
- * 提交评论
- * @param {Event} event - 表单提交事件
- */
-async function submitComment(event) {
-    event.preventDefault();
-    
-    const nameInput = document.getElementById('commenter-name');
-    const contentInput = document.getElementById('comment-content');
-    const submitButton = document.querySelector('.submit-comment-btn');
-    
-    // 获取输入值并验证
-    const name = nameInput.value.trim();
-    const content = contentInput.value.trim();
-    
-    if (!name || !content) {
-        alert('请填写昵称和评论内容');
-        return;
-    }
-    
-    // 禁用提交按钮防止重复提交
-    submitButton.disabled = true;
-    submitButton.innerHTML = `
-        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        提交中...
-    `;
-    
-    try {
-        const response = await fetch('/api/comments/add', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                postId: currentPostId,
-                name,
-                content
-            })
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || '提交评论失败');
-        }
-        
-        // 重置表单
-        nameInput.value = '';
-        contentInput.value = '';
-        
-        // 重新加载评论
-        loadComments(currentPostId);
-        
-        // 显示成功消息
-        alert('评论提交成功！');
-    } catch (error) {
-        console.error('提交评论失败:', error);
-        alert('提交评论失败: ' + error.message);
-    } finally {
-        // 恢复提交按钮
-        submitButton.disabled = false;
-        submitButton.textContent = '提交评论';
-    }
-}
-
-/**
- * 加载更多评论
- */
-function loadMoreComments() {
-    if (!hasMoreComments) return;
-    
-    commentPage++;
-    loadComments(currentPostId, true);
-}
-
-/**
- * 初始化评论区事件监听
- */
-function initializeCommentsSection() {
-    // 评论表单提交
-    const commentForm = document.getElementById('comment-form');
-    if (commentForm) {
-        commentForm.addEventListener('submit', submitComment);
-    }
-    
-    // 加载更多评论按钮
-    const loadMoreBtn = document.getElementById('load-more-btn');
-    if (loadMoreBtn) {
-        loadMoreBtn.addEventListener('click', loadMoreComments);
-    }
-    
-    // 从localStorage恢复上次填写的昵称
-    const savedName = localStorage.getItem('commenter-name');
-    if (savedName) {
-        const nameInput = document.getElementById('commenter-name');
-        if (nameInput) nameInput.value = savedName;
-    }
-    
-    // 保存用户填写的昵称到localStorage
-    const nameInput = document.getElementById('commenter-name');
-    if (nameInput) {
-        nameInput.addEventListener('blur', function() {
-            const name = this.value.trim();
-            if (name) {
-                localStorage.setItem('commenter-name', name);
-            }
-        });
-    }
-} 
+</svg>`; 
