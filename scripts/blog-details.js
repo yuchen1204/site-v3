@@ -191,6 +191,8 @@ function displayPostDetails(post) {
             <div class="blog-post-content">
                 ${post.content}
             </div>
+            <!-- 引用区域容器，将在这里插入 -->
+            <div id="references-container"></div>
             <!-- 评论区容器，将在这里插入 -->
             <div id="comments-section-container"></div>
         </article>
@@ -474,13 +476,19 @@ function hideCommentError() {
  * @param {Array<number>} referenceIds - 相关文章的ID数组
  */
 async function loadRelatedPosts(referenceIds) {
-    const postDetailsContainer = document.getElementById('blog-post-details');
-    if (!postDetailsContainer || !referenceIds || referenceIds.length === 0) return;
+    // 早期返回条件
+    if (!referenceIds || referenceIds.length === 0) return;
+    
+    // 获取引用容器 (现在我们使用专门的容器)
+    const referencesContainer = document.getElementById('references-container');
+    if (!referencesContainer) {
+        console.error('找不到引用容器元素');
+        return;
+    }
 
     try {
+        // 从JSON文件加载所有文章
         let allPosts = [];
-        // 优先尝试从KV API获取所有文章列表（如果未来有这个API）
-        // 否则，回退到从JSON文件加载
         try {
             const response = await fetch('../data/blog.json');
             if (!response.ok) {
@@ -488,38 +496,49 @@ async function loadRelatedPosts(referenceIds) {
             }
             allPosts = await response.json();
         } catch (error) {
-            console.warn('加载所有文章数据以显示相关文章时失败:', error);
-            return; // 无法获取数据，不显示相关文章
+            console.error('加载文章数据失败:', error);
+            return;
         }
 
+        // 筛选相关文章
         const relatedPosts = allPosts.filter(post => referenceIds.includes(post.id));
-
-        if (relatedPosts.length > 0) {
-            const referencesContainer = document.createElement('div');
-            referencesContainer.className = 'blog-post-references';
-            const referencesTitle = document.createElement('h5');
-            referencesTitle.textContent = '引用与相关阅读:';
-            referencesContainer.appendChild(referencesTitle);
-
-            const referenceList = document.createElement('ul');
-            referenceList.className = 'reference-list';
-
-            relatedPosts.forEach(relatedPost => {
-                const listItem = document.createElement('li');
-                const link = document.createElement('a');
-                link.href = `/blog/?id=${relatedPost.id}`; // 指向详情页
-                link.textContent = relatedPost.title;
-                link.className = 'reference-link';
-                listItem.appendChild(link);
-                referenceList.appendChild(listItem);
-            });
-
-            referencesContainer.appendChild(referenceList);
-            postDetailsContainer.querySelector('.blog-post-full').appendChild(referencesContainer);
+        if (relatedPosts.length === 0) {
+            console.log('未找到相关文章');
+            return;
         }
 
+        // 创建引用区域
+        const referencesSection = document.createElement('div');
+        referencesSection.className = 'blog-post-references';
+        
+        const referencesTitle = document.createElement('h5');
+        referencesTitle.textContent = '引用与相关阅读:';
+        referencesSection.appendChild(referencesTitle);
+
+        const referenceList = document.createElement('ul');
+        referenceList.className = 'reference-list';
+
+        // 添加每篇相关文章
+        relatedPosts.forEach(relatedPost => {
+            const listItem = document.createElement('li');
+            const link = document.createElement('a');
+            // 修正链接URL (确保与当前URL结构匹配)
+            const baseUrl = window.location.pathname.includes('/blog/') 
+                ? '' 
+                : '/blog/';
+            link.href = `${baseUrl}?id=${relatedPost.id}`; 
+            link.textContent = relatedPost.title;
+            link.className = 'reference-link';
+            listItem.appendChild(link);
+            referenceList.appendChild(listItem);
+        });
+
+        referencesSection.appendChild(referenceList);
+        referencesContainer.appendChild(referencesSection);
+        
+        console.log(`已成功加载 ${relatedPosts.length} 篇相关文章`);
     } catch (error) {
-        console.error('处理相关文章时出错:', error);
+        console.error('加载相关文章时出错:', error);
     }
 }
 
