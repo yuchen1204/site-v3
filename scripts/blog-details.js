@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 跟踪数据来源
 let blogDataSource = '';
+let currentPostId = null; // 全局变量存储当前文章ID
 
 /**
  * 初始化主题切换功能
@@ -104,7 +105,7 @@ function setupSidebarLinks() {
 }
 
 /**
- * 从URL中获取文章ID并加载文章详情
+ * 从URL中获取文章ID并加载文章详情和评论
  */
 async function loadPostDetails() {
     const postDetailsContainer = document.getElementById('blog-post-details');
@@ -113,6 +114,7 @@ async function loadPostDetails() {
     // 从URL中获取文章ID
     const urlParams = new URLSearchParams(window.location.search);
     const postId = parseInt(urlParams.get('id'), 10);
+    currentPostId = postId; // 存储文章ID
     
     if (isNaN(postId)) {
         showError('无效的文章ID', postDetailsContainer);
@@ -120,7 +122,7 @@ async function loadPostDetails() {
     }
     
     try {
-        // 先尝试从KV数据库API加载
+        // 先尝试从KV数据库API加载文章
         const response = await fetch(`/api/blog/post/${postId}`);
         
         if (!response.ok) {
@@ -130,7 +132,9 @@ async function loadPostDetails() {
         const post = await response.json();
         blogDataSource = 'kv';
         updateDataSourceIndicator();
-        displayPostDetails(post);
+        displayPostDetails(post); // 显示文章详情
+        loadComments(postId); // 加载评论
+        setupCommentForm(postId); // 设置评论表单
     } catch (error) {
         console.warn('从KV数据库加载文章失败，尝试从JSON文件加载:', error);
         
@@ -151,10 +155,13 @@ async function loadPostDetails() {
             
             blogDataSource = 'json';
             updateDataSourceIndicator();
-            displayPostDetails(post);
+            displayPostDetails(post); // 显示文章详情
+            // 注意：从JSON加载时，评论功能可能不可用，因为没有后端API
+            disableCommentSection("评论功能仅在API模式下可用");
         } catch (error) {
             console.error('加载文章详情失败:', error);
             showError('找不到指定的文章或加载出错', postDetailsContainer);
+            disableCommentSection("文章加载失败，无法使用评论功能");
         }
     }
 }
@@ -366,6 +373,226 @@ function formatDate(date) {
         console.error('日期格式化出错:', e);
         return '';
     }
+}
+
+/**
+ * 禁用评论区
+ * @param {string} message - 显示的消息
+ */
+function disableCommentSection(message) {
+    const commentSection = document.getElementById('comment-section');
+    if (commentSection) {
+        commentSection.innerHTML = `<p class="text-muted text-center"><em>${message}</em></p>`;
+    }
+}
+
+/**
+ * 加载指定文章的评论
+ * @param {number} postId - 文章ID
+ */
+async function loadComments(postId) {
+    const commentListContainer = document.getElementById('comment-list');
+    if (!commentListContainer) return;
+
+    commentListContainer.innerHTML = `
+        <div class="text-center my-3">
+            <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                <span class="visually-hidden">加载评论中...</span>
+            </div>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(`/api/comments/${postId}`);
+        if (!response.ok) {
+            throw new Error('获取评论失败');
+        }
+        const comments = await response.json();
+        displayComments(comments);
+    } catch (error) {
+        console.error('加载评论出错:', error);
+        commentListContainer.innerHTML = '<p class="text-danger">加载评论失败，请稍后重试。</p>';
+    }
+}
+
+/**
+ * 显示评论列表
+ * @param {Array} comments - 评论数组
+ */
+function displayComments(comments) {
+    const commentListContainer = document.getElementById('comment-list');
+    if (!commentListContainer) return;
+
+    if (!comments || comments.length === 0) {
+        commentListContainer.innerHTML = '<p class="text-muted">暂无评论，快来抢沙发吧！</p>';
+        return;
+    }
+
+    commentListContainer.innerHTML = comments.map(comment => `
+        <div class="comment-item">
+            <div class="comment-header">
+                <span class="comment-author">${escapeHtml(comment.author)}</span>
+                <span class="comment-timestamp">${formatRelativeTime(new Date(comment.timestamp))}</span>
+            </div>
+            <div class="comment-text">${escapeHtml(comment.text)}</div>
+        </div>
+    `).join('');
+}
+
+/**
+ * 设置评论表单提交事件
+ * @param {number} postId - 文章ID
+ */
+function setupCommentForm(postId) {
+    const commentForm = document.getElementById('comment-form');
+    const authorInput = document.getElementById('comment-author');
+    const textInput = document.getElementById('comment-text');
+    const feedbackDiv = document.getElementById('comment-form-feedback');
+    const submitButton = commentForm.querySelector('button[type="submit"]');
+
+    if (!commentForm || !authorInput || !textInput || !feedbackDiv || !submitButton) return;
+
+    commentForm.addEventListener('submit', async (event) => {
+        event.preventDefault(); // 阻止表单默认提交行为
+
+        const author = authorInput.value.trim();
+        const text = textInput.value.trim();
+
+        if (!author || !text) {
+            showFeedback('昵称和评论内容不能为空！', 'error');
+            return;
+        }
+
+        // 禁用按钮，防止重复提交
+        submitButton.disabled = true;
+        submitButton.textContent = '提交中...';
+        showFeedback('', ''); // 清除之前的反馈
+
+        try {
+            const response = await fetch('/api/comments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    postId: postId,
+                    author: author,
+                    text: text
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.text();
+                throw new Error(errorData || '提交评论失败');
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+                showFeedback('评论提交成功！', 'success');
+                commentForm.reset(); // 清空表单
+                // 重新加载评论列表，显示新评论
+                // 可以选择直接将新评论添加到列表顶部，而不是重新加载所有评论
+                // loadComments(postId);
+                addNewCommentToList(result.comment); // 优化：直接添加
+            } else {
+                throw new Error('提交评论失败');
+            }
+
+        } catch (error) {
+            console.error('提交评论出错:', error);
+            showFeedback(`评论失败: ${error.message}`, 'error');
+        } finally {
+            // 重新启用按钮
+            submitButton.disabled = false;
+            submitButton.textContent = '提交评论';
+        }
+    });
+}
+
+/**
+ * 在评论列表顶部添加新评论
+ * @param {object} comment - 新评论对象
+ */
+function addNewCommentToList(comment) {
+    const commentListContainer = document.getElementById('comment-list');
+    if (!commentListContainer) return;
+
+    // 如果之前是“暂无评论”，则清空
+    if (commentListContainer.querySelector('p.text-muted')) {
+        commentListContainer.innerHTML = '';
+    }
+
+    const commentElement = document.createElement('div');
+    commentElement.className = 'comment-item';
+    commentElement.innerHTML = `
+        <div class="comment-header">
+            <span class="comment-author">${escapeHtml(comment.author)}</span>
+            <span class="comment-timestamp">刚刚</span>
+        </div>
+        <div class="comment-text">${escapeHtml(comment.text)}</div>
+    `;
+
+    // 将新评论添加到列表顶部
+    commentListContainer.insertBefore(commentElement, commentListContainer.firstChild);
+}
+
+/**
+ * 显示表单反馈信息
+ * @param {string} message - 反馈信息
+ * @param {'success'|'error'|''} type - 信息类型
+ */
+function showFeedback(message, type) {
+    const feedbackDiv = document.getElementById('comment-form-feedback');
+    if (!feedbackDiv) return;
+    feedbackDiv.textContent = message;
+    feedbackDiv.className = `mt-2 ${type}`;
+}
+
+/**
+ * 简单的HTML转义函数，防止XSS
+ * @param {string} str - 需要转义的字符串
+ * @returns {string} 转义后的字符串
+ */
+function escapeHtml(str) {
+    if (!str) return '';
+    return str
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+ }
+
+/**
+ * 将日期格式化为相对时间（例如，“5分钟前”）
+ * @param {Date} date - 日期对象
+ * @returns {string} 相对时间字符串
+ */
+function formatRelativeTime(date) {
+    if (!(date instanceof Date) || isNaN(date)) {
+        return '';
+    }
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+
+    const rtf = new Intl.RelativeTimeFormat('zh-CN', { numeric: 'auto' });
+
+    if (diffInSeconds < 60) {
+        return rtf.format(-diffInSeconds, 'second');
+    } else if (diffInSeconds < 3600) {
+        return rtf.format(-Math.floor(diffInSeconds / 60), 'minute');
+    } else if (diffInSeconds < 86400) {
+        return rtf.format(-Math.floor(diffInSeconds / 3600), 'hour');
+    } else if (diffInSeconds < 2592000) { // 30 days
+        return rtf.format(-Math.floor(diffInSeconds / 86400), 'day');
+    } else if (diffInSeconds < 31536000) { // 365 days
+        return rtf.format(-Math.floor(diffInSeconds / 2592000), 'month');
+    } else {
+        return rtf.format(-Math.floor(diffInSeconds / 31536000), 'year');
+    }
+    // 对于更早的日期，可以考虑显示具体日期
+    // return formatDate(date); // 使用之前的绝对日期格式化
 }
 
 // SVG Icons - 添加图标

@@ -1099,3 +1099,69 @@ body.dark-mode .breadcrumb-item.active {
     color: #ffffff; /* 纯白色，确保在深色背景下高对比度 */
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.5); /* 添加文字阴影增强可读性 */
 }
+
+/* 评论区样式 */
+#comment-section {
+    /* 可以在这里添加特定于评论区的背景色或边框等 */
+}
+
+.comment-list {
+    /* 评论列表容器样式 */
+}
+
+.comment-item {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: var(--profile-bg-light);
+    border-radius: 0.5rem;
+    border-left: 3px solid var(--name-color-light);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.comment-author {
+    font-weight: 600;
+    color: var(--body-color-light);
+    margin-right: 0.5rem;
+}
+
+.comment-timestamp {
+    font-size: 0.8rem;
+    color: var(--motto-color-light);
+}
+
+.comment-text {
+    margin-top: 0.5rem;
+    line-height: 1.6;
+    color: var(--body-color-light);
+}
+
+#comment-form-feedback {
+    font-size: 0.9rem;
+}
+
+#comment-form-feedback.success {
+    color: green;
+}
+
+#comment-form-feedback.error {
+    color: red;
+}
+
+/* 深色模式评论区 */
+body.dark-mode .comment-item {
+    background-color: var(--profile-bg-dark);
+    border-left-color: var(--name-color-dark);
+    box-shadow: 0 1px 3px rgba(255,255,255,0.05);
+}
+
+body.dark-mode .comment-author {
+    color: var(--body-color-dark);
+}
+
+body.dark-mode .comment-timestamp {
+    color: var(--motto-color-dark);
+}
+
+body.dark-mode .comment-text {
+    color: var(--body-color-dark);
+}
