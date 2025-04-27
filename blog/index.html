@@ -62,6 +62,38 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- 评论区开始 -->
+                        <section id="comments-section" class="comments-section mt-5">
+                            <h2 class="comments-title">评论区</h2>
+
+                            <!-- 评论提交表单 -->
+                            <div class="comment-form-container mb-4">
+                                <form id="comment-form">
+                                    <div class="mb-3">
+                                        <label for="comment-name" class="form-label">昵称:</label>
+                                        <input type="text" class="form-control" id="comment-name" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="comment-text" class="form-label">评论内容:</label>
+                                        <textarea class="form-control" id="comment-text" rows="4" required></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary comment-submit-btn">提交评论</button>
+                                    <span id="comment-status" class="ms-3"></span>
+                                </form>
+                            </div>
+
+                            <!-- 评论列表 -->
+                            <div class="comment-list-container">
+                                <h3 class="comment-list-title">最新评论</h3>
+                                <div id="comment-list">
+                                    <!-- 评论将通过 JavaScript 动态加载 -->
+                                    <p id="comments-loading" class="text-center text-muted">评论加载中...</p>
+                                </div>
+                            </div>
+                        </section>
+                        <!-- 评论区结束 -->
+
                     </div>
                 </div>
             </div>

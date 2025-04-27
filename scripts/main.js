@@ -372,7 +372,7 @@ function displayBlogPosts(postsToShow) {
                 </div>
                 <div class="blog-post-summary">
                     ${summary}
-                </div>
+                    </div>
                 <div class="blog-post-read-more">
                     <a href="blog/index.html?id=${post.id}" class="read-more-link">阅读全文</a>
                 </div>
