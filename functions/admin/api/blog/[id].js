@@ -90,10 +90,16 @@ async function handleUpdate(context) {
         posts[postIndex] = {
             ...posts[postIndex],
             ...updatedData,
-            id: postId, // Ensure ID remains the same
+            id: postId,
             date: new Date(updatedData.date).toISOString(),
             attachments: updatedData.attachments || [],
-            references: updatedData.references || []
+            references: updatedData.references || [],
+            commentsEnabled: updatedData.commentsEnabled !== undefined 
+                                ? updatedData.commentsEnabled 
+                                : (posts[postIndex].commentsEnabled !== false),
+            moderationEnabled: updatedData.moderationEnabled !== undefined 
+                                ? updatedData.moderationEnabled 
+                                : (posts[postIndex].moderationEnabled !== false)
         };
 
         await saveBlogPosts(env, posts);

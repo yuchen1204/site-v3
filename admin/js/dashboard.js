@@ -372,11 +372,14 @@ function showBlogEditor(post = null) {
     const contentInput = document.getElementById('blog-content');
     const attachmentsEditor = document.getElementById('blog-attachments-editor');
     const referencesEditor = document.getElementById('blog-references-editor');
+    const commentsEnabledSwitch = document.getElementById('blog-comments-enabled');
+    const moderationEnabledSwitch = document.getElementById('blog-moderation-enabled');
     const saveStatus = document.getElementById('blog-save-status');
 
     if (!listContainer || !editorContainer || !editorTitle || !form || !blogIdInput || 
         !titleInput || !categoryInput || !dateInput || !contentInput || 
-        !attachmentsEditor || !referencesEditor || !saveStatus) return;
+        !attachmentsEditor || !referencesEditor || !saveStatus ||
+        !commentsEnabledSwitch || !moderationEnabledSwitch) return;
 
     listContainer.style.display = 'none';
     editorContainer.style.display = 'block';
@@ -403,6 +406,10 @@ function showBlogEditor(post = null) {
             post.references.forEach(refId => addReferenceInputGroup(referencesEditor, refId));
         }
 
+        // 设置评论开关状态 (如果字段不存在，则默认为 true)
+        commentsEnabledSwitch.checked = post.commentsEnabled !== false;
+        moderationEnabledSwitch.checked = post.moderationEnabled !== false;
+
     } else {
         // 添加新文章
         editorTitle.textContent = '添加新文章';
@@ -413,6 +420,10 @@ function showBlogEditor(post = null) {
         // 添加一个空的附件和引用输入（可选）
         // addAttachmentInputGroup(attachmentsEditor);
         // addReferenceInputGroup(referencesEditor);
+        
+        // 新文章默认开启评论和审核
+        commentsEnabledSwitch.checked = true;
+        moderationEnabledSwitch.checked = true;
     }
 }
 
@@ -550,6 +561,8 @@ async function saveBlogPost() {
     const category = document.getElementById('blog-category').value.trim();
     const dateStr = document.getElementById('blog-date').value;
     const content = document.getElementById('blog-content').value.trim();
+    const commentsEnabled = document.getElementById('blog-comments-enabled').checked;
+    const moderationEnabled = document.getElementById('blog-moderation-enabled').checked;
     const statusSpan = document.getElementById('blog-save-status');
     const saveButton = document.getElementById('save-post-button');
 
@@ -608,7 +621,9 @@ async function saveBlogPost() {
         date: dateISO,
         content,
         attachments,
-        references
+        references,
+        commentsEnabled,     // 添加评论设置
+        moderationEnabled    // 添加审核设置
     };
 
     const method = postId ? 'PUT' : 'POST';

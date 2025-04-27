@@ -108,7 +108,8 @@ function setupSidebarLinks() {
  */
 async function loadPostDetails() {
     const postDetailsContainer = document.getElementById('blog-post-details');
-    if (!postDetailsContainer) return;
+    const commentsSection = document.getElementById('comments-section'); // 获取评论区元素
+    if (!postDetailsContainer || !commentsSection) return;
     
     // 从URL中获取文章ID
     const urlParams = new URLSearchParams(window.location.search);
@@ -116,48 +117,61 @@ async function loadPostDetails() {
     
     if (isNaN(postId)) {
         showError('无效的文章ID', postDetailsContainer);
+        commentsSection.style.display = 'none'; // 隐藏评论区
         return;
     }
     
     try {
-        // 先尝试从KV数据库API加载
+        // 使用新的 API 端点获取文章数据
         const response = await fetch(`/api/blog/post/${postId}`);
         
         if (!response.ok) {
-            throw new Error('API响应异常');
+            if (response.status === 404) {
+                throw new Error('找不到指定ID的文章');
+            } else {
+                throw new Error('API响应异常');
+            }
         }
         
         const post = await response.json();
-        blogDataSource = 'kv';
+        blogDataSource = 'kv'; // 假设 API 优先使用 KV
         updateDataSourceIndicator();
         displayPostDetails(post);
-        // 加载评论并初始化评论表单
-        await loadComments(postId);
-        initializeCommentForm(postId);
-    } catch (error) {
-        console.warn('从KV数据库加载文章失败，尝试从JSON文件加载:', error);
+
+        // 检查评论设置
+        if (post.commentsEnabled !== false) {
+            commentsSection.style.display = 'block'; // 显示评论区
+            // 加载评论并初始化评论表单
+            await loadComments(postId);
+            initializeCommentForm(postId);
+        } else {
+            commentsSection.style.display = 'none'; // 明确隐藏评论区
+            console.log('评论功能已关闭。');
+        }
         
+    } catch (error) {
+        console.warn('加载文章失败:', error.message);
+        // 如果 API 失败，尝试从 JSON 加载 (保持原有逻辑，但这种情况下无法获取评论设置)
         try {
-            // 如果从KV加载失败，则从本地JSON文件加载所有文章
             const response = await fetch('../data/blog.json');
-            
-            if (!response.ok) {
-                throw new Error('JSON文件响应异常');
-            }
-            
+            if (!response.ok) throw new Error('JSON文件响应异常');
             const allPosts = await response.json();
-            const post = allPosts.find(p => p.id === postId);
-            
-            if (!post) {
-                throw new Error('找不到指定ID的文章');
-            }
+            const postFromJson = allPosts.find(p => p.id === postId);
+            if (!postFromJson) throw new Error('在JSON中找不到指定ID的文章');
             
             blogDataSource = 'json';
             updateDataSourceIndicator();
-            displayPostDetails(post);
-        } catch (error) {
-            console.error('加载文章详情失败:', error);
+            displayPostDetails(postFromJson);
+            
+            // 从 JSON 加载时，我们不知道设置，默认显示评论区 (或者可以隐藏)
+            commentsSection.style.display = 'block'; 
+            await loadComments(postId);
+            initializeCommentForm(postId);
+
+        } catch (jsonError) {
+            console.error('加载文章详情失败:', jsonError);
             showError('找不到指定的文章或加载出错', postDetailsContainer);
+            commentsSection.style.display = 'none'; // 最终失败时隐藏评论区
         }
     }
 }
