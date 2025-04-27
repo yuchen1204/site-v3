@@ -1099,3 +1099,122 @@ body.dark-mode .breadcrumb-item.active {
     color: #ffffff; /* 纯白色，确保在深色背景下高对比度 */
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.5); /* 添加文字阴影增强可读性 */
 }
+
+/* Comments Section Styles */
+.comments-section {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--toggle-border-light);
+}
+
+.comments-title {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.comments-list {
+    margin-bottom: 2rem;
+}
+
+.comment-item {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--toggle-border-light);
+}
+
+.comment-item:last-child {
+    border-bottom: none;
+}
+
+.comment-avatar {
+    width: 40px; /* Match JS size */
+    height: 40px; /* Match JS size */
+    border-radius: 50%;
+}
+
+.comment-header {
+    margin-bottom: 0.25rem;
+}
+
+.comment-author {
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.comment-date {
+    font-size: 0.85em;
+    color: var(--motto-color-light);
+}
+
+.comment-content {
+    font-size: 0.95em;
+    line-height: 1.6;
+}
+
+.no-comments {
+    color: var(--motto-color-light);
+    font-style: italic;
+    padding: 1rem 0;
+}
+
+.comment-form-container h4 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.comment-form label {
+    font-weight: 500;
+}
+
+.comment-form input,
+.comment-form textarea {
+    background-color: var(--profile-bg-light);
+    border-color: var(--toggle-border-light);
+    color: var(--body-color-light);
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.comment-form input:focus,
+.comment-form textarea:focus {
+    background-color: var(--profile-bg-light);
+    color: var(--body-color-light);
+    border-color: #86b7fe; /* Bootstrap focus color */
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); /* Bootstrap focus shadow */
+}
+
+/* Dark Mode Comments Styles */
+body.dark-mode .comments-section {
+    border-top-color: var(--toggle-border-dark);
+}
+
+body.dark-mode .comment-item {
+    border-bottom-color: var(--toggle-border-dark);
+}
+
+body.dark-mode .comment-date {
+    color: #adb5bd; /* Lighter gray for dark mode date */
+}
+
+body.dark-mode .no-comments {
+    color: #adb5bd;
+}
+
+body.dark-mode .comment-form input,
+body.dark-mode .comment-form textarea {
+    background-color: var(--profile-bg-dark);
+    border-color: var(--toggle-border-dark);
+    color: var(--body-color-dark);
+}
+
+body.dark-mode .comment-form input::placeholder,
+body.dark-mode .comment-form textarea::placeholder {
+    color: #6c757d; /* Darker placeholder text for dark mode */
+}
+
+body.dark-mode .comment-form input:focus,
+body.dark-mode .comment-form textarea:focus {
+    background-color: var(--profile-bg-dark);
+    color: var(--body-color-dark);
+    border-color: #8ec5fc; /* Adjusted focus color for dark mode */
+    box-shadow: 0 0 0 0.25rem rgba(142, 197, 252, 0.25); /* Adjusted focus shadow for dark mode */
+}

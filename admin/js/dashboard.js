@@ -370,16 +370,13 @@ function showBlogEditor(post = null) {
     const categoryInput = document.getElementById('blog-category');
     const dateInput = document.getElementById('blog-date');
     const contentInput = document.getElementById('blog-content');
-    const commentsEnabledSwitch = document.getElementById('blog-comments-enabled');
-    const moderationEnabledSwitch = document.getElementById('blog-moderation-enabled');
     const attachmentsEditor = document.getElementById('blog-attachments-editor');
     const referencesEditor = document.getElementById('blog-references-editor');
     const saveStatus = document.getElementById('blog-save-status');
 
     if (!listContainer || !editorContainer || !editorTitle || !form || !blogIdInput || 
         !titleInput || !categoryInput || !dateInput || !contentInput || 
-        !attachmentsEditor || !referencesEditor || !saveStatus ||
-        !commentsEnabledSwitch || !moderationEnabledSwitch) return;
+        !attachmentsEditor || !referencesEditor || !saveStatus) return;
 
     listContainer.style.display = 'none';
     editorContainer.style.display = 'block';
@@ -397,10 +394,6 @@ function showBlogEditor(post = null) {
         dateInput.value = post.date ? new Date(post.date).toISOString().slice(0, 16) : '';
         contentInput.value = post.content || '';
 
-        // 设置开关状态 (处理旧数据可能没有这些字段的情况)
-        commentsEnabledSwitch.checked = post.commentsEnabled !== undefined ? post.commentsEnabled : true; 
-        moderationEnabledSwitch.checked = post.moderationEnabled !== undefined ? post.moderationEnabled : true;
-
         // 填充附件
         if (post.attachments && Array.isArray(post.attachments)) {
             post.attachments.forEach(att => addAttachmentInputGroup(attachmentsEditor, att.url, att.type, att.filename));
@@ -417,9 +410,6 @@ function showBlogEditor(post = null) {
         blogIdInput.value = ''; // 确保 ID 为空
         // 可以设置默认日期为当前时间
         dateInput.value = new Date().toISOString().slice(0, 16);
-        // 设置默认开关状态
-        commentsEnabledSwitch.checked = true;
-        moderationEnabledSwitch.checked = true;
         // 添加一个空的附件和引用输入（可选）
         // addAttachmentInputGroup(attachmentsEditor);
         // addReferenceInputGroup(referencesEditor);
@@ -560,8 +550,6 @@ async function saveBlogPost() {
     const category = document.getElementById('blog-category').value.trim();
     const dateStr = document.getElementById('blog-date').value;
     const content = document.getElementById('blog-content').value.trim();
-    const commentsEnabled = document.getElementById('blog-comments-enabled').checked;
-    const moderationEnabled = document.getElementById('blog-moderation-enabled').checked;
     const statusSpan = document.getElementById('blog-save-status');
     const saveButton = document.getElementById('save-post-button');
 
@@ -620,9 +608,7 @@ async function saveBlogPost() {
         date: dateISO,
         content,
         attachments,
-        references,
-        commentsEnabled,      // 添加评论开关状态
-        moderationEnabled     // 添加审核开关状态
+        references
     };
 
     const method = postId ? 'PUT' : 'POST';

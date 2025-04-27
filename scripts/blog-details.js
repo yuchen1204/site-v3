@@ -108,8 +108,7 @@ function setupSidebarLinks() {
  */
 async function loadPostDetails() {
     const postDetailsContainer = document.getElementById('blog-post-details');
-    const commentsSection = document.getElementById('comments-section'); // 获取整个评论区
-    if (!postDetailsContainer || !commentsSection) return;
+    if (!postDetailsContainer) return;
     
     // 从URL中获取文章ID
     const urlParams = new URLSearchParams(window.location.search);
@@ -132,16 +131,9 @@ async function loadPostDetails() {
         blogDataSource = 'kv';
         updateDataSourceIndicator();
         displayPostDetails(post);
-
-        // 根据文章设置显示或隐藏评论区
-        if (post.commentsEnabled !== false) {
-            commentsSection.style.display = 'block';
-            // 加载评论并初始化评论表单
-            loadComments(postId);
-            initializeCommentForm(postId);
-        } else {
-            commentsSection.style.display = 'none'; // 或者显示 "评论已关闭"
-        }
+        // 加载评论并初始化评论表单
+        await loadComments(postId);
+        initializeCommentForm(postId);
     } catch (error) {
         console.warn('从KV数据库加载文章失败，尝试从JSON文件加载:', error);
         

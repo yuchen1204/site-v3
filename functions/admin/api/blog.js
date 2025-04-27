@@ -83,10 +83,7 @@ async function handleCreate(context) {
             date: new Date(newPostData.date).toISOString(), 
              // Ensure attachments and references are arrays if not provided
             attachments: newPostData.attachments || [],
-            references: newPostData.references || [],
-            // Set comment settings, default to true if not provided
-            commentsEnabled: newPostData.commentsEnabled !== undefined ? newPostData.commentsEnabled : true,
-            moderationEnabled: newPostData.moderationEnabled !== undefined ? newPostData.moderationEnabled : true
+            references: newPostData.references || []
         };
 
         posts.push(newPost);

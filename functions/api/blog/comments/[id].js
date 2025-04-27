@@ -30,14 +30,6 @@ function jsonResponse(data, status = 200, headers = {}) {
     });
 }
 
-// 新增：Helper function to get a single blog post
-async function getPost(env, postId) {
-    const blogData = await env.blog_data.get('blog', { type: 'json' });
-    const posts = blogData || [];
-    const post = posts.find(p => p.id === postId);
-    return post;
-}
-
 // Handle GET request - Fetch comments for a post
 async function handleGetComments(context) {
     const { env, params } = context;
@@ -66,18 +58,6 @@ async function handleAddComment(context) {
     }
 
     try {
-        // 1. 获取文章设置
-        const post = await getPost(env, postId);
-        if (!post) {
-            return jsonResponse({ error: '找不到对应的文章' }, 404);
-        }
-
-        // 2. 检查评论是否开启
-        //    使用 post.commentsEnabled !== false 来处理旧数据没有该字段的情况（默认为开启）
-        if (post.commentsEnabled === false) { 
-            return jsonResponse({ error: '该文章已关闭评论' }, 403); // 403 Forbidden
-        }
-
         const { name, email, content } = await request.json();
 
         // 基本验证
@@ -102,17 +82,14 @@ async function handleAddComment(context) {
         // 获取现有评论
         const comments = await getComments(env, postId);
 
-        // 3. 根据审核设置确定初始状态
-        const initialStatus = post.moderationEnabled !== false ? 'pending' : 'approved';
-
         // 创建新评论
         const newComment = {
-            id: Date.now(), 
+            id: Date.now(), // 使用时间戳作为评论ID
             name,
-            email, 
+            email, // 邮箱将被保存但不会返回给前端
             content,
             createdAt: new Date().toISOString(),
-            status: initialStatus // 使用计算出的初始状态
+            status: 'pending' // 新评论默认为待审核状态
         };
 
         // 添加新评论
