@@ -560,6 +560,8 @@ async function saveBlogPost() {
     const category = document.getElementById('blog-category').value.trim();
     const dateStr = document.getElementById('blog-date').value;
     const content = document.getElementById('blog-content').value.trim();
+    const commentsEnabled = document.getElementById('blog-comments-enabled').checked;
+    const moderationEnabled = document.getElementById('blog-moderation-enabled').checked;
     const statusSpan = document.getElementById('blog-save-status');
     const saveButton = document.getElementById('save-post-button');
 
@@ -618,7 +620,9 @@ async function saveBlogPost() {
         date: dateISO,
         content,
         attachments,
-        references
+        references,
+        commentsEnabled,
+        moderationEnabled
     };
 
     const method = postId ? 'PUT' : 'POST';
