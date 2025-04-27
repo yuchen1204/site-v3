@@ -94,12 +94,8 @@ async function handleUpdate(context) {
             date: new Date(updatedData.date).toISOString(),
             attachments: updatedData.attachments || [],
             references: updatedData.references || [],
-            commentsEnabled: updatedData.commentsEnabled !== undefined 
-                                ? updatedData.commentsEnabled 
-                                : (posts[postIndex].commentsEnabled !== false),
-            moderationEnabled: updatedData.moderationEnabled !== undefined 
-                                ? updatedData.moderationEnabled 
-                                : (posts[postIndex].moderationEnabled !== false)
+            commentsEnabled: updatedData.commentsEnabled !== undefined ? updatedData.commentsEnabled : posts[postIndex].commentsEnabled,
+            moderationEnabled: updatedData.moderationEnabled !== undefined ? updatedData.moderationEnabled : posts[postIndex].moderationEnabled
         };
 
         await saveBlogPosts(env, posts);

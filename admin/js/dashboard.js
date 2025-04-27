@@ -370,10 +370,10 @@ function showBlogEditor(post = null) {
     const categoryInput = document.getElementById('blog-category');
     const dateInput = document.getElementById('blog-date');
     const contentInput = document.getElementById('blog-content');
-    const attachmentsEditor = document.getElementById('blog-attachments-editor');
-    const referencesEditor = document.getElementById('blog-references-editor');
     const commentsEnabledSwitch = document.getElementById('blog-comments-enabled');
     const moderationEnabledSwitch = document.getElementById('blog-moderation-enabled');
+    const attachmentsEditor = document.getElementById('blog-attachments-editor');
+    const referencesEditor = document.getElementById('blog-references-editor');
     const saveStatus = document.getElementById('blog-save-status');
 
     if (!listContainer || !editorContainer || !editorTitle || !form || !blogIdInput || 
@@ -397,6 +397,10 @@ function showBlogEditor(post = null) {
         dateInput.value = post.date ? new Date(post.date).toISOString().slice(0, 16) : '';
         contentInput.value = post.content || '';
 
+        // 设置开关状态 (处理旧数据可能没有这些字段的情况)
+        commentsEnabledSwitch.checked = post.commentsEnabled !== undefined ? post.commentsEnabled : true; 
+        moderationEnabledSwitch.checked = post.moderationEnabled !== undefined ? post.moderationEnabled : true;
+
         // 填充附件
         if (post.attachments && Array.isArray(post.attachments)) {
             post.attachments.forEach(att => addAttachmentInputGroup(attachmentsEditor, att.url, att.type, att.filename));
@@ -406,10 +410,6 @@ function showBlogEditor(post = null) {
             post.references.forEach(refId => addReferenceInputGroup(referencesEditor, refId));
         }
 
-        // 设置评论开关状态 (如果字段不存在，则默认为 true)
-        commentsEnabledSwitch.checked = post.commentsEnabled !== false;
-        moderationEnabledSwitch.checked = post.moderationEnabled !== false;
-
     } else {
         // 添加新文章
         editorTitle.textContent = '添加新文章';
@@ -417,13 +417,12 @@ function showBlogEditor(post = null) {
         blogIdInput.value = ''; // 确保 ID 为空
         // 可以设置默认日期为当前时间
         dateInput.value = new Date().toISOString().slice(0, 16);
+        // 设置默认开关状态
+        commentsEnabledSwitch.checked = true;
+        moderationEnabledSwitch.checked = true;
         // 添加一个空的附件和引用输入（可选）
         // addAttachmentInputGroup(attachmentsEditor);
         // addReferenceInputGroup(referencesEditor);
-        
-        // 新文章默认开启评论和审核
-        commentsEnabledSwitch.checked = true;
-        moderationEnabledSwitch.checked = true;
     }
 }
 
@@ -622,8 +621,8 @@ async function saveBlogPost() {
         content,
         attachments,
         references,
-        commentsEnabled,     // 添加评论设置
-        moderationEnabled    // 添加审核设置
+        commentsEnabled,      // 添加评论开关状态
+        moderationEnabled     // 添加审核开关状态
     };
 
     const method = postId ? 'PUT' : 'POST';

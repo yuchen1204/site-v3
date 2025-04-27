@@ -81,12 +81,12 @@ async function handleCreate(context) {
             id: generateUniqueId(posts), // Generate a new ID
             // Ensure date is stored consistently (e.g., ISO string)
             date: new Date(newPostData.date).toISOString(), 
-            // Ensure attachments and references are arrays if not provided
+             // Ensure attachments and references are arrays if not provided
             attachments: newPostData.attachments || [],
             references: newPostData.references || [],
-            // Set comment settings, defaulting to true if not provided
-            commentsEnabled: newPostData.commentsEnabled !== false,
-            moderationEnabled: newPostData.moderationEnabled !== false
+            // Set comment settings, default to true if not provided
+            commentsEnabled: newPostData.commentsEnabled !== undefined ? newPostData.commentsEnabled : true,
+            moderationEnabled: newPostData.moderationEnabled !== undefined ? newPostData.moderationEnabled : true
         };
 
         posts.push(newPost);
