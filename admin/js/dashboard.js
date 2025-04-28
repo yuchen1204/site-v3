@@ -1,14 +1,32 @@
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM内容已加载，开始初始化功能...');
+    
+    // 初始化各个功能模块
     initializeLogout();
     initializeAdminSidebar();
     initializeProfileEditor(); // 初始化个人资料编辑器
     initializeBlogEditor(); // 初始化博客编辑器
-    initializePasskeyManager(); // 初始化Passkey管理器
-    // 如果当前页面是评论管理页面，则初始化评论管理功能
-    const commentsSection = document.getElementById('manage-comments');
-    if (commentsSection && typeof initializeCommentManagement === 'function') {
-        initializeCommentManagement();
+    
+    // 初始化Passkey管理器
+    try {
+        console.log('开始初始化Passkey管理器...');
+        initializePasskeyManager();
+    } catch (error) {
+        console.error('初始化Passkey管理器失败:', error);
     }
+    
+    // 如果当前页面是评论管理页面，则初始化评论管理功能
+    try {
+        const commentsSection = document.getElementById('manage-comments');
+        if (commentsSection && typeof initializeCommentManagement === 'function') {
+            console.log('开始初始化评论管理功能...');
+            initializeCommentManagement();
+        }
+    } catch (error) {
+        console.error('初始化评论管理功能失败:', error);
+    }
+    
+    console.log('所有功能初始化完成');
 });
 
 /**
@@ -133,7 +151,12 @@ function initializeAdminSidebar() {
                         break;
                     case 'manage-passkeys':
                         // 加载Passkey列表
-                        loadPasskeysList();
+                        console.log('切换到Passkey管理区域，调用loadPasskeysList()');
+                        if (typeof loadPasskeysList === 'function') {
+                            loadPasskeysList();
+                        } else {
+                            console.error('loadPasskeysList函数未定义');
+                        }
                         break;
                     case 'dashboard-overview':
                         // 仪表盘通常是静态的或有自己的更新机制，这里暂时不处理
@@ -857,6 +880,14 @@ function showToast(title, message, type = 'info') {
  */
 function initializePasskeyManager() {
     console.log('正在初始化Passkey管理器...');
+    
+    // 先检查Passkey管理区域是否存在
+    const passkeySection = document.getElementById('manage-passkeys');
+    if (!passkeySection) {
+        console.error('未找到Passkey管理区域');
+        return;
+    }
+    
     const registerButton = document.getElementById('register-passkey-button');
     if (!registerButton) {
         console.error('未找到Passkey注册按钮');
@@ -866,15 +897,12 @@ function initializePasskeyManager() {
     // 检查浏览器支持
     if (!window.PublicKeyCredential) {
         console.warn('此浏览器不支持WebAuthn/Passkey');
-        const passkeySection = document.getElementById('manage-passkeys');
-        if (passkeySection) {
-            passkeySection.innerHTML = `
-                <div class="alert alert-warning">
-                    <i class="bi bi-exclamation-triangle me-2"></i>
-                    您的浏览器不支持 WebAuthn/Passkey。请使用支持该功能的现代浏览器（如Chrome、Firefox、Safari或Edge的最新版本）。
-                </div>
-            `;
-        }
+        passkeySection.innerHTML = `
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                您的浏览器不支持 WebAuthn/Passkey。请使用支持该功能的现代浏览器（如Chrome、Firefox、Safari或Edge的最新版本）。
+            </div>
+        `;
         return;
     }
 
@@ -889,6 +917,12 @@ function initializePasskeyManager() {
     // 初始加载Passkey列表 - 在首次初始化时不调用，等待切换到该区域时才加载
     // 这样可以避免在加载后台页面时就请求所有API
     console.log('Passkey管理器初始化完成');
+    
+    // 手动检查当前是否正在显示Passkey管理区域
+    if (passkeySection.classList.contains('active')) {
+        console.log('Passkey管理区域是当前活跃区域，立即加载数据');
+        loadPasskeysList();
+    }
 }
 
 /**
@@ -974,6 +1008,9 @@ async function loadPasskeysList() {
         tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
     }
 }
+
+// 确保loadPasskeysList函数在全局范围内可访问
+window.loadPasskeysList = loadPasskeysList;
 
 /**
  * 注册新的Passkey
