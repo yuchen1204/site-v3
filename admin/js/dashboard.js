@@ -109,11 +109,20 @@ function initializeAdminSidebar() {
             const targetSection = document.getElementById(targetSectionId);
             if (targetSection) {
                 targetSection.classList.add('active');
-                // 根据区域加载数据
+                // 根据区域加载或刷新数据
                 if (targetSectionId === 'edit-profile') {
-                    loadProfileDataForEditing();
+                    // 如果需要每次切换都刷新个人资料，取消下面这行的注释
+                    // loadProfileDataForEditing(); 
                 } else if (targetSectionId === 'edit-blog') {
-                    showBlogList(); // 显示文章列表并加载数据
+                    showBlogList(); // 博客列表每次切换时重新加载
+                } else if (targetSectionId === 'manage-comments') {
+                    // 假设 comments.js 中有 loadCommentsData 函数用于加载评论
+                    if (typeof loadCommentsData === 'function') {
+                        loadCommentsData(); // 每次切换到评论管理时重新加载数据
+                    } else {
+                        console.warn('无法找到评论加载函数 loadCommentsData()');
+                        // 可以考虑在此处添加一个占位符或提示信息
+                    }
                 }
             } else {
                 console.warn(`未找到目标区域: ${targetSectionId}`);
