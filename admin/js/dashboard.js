@@ -112,6 +112,7 @@ function initializeAdminSidebar() {
                 targetSection.classList.add('active');
 
                 // --- 修改：根据区域强制加载最新数据 ---
+                console.log(`[Sidebar Click] Switching section. Target ID: ${targetSectionId}`); // Log target ID
                 switch (targetSectionId) {
                     case 'edit-profile':
                         // 加载最新的个人资料用于编辑
@@ -125,6 +126,7 @@ function initializeAdminSidebar() {
                         // 重新初始化评论管理或调用特定的加载函数
                         // 假设 initializeCommentManagement 负责加载数据并且可以重复调用
                         // 如果有单独的 loadComments() 函数会更好
+                        console.log("[Sidebar Click] Calling initializeCommentManagement for manage-comments section.");
                         if (typeof initializeCommentManagement === 'function') {
                             initializeCommentManagement(); // 重新加载评论数据
                         } else {
@@ -133,13 +135,15 @@ function initializeAdminSidebar() {
                         break;
                     case 'manage-passkeys':
                         // 加载Passkey列表
+                        console.log("[Sidebar Click] Calling loadPasskeysList for manage-passkeys section.");
                         loadPasskeysList();
                         break;
                     case 'dashboard-overview':
+                         console.log("[Sidebar Click] Switching to dashboard-overview section.");
                         // 仪表盘通常是静态的或有自己的更新机制，这里暂时不处理
                         break;
                     default:
-                        console.warn(`未处理的区域数据加载: ${targetSectionId}`);
+                        console.warn(`[Sidebar Click] 未处理的区域数据加载: ${targetSectionId}`);
                 }
                 // --- 修改结束 ---
 
@@ -164,11 +168,13 @@ function initializeAdminSidebar() {
     // 查找初始激活的链接，并为其对应的 section 加载数据
     const initialActiveLink = document.querySelector('.admin-sidebar-link.active');
     if (initialActiveLink) {
+        console.log("[Initial Load] Found initial active link:", initialActiveLink);
         const initialSectionId = initialActiveLink.getAttribute('data-section');
         const initialSection = document.getElementById(initialSectionId);
         // 确保对应的 section 确实是初始激活的
         if (initialSection && initialSection.classList.contains('active')) {
-             switch (initialSectionId) {
+            console.log(`[Initial Load] Initial active section ID: ${initialSectionId}`); // Log initial ID
+            switch (initialSectionId) {
                 case 'edit-profile':
                     loadProfileDataForEditing();
                     break;
@@ -177,17 +183,23 @@ function initializeAdminSidebar() {
                     break;
                 case 'manage-comments':
                     // 初始加载评论
+                     console.log("[Initial Load] Calling initializeCommentManagement for manage-comments section.");
                     if (typeof initializeCommentManagement === 'function') {
                         initializeCommentManagement();
                     }
                     break;
                 case 'manage-passkeys':
                     // 初始加载Passkey列表
+                    console.log("[Initial Load] Calling loadPasskeysList for manage-passkeys section.");
                     loadPasskeysList();
                     break;
                 // dashboard-overview 通常不需要初始加载动态数据
                 case 'dashboard-overview':
+                     console.log("[Initial Load] Dashboard overview section active.");
                      break;
+                default: // Added default case for initial load logging
+                     console.warn(`[Initial Load] 未处理的区域数据加载: ${initialSectionId}`);
+                     break; // Added break
             }
         }
     }
@@ -856,11 +868,17 @@ function showToast(title, message, type = 'info') {
  * 初始化Passkey管理功能
  */
 function initializePasskeyManager() {
+    console.log("[Passkey] Initializing Passkey Manager..."); // Log start
     const registerButton = document.getElementById('register-passkey-button');
-    if (!registerButton) return;
+    if (!registerButton) {
+        console.error("[Passkey] Register button not found!");
+        return;
+    }
+    console.log("[Passkey] Register button found.");
 
     // 检查浏览器支持
     if (!window.PublicKeyCredential) {
+        console.warn("[Passkey] Browser does not support WebAuthn/Passkey.");
         const passkeySection = document.getElementById('manage-passkeys');
         if (passkeySection) {
             passkeySection.innerHTML = `
@@ -872,12 +890,15 @@ function initializePasskeyManager() {
         }
         return;
     }
+    console.log("[Passkey] Browser supports WebAuthn/Passkey.");
 
     // 注册按钮点击事件
+    console.log("[Passkey] Adding click listener to register passkey button.");
     registerButton.addEventListener('click', registerNewPasskey);
 
-    // 初始加载Passkey列表
-    loadPasskeysList();
+    // 初始加载Passkey列表 - 注意：如果初始加载逻辑已调用，则可能冗余
+    // console.log("[Passkey] Calling loadPasskeysList from initializePasskeyManager (might be redundant).");
+    // loadPasskeysList(); // 暂时注释掉，避免重复加载
 }
 
 /**
@@ -939,6 +960,7 @@ async function loadPasskeysList() {
  * 注册新的Passkey
  */
 async function registerNewPasskey() {
+    console.log("[Passkey] registerNewPasskey function called."); // Log function entry
     const statusElement = document.getElementById('passkey-status');
     const button = document.getElementById('register-passkey-button');
     
