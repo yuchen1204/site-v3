@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeAdminSidebar();
     initializeProfileEditor(); // 初始化个人资料编辑器
     initializeBlogEditor(); // 初始化博客编辑器
+    initializePasskeyManager(); // 初始化Passkey管理器
     // 如果当前页面是评论管理页面，则初始化评论管理功能
     const commentsSection = document.getElementById('manage-comments');
     if (commentsSection && typeof initializeCommentManagement === 'function') {
@@ -130,6 +131,10 @@ function initializeAdminSidebar() {
                             console.warn('评论管理功能 (initializeCommentManagement) 未定义或不可用。');
                         }
                         break;
+                    case 'manage-passkeys':
+                        // 加载Passkey列表
+                        loadPasskeysList();
+                        break;
                     case 'dashboard-overview':
                         // 仪表盘通常是静态的或有自己的更新机制，这里暂时不处理
                         break;
@@ -175,6 +180,10 @@ function initializeAdminSidebar() {
                     if (typeof initializeCommentManagement === 'function') {
                         initializeCommentManagement();
                     }
+                    break;
+                case 'manage-passkeys':
+                    // 初始加载Passkey列表
+                    loadPasskeysList();
                     break;
                 // dashboard-overview 通常不需要初始加载动态数据
                 case 'dashboard-overview':
@@ -841,4 +850,283 @@ function escapeHTML(str) {
  */
 function showToast(title, message, type = 'info') {
     createToast(`<strong>${title}</strong>: ${message}`, type);
+}
+
+/**
+ * 初始化Passkey管理功能
+ */
+function initializePasskeyManager() {
+    const registerButton = document.getElementById('register-passkey-button');
+    if (!registerButton) return;
+
+    // 检查浏览器支持
+    if (!window.PublicKeyCredential) {
+        const passkeySection = document.getElementById('manage-passkeys');
+        if (passkeySection) {
+            passkeySection.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    您的浏览器不支持 WebAuthn/Passkey。请使用支持该功能的现代浏览器（如Chrome、Firefox、Safari或Edge的最新版本）。
+                </div>
+            `;
+        }
+        return;
+    }
+
+    // 注册按钮点击事件
+    registerButton.addEventListener('click', registerNewPasskey);
+
+    // 初始加载Passkey列表
+    loadPasskeysList();
+}
+
+/**
+ * 加载已注册的Passkey列表
+ */
+async function loadPasskeysList() {
+    const tbody = document.getElementById('passkeys-list-tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center">加载中...</td></tr>';
+
+    try {
+        const response = await fetch('/admin/api/passkey/list');
+        if (!response.ok) {
+            throw new Error(`获取Passkey列表失败: ${response.statusText}`);
+        }
+
+        const passkeys = await response.json();
+
+        if (passkeys.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center">还没有注册的Passkey</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        passkeys.forEach(passkey => {
+            const row = tbody.insertRow();
+            const registerDate = new Date(passkey.createdAt).toLocaleString('zh-CN');
+            const lastUsed = passkey.lastUsed ? new Date(passkey.lastUsed).toLocaleString('zh-CN') : '从未使用';
+            
+            row.innerHTML = `
+                <td>${escapeHTML(passkey.name || '未命名设备')}</td>
+                <td>${registerDate}</td>
+                <td>${lastUsed}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger delete-passkey-button" data-id="${passkey.id}" data-name="${escapeHTML(passkey.name || '未命名设备')}">
+                        <i class="bi bi-trash"></i> 删除
+                    </button>
+                </td>
+            `;
+        });
+
+        // 添加删除按钮事件监听
+        document.querySelectorAll('.delete-passkey-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const name = this.getAttribute('data-name');
+                deletePasskey(id, name);
+            });
+        });
+
+    } catch (error) {
+        console.error('加载Passkey列表失败:', error);
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
+    }
+}
+
+/**
+ * 注册新的Passkey
+ */
+async function registerNewPasskey() {
+    const statusElement = document.getElementById('passkey-status');
+    const button = document.getElementById('register-passkey-button');
+    
+    if (!statusElement || !button) return;
+    
+    statusElement.className = 'mt-3 alert alert-info';
+    statusElement.textContent = '开始注册新Passkey...';
+    
+    button.disabled = true;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-hourglass-split me-2"></i> 注册中...';
+
+    try {
+        // 1. 获取注册选项
+        const getOptionsResponse = await fetch('/admin/api/passkey/get-registration-options', {
+            method: 'GET'
+        });
+
+        if (!getOptionsResponse.ok) {
+            const errorData = await getOptionsResponse.json();
+            throw new Error(errorData.error || '获取注册选项失败');
+        }
+
+        let options = await getOptionsResponse.json();
+        
+        // 2. 准备选项数据格式
+        options.challenge = base64UrlToArrayBuffer(options.challenge);
+        options.user.id = base64UrlToArrayBuffer(options.user.id);
+        if (options.excludeCredentials) {
+            options.excludeCredentials = options.excludeCredentials.map(credential => {
+                return {
+                    ...credential,
+                    id: base64UrlToArrayBuffer(credential.id)
+                };
+            });
+        }
+
+        // 3. 调用浏览器API创建凭据
+        const credential = await navigator.credentials.create({
+            publicKey: options
+        });
+
+        // 4. 准备验证数据
+        const verificationData = {
+            id: credential.id,
+            rawId: arrayBufferToBase64Url(credential.rawId),
+            response: {
+                clientDataJSON: arrayBufferToBase64Url(credential.response.clientDataJSON),
+                attestationObject: arrayBufferToBase64Url(credential.response.attestationObject)
+            },
+            type: credential.type,
+            // 可选: 添加设备友好名称
+            clientData: {
+                name: navigator.platform || 'Unknown Device'
+            }
+        };
+
+        // 5. 发送到服务器验证
+        const verifyResponse = await fetch('/admin/api/passkey/verify-registration', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(verificationData)
+        });
+
+        if (!verifyResponse.ok) {
+            const errorData = await verifyResponse.json();
+            throw new Error(errorData.error || '验证注册失败');
+        }
+
+        // 6. 注册成功
+        const result = await verifyResponse.json();
+        statusElement.className = 'mt-3 alert alert-success';
+        statusElement.textContent = `成功注册新Passkey: ${result.name || '未命名设备'}`;
+        
+        // 7. 重新加载Passkey列表
+        loadPasskeysList();
+
+    } catch (error) {
+        console.error('注册Passkey失败:', error);
+        
+        // 显示友好的错误消息
+        let errorMessage = '注册失败';
+        
+        if (error.name === 'NotAllowedError') {
+            errorMessage = '操作被取消或拒绝';
+        } else if (error.name === 'SecurityError') {
+            errorMessage = '安全错误: 可能的原因包括非HTTPS环境或不安全的上下文';
+        } else if (error.name === 'AbortError') {
+            errorMessage = '操作被中止';
+        } else if (error.message) {
+            errorMessage = `注册失败: ${error.message}`;
+        }
+        
+        statusElement.className = 'mt-3 alert alert-danger';
+        statusElement.textContent = errorMessage;
+    } finally {
+        // 恢复按钮状态
+        button.disabled = false;
+        button.innerHTML = originalText;
+        
+        // 3秒后自动隐藏成功消息，错误消息保留
+        if (statusElement.classList.contains('alert-success')) {
+            setTimeout(() => {
+                statusElement.textContent = '';
+                statusElement.className = 'mt-3';
+            }, 3000);
+        }
+    }
+}
+
+/**
+ * 删除Passkey
+ * @param {string} id Passkey ID
+ * @param {string} name Passkey名称（用于显示）
+ */
+async function deletePasskey(id, name) {
+    if (!id) return;
+
+    // 显示确认对话框
+    if (!confirm(`确定要删除Passkey "${name}"吗？此操作不可撤销。`)) {
+        return;
+    }
+
+    const statusElement = document.getElementById('passkey-status');
+    if (statusElement) {
+        statusElement.className = 'mt-3 alert alert-info';
+        statusElement.textContent = `正在删除Passkey "${name}"...`;
+    }
+
+    try {
+        const response = await fetch(`/admin/api/passkey/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || '删除失败');
+        }
+
+        // 删除成功
+        if (statusElement) {
+            statusElement.className = 'mt-3 alert alert-success';
+            statusElement.textContent = `成功删除Passkey "${name}"`;
+        }
+
+        // 重新加载Passkey列表
+        loadPasskeysList();
+
+    } catch (error) {
+        console.error('删除Passkey失败:', error);
+        if (statusElement) {
+            statusElement.className = 'mt-3 alert alert-danger';
+            statusElement.textContent = `删除失败: ${error.message}`;
+        }
+    }
+}
+
+/**
+ * Base64 URL格式转换为ArrayBuffer
+ * @param {string} base64Url 
+ * @returns {ArrayBuffer}
+ */
+function base64UrlToArrayBuffer(base64Url) {
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const padLength = (4 - (base64.length % 4)) % 4;
+    const padded = base64.padEnd(base64.length + padLength, '=');
+    const binary = atob(padded);
+    const buffer = new ArrayBuffer(binary.length);
+    const view = new Uint8Array(buffer);
+    for (let i = 0; i < binary.length; i++) {
+        view[i] = binary.charCodeAt(i);
+    }
+    return buffer;
+}
+
+/**
+ * ArrayBuffer转换为Base64 URL格式
+ * @param {ArrayBuffer} buffer 
+ * @returns {string}
+ */
+function arrayBufferToBase64Url(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    const base64 = btoa(binary);
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 } 
