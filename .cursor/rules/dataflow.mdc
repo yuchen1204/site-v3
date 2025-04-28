@@ -1,0 +1,12 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Data Flow and Synchronization
+
+- **Local Data Source:** Blog posts and profile information are primarily stored in [data/blog.json](mdc:data/blog.json) and [data/profile.json](mdc:data/profile.json).
+- **Synchronization Script:** The [scripts/sync-to-kv.js](mdc:scripts/sync-to-kv.js) script is used to push data from the local JSON files to Cloudflare KV.
+- **Live Data Store:** Cloudflare KV (bound as `blog_data` in Functions) is the live data store used by the backend APIs.
+- **Important:** Changes to `data/*.json` files **must** be synced using the script to be reflected online.
+- **Comments & Sessions:** Comment data and admin sessions are stored directly in Cloudflare KV via the Functions API, not in the local JSON files.

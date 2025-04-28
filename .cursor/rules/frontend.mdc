@@ -1,0 +1,11 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Frontend Logic and Styling
+
+- **Main Site Logic:** Core JavaScript for the main site (profile loading, blog list, theme toggle, sidebar) is in [scripts/main.js](mdc:scripts/main.js).
+- **Blog Detail Logic:** JavaScript for the blog detail page (loading post, loading/submitting comments) is in [scripts/blog-details.js](mdc:scripts/blog-details.js).
+- **Admin Logic:** JavaScript for admin panel functionalities (login, dashboard, comment moderation) resides in files under `admin/js/`.
+- **Main Stylesheet:** Global styles are defined in [styles/main.css](mdc:styles/main.css), utilizing Bootstrap 5.

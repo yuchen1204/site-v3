@@ -1,0 +1,18 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Project Entry Points and Core Directories
+
+## Frontend Entry Points
+- Main Site: [index.html](mdc:index.html)
+- Blog Detail Page: [blog/index.html](mdc:blog/index.html)
+- Admin Login: [admin/index.html](mdc:admin/index.html)
+- Admin Dashboard: [admin/dashboard.html](mdc:admin/dashboard.html)
+
+## Backend (Cloudflare Functions)
+- **Public API:** Files within `functions/api/` directory define public endpoints.
+- **Admin API & Auth:** Files within `functions/admin/` define protected admin endpoints and handle authentication via [_middleware.js](mdc:functions/admin/_middleware.js).
+
+See [README.md](mdc:README.md) for detailed API routes.

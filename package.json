@@ -1,0 +1,21 @@
+{
+  "name": "personal-site-v3",
+  "version": "1.0.0",
+  "description": "个人网站V3，使用Cloudflare Pages和KV",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "sync-kv": "node scripts/sync-to-kv.js"
+  },
+  "keywords": [
+    "blog",
+    "cloudflare",
+    "personal-site"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@simplewebauthn/browser": "^8.3.1",
+    "@simplewebauthn/server": "^8.3.4"
+  }
+} 
