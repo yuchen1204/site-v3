@@ -7,50 +7,13 @@ body {
 }
 
 .login-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: #f8f9fa;
+    width: 100%;
+    max-width: 400px;
 }
 
 .login-box {
-    width: 100%;
-    max-width: 400px;
-    padding: 2rem;
     background-color: #ffffff;
+    padding: 2.5rem;
     border-radius: 0.5rem;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-}
-
-/* 分隔线样式 */
-.separator {
-    display: flex;
-    align-items: center;
-    text-align: center;
-    color: #6c757d;
-}
-
-.separator::before,
-.separator::after {
-    content: '';
-    flex: 1;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.separator span {
-    padding: 0 1rem;
-}
-
-/* Passkey按钮样式 */
-#passkey-login-button {
-    width: 100%;
-    padding: 0.6rem;
-    justify-content: center;
-    font-weight: 500;
-}
-
-/* 错误消息样式 */
-#login-error {
-    font-size: 0.875rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 } 
