@@ -101,7 +101,7 @@ function initializeAdminSidebar() {
             this.classList.add('active');
 
             const targetSectionId = this.getAttribute('data-section');
-            
+
             // 隐藏所有内容区域
             sections.forEach(section => section.classList.remove('active'));
 
@@ -109,37 +109,80 @@ function initializeAdminSidebar() {
             const targetSection = document.getElementById(targetSectionId);
             if (targetSection) {
                 targetSection.classList.add('active');
-                // 根据区域加载或刷新数据
-                if (targetSectionId === 'edit-profile') {
-                    // 如果需要每次切换都刷新个人资料，取消下面这行的注释
-                    // loadProfileDataForEditing(); 
-                } else if (targetSectionId === 'edit-blog') {
-                    showBlogList(); // 博客列表每次切换时重新加载
-                } else if (targetSectionId === 'manage-comments') {
-                    // 假设 comments.js 中有 loadCommentsData 函数用于加载评论
-                    if (typeof loadCommentsData === 'function') {
-                        loadCommentsData(); // 每次切换到评论管理时重新加载数据
-                    } else {
-                        console.warn('无法找到评论加载函数 loadCommentsData()');
-                        // 可以考虑在此处添加一个占位符或提示信息
-                    }
+
+                // --- 修改：根据区域强制加载最新数据 ---
+                switch (targetSectionId) {
+                    case 'edit-profile':
+                        // 加载最新的个人资料用于编辑
+                        loadProfileDataForEditing();
+                        break;
+                    case 'edit-blog':
+                        // 显示文章列表，该函数内部会调用 loadBlogPosts 加载最新文章
+                        showBlogList();
+                        break;
+                    case 'manage-comments':
+                        // 重新初始化评论管理或调用特定的加载函数
+                        // 假设 initializeCommentManagement 负责加载数据并且可以重复调用
+                        // 如果有单独的 loadComments() 函数会更好
+                        if (typeof initializeCommentManagement === 'function') {
+                            initializeCommentManagement(); // 重新加载评论数据
+                        } else {
+                            console.warn('评论管理功能 (initializeCommentManagement) 未定义或不可用。');
+                        }
+                        break;
+                    case 'dashboard-overview':
+                        // 仪表盘通常是静态的或有自己的更新机制，这里暂时不处理
+                        break;
+                    default:
+                        console.warn(`未处理的区域数据加载: ${targetSectionId}`);
                 }
+                // --- 修改结束 ---
+
             } else {
                 console.warn(`未找到目标区域: ${targetSectionId}`);
             }
 
             // (可选) 在小屏幕上点击链接后自动关闭侧边栏
-            if (window.innerWidth < 992) { 
+            if (window.innerWidth < 992) {
                 closeSidebar();
             }
         });
     });
 
-    // 初始加载检查，如果默认显示的是编辑博客文章区域
-    const initialActiveSection = document.querySelector('.admin-section.active');
-    if (initialActiveSection && initialActiveSection.id === 'edit-blog') {
-        showBlogList(); // 显示文章列表并加载数据
+    // --- 修改：确保初始加载时，当前激活的 section 也加载数据 ---
+    // 移除旧的、只针对 edit-blog 的初始加载逻辑
+    // const initialActiveSection = document.querySelector('.admin-section.active');
+    // if (initialActiveSection && initialActiveSection.id === 'edit-blog') {
+    //     showBlogList();
+    // }
+
+    // 查找初始激活的链接，并为其对应的 section 加载数据
+    const initialActiveLink = document.querySelector('.admin-sidebar-link.active');
+    if (initialActiveLink) {
+        const initialSectionId = initialActiveLink.getAttribute('data-section');
+        const initialSection = document.getElementById(initialSectionId);
+        // 确保对应的 section 确实是初始激活的
+        if (initialSection && initialSection.classList.contains('active')) {
+             switch (initialSectionId) {
+                case 'edit-profile':
+                    loadProfileDataForEditing();
+                    break;
+                case 'edit-blog':
+                    showBlogList(); // 加载博客列表
+                    break;
+                case 'manage-comments':
+                    // 初始加载评论
+                    if (typeof initializeCommentManagement === 'function') {
+                        initializeCommentManagement();
+                    }
+                    break;
+                // dashboard-overview 通常不需要初始加载动态数据
+                case 'dashboard-overview':
+                     break;
+            }
+        }
     }
+    // --- 修改结束 ---
 }
 
 /**
