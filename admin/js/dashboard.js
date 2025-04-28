@@ -856,11 +856,16 @@ function showToast(title, message, type = 'info') {
  * 初始化Passkey管理功能
  */
 function initializePasskeyManager() {
+    console.log('正在初始化Passkey管理器...');
     const registerButton = document.getElementById('register-passkey-button');
-    if (!registerButton) return;
+    if (!registerButton) {
+        console.error('未找到Passkey注册按钮');
+        return;
+    }
 
     // 检查浏览器支持
     if (!window.PublicKeyCredential) {
+        console.warn('此浏览器不支持WebAuthn/Passkey');
         const passkeySection = document.getElementById('manage-passkeys');
         if (passkeySection) {
             passkeySection.innerHTML = `
@@ -873,29 +878,62 @@ function initializePasskeyManager() {
         return;
     }
 
+    console.log('注册Passkey按钮点击事件绑定');
     // 注册按钮点击事件
-    registerButton.addEventListener('click', registerNewPasskey);
+    registerButton.addEventListener('click', function(e) {
+        console.log('Passkey注册按钮被点击');
+        e.preventDefault();
+        registerNewPasskey();
+    });
 
-    // 初始加载Passkey列表
-    loadPasskeysList();
+    // 初始加载Passkey列表 - 在首次初始化时不调用，等待切换到该区域时才加载
+    // 这样可以避免在加载后台页面时就请求所有API
+    console.log('Passkey管理器初始化完成');
 }
 
 /**
  * 加载已注册的Passkey列表
  */
 async function loadPasskeysList() {
+    console.log('开始加载Passkey列表...');
     const tbody = document.getElementById('passkeys-list-tbody');
-    if (!tbody) return;
+    if (!tbody) {
+        console.error('未找到Passkey列表元素');
+        return;
+    }
 
     tbody.innerHTML = '<tr><td colspan="4" class="text-center">加载中...</td></tr>';
 
     try {
-        const response = await fetch('/admin/api/passkey/list');
+        console.log('正在请求Passkey列表...');
+        const response = await fetch('/admin/api/passkey/list', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin' // 确保发送cookies
+        });
+        
+        console.log('Passkey列表响应状态:', response.status);
+        
         if (!response.ok) {
-            throw new Error(`获取Passkey列表失败: ${response.statusText}`);
+            const errorText = await response.text();
+            console.error('获取Passkey列表响应错误:', errorText);
+            try {
+                const errorData = JSON.parse(errorText);
+                throw new Error(errorData.error || `获取Passkey列表失败 (${response.status}): ${response.statusText}`);
+            } catch (e) {
+                throw new Error(`获取Passkey列表失败 (${response.status}): ${response.statusText}`);
+            }
         }
 
         const passkeys = await response.json();
+        console.log('获取到Passkey列表:', passkeys);
+
+        if (!Array.isArray(passkeys)) {
+            console.error('返回的Passkey列表不是数组:', passkeys);
+            throw new Error('服务器返回了无效的Passkey列表格式');
+        }
 
         if (passkeys.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" class="text-center">还没有注册的Passkey</td></tr>';
@@ -929,6 +967,8 @@ async function loadPasskeysList() {
             });
         });
 
+        console.log('Passkey列表加载完成');
+
     } catch (error) {
         console.error('加载Passkey列表失败:', error);
         tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
@@ -939,10 +979,14 @@ async function loadPasskeysList() {
  * 注册新的Passkey
  */
 async function registerNewPasskey() {
+    console.log('开始注册新Passkey...');  // 添加调试日志
     const statusElement = document.getElementById('passkey-status');
     const button = document.getElementById('register-passkey-button');
     
-    if (!statusElement || !button) return;
+    if (!statusElement || !button) {
+        console.error('未找到状态元素或按钮元素');
+        return;
+    }
     
     statusElement.className = 'mt-3 alert alert-info';
     statusElement.textContent = '开始注册新Passkey...';
@@ -953,16 +997,24 @@ async function registerNewPasskey() {
 
     try {
         // 1. 获取注册选项
+        console.log('正在获取注册选项...');
         const getOptionsResponse = await fetch('/admin/api/passkey/get-registration-options', {
-            method: 'GET'
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin' // 确保发送cookies
         });
 
+        console.log('注册选项响应状态:', getOptionsResponse.status);
+        
         if (!getOptionsResponse.ok) {
             const errorData = await getOptionsResponse.json();
-            throw new Error(errorData.error || '获取注册选项失败');
+            throw new Error(errorData.error || `获取注册选项失败 (${getOptionsResponse.status})`);
         }
 
         let options = await getOptionsResponse.json();
+        console.log('获取到注册选项:', options);
         
         // 2. 准备选项数据格式
         options.challenge = base64UrlToArrayBuffer(options.challenge);
@@ -977,9 +1029,12 @@ async function registerNewPasskey() {
         }
 
         // 3. 调用浏览器API创建凭据
+        console.log('正在调用WebAuthn API...');
         const credential = await navigator.credentials.create({
             publicKey: options
         });
+        
+        console.log('凭据创建成功:', credential);
 
         // 4. 准备验证数据
         const verificationData = {
@@ -997,21 +1052,27 @@ async function registerNewPasskey() {
         };
 
         // 5. 发送到服务器验证
+        console.log('正在发送验证数据到服务器...');
         const verifyResponse = await fetch('/admin/api/passkey/verify-registration', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'same-origin', // 确保发送cookies
             body: JSON.stringify(verificationData)
         });
 
+        console.log('验证响应状态:', verifyResponse.status);
+        
         if (!verifyResponse.ok) {
             const errorData = await verifyResponse.json();
-            throw new Error(errorData.error || '验证注册失败');
+            throw new Error(errorData.error || `验证注册失败 (${verifyResponse.status})`);
         }
 
         // 6. 注册成功
         const result = await verifyResponse.json();
+        console.log('注册成功:', result);
+        
         statusElement.className = 'mt-3 alert alert-success';
         statusElement.textContent = `成功注册新Passkey: ${result.name || '未命名设备'}`;
         
@@ -1057,10 +1118,15 @@ async function registerNewPasskey() {
  * @param {string} name Passkey名称（用于显示）
  */
 async function deletePasskey(id, name) {
-    if (!id) return;
+    console.log(`开始删除Passkey: ${id} (${name})`);
+    if (!id) {
+        console.error('缺少Passkey ID');
+        return;
+    }
 
     // 显示确认对话框
     if (!confirm(`确定要删除Passkey "${name}"吗？此操作不可撤销。`)) {
+        console.log('用户取消了删除操作');
         return;
     }
 
@@ -1071,16 +1137,32 @@ async function deletePasskey(id, name) {
     }
 
     try {
+        console.log(`正在发送删除请求: /admin/api/passkey/${id}`);
         const response = await fetch(`/admin/api/passkey/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin' // 确保发送cookies
         });
 
+        console.log('删除响应状态:', response.status);
+        
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || '删除失败');
+            const errorText = await response.text();
+            console.error('删除响应错误:', errorText);
+            try {
+                const errorData = JSON.parse(errorText);
+                throw new Error(errorData.error || `删除失败 (${response.status}): ${response.statusText}`);
+            } catch (e) {
+                throw new Error(`删除失败 (${response.status}): ${response.statusText}`);
+            }
         }
 
         // 删除成功
+        const result = await response.json();
+        console.log('删除成功:', result);
+        
         if (statusElement) {
             statusElement.className = 'mt-3 alert alert-success';
             statusElement.textContent = `成功删除Passkey "${name}"`;
