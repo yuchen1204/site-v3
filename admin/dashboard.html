@@ -64,12 +64,6 @@
                         <span class="admin-sidebar-text">评论管理</span>
                     </a>
                 </li>
-                <li class="admin-sidebar-item">
-                    <a href="#" class="admin-sidebar-link" data-section="manage-passkeys">
-                        <i class="bi bi-fingerprint admin-sidebar-icon"></i>
-                        <span class="admin-sidebar-text">Passkey管理</span>
-                    </a>
-                </li>
             </ul>
         </nav>
     </aside>
@@ -245,53 +239,6 @@
                 <!-- 分页控件 -->
                 <div id="comments-pagination" class="d-flex justify-content-center mt-3"></div>
             </section>
-
-            <!-- Passkey管理部分 -->
-            <section id="manage-passkeys" class="admin-section">
-                <h1 class="h2">Passkey管理</h1>
-                <p class="text-muted">在此页面管理您的Passkey身份验证器</p>
-                
-                <div class="mt-4 mb-3">
-                    <button id="add-passkey-button" class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-2"></i>添加新Passkey
-                    </button>
-                </div>
-                
-                <!-- Passkey列表 -->
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">已注册的Passkey</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div id="passkeys-loading" class="text-center py-4">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">加载中...</span>
-                            </div>
-                            <p class="mt-2">加载Passkey列表...</p>
-                        </div>
-                        <div id="passkeys-empty" class="text-center py-4" style="display:none;">
-                            <i class="bi bi-fingerprint text-muted" style="font-size: 3rem;"></i>
-                            <p class="mt-2">您还没有注册Passkey</p>
-                        </div>
-                        <div id="passkeys-error" class="text-center py-4 text-danger" style="display:none;">
-                            <i class="bi bi-exclamation-triangle" style="font-size: 3rem;"></i>
-                            <p class="mt-2" id="passkeys-error-message">加载Passkey时出错</p>
-                        </div>
-                        <table class="table table-hover mb-0" id="passkeys-table" style="display:none;">
-                            <thead>
-                                <tr>
-                                    <th>名称</th>
-                                    <th>创建日期</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="passkeys-list">
-                                <!-- Passkey列表将动态加载到这里 -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
         </div>
     </main>
 
@@ -310,68 +257,6 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     <button type="button" class="btn btn-danger" id="confirmDeleteButton">
-                        <i class="bi bi-trash-fill me-1"></i> 确认删除
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Passkey添加模态框 -->
-    <div class="modal fade" id="addPasskeyModal" tabindex="-1" aria-labelledby="addPasskeyModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addPasskeyModalLabel">添加新Passkey</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="add-passkey-form">
-                        <div class="mb-3">
-                            <label for="passkey-name" class="form-label">Passkey名称</label>
-                            <input type="text" class="form-control" id="passkey-name" placeholder="例如：我的电脑、我的手机" required>
-                            <div class="form-text">为您的Passkey起一个易于识别的名称</div>
-                        </div>
-                    </form>
-                    
-                    <div id="passkey-registration-status" class="mt-3" style="display:none;">
-                        <div class="d-flex align-items-center" id="passkey-registering">
-                            <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
-                                <span class="visually-hidden">处理中...</span>
-                            </div>
-                            <span>请按照设备提示完成验证...</span>
-                        </div>
-                        <div class="alert alert-success" id="passkey-success" style="display:none;">
-                            Passkey添加成功!
-                        </div>
-                        <div class="alert alert-danger" id="passkey-error" style="display:none;">
-                            Passkey添加失败: <span id="passkey-error-message"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" id="start-passkey-registration">开始注册</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Passkey删除确认模态框 -->
-    <div class="modal fade" id="deletePasskeyModal" tabindex="-1" aria-labelledby="deletePasskeyModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="deletePasskeyModalLabel">删除Passkey</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="关闭"></button>
-                </div>
-                <div class="modal-body">
-                    <p id="delete-passkey-message"></p>
-                    <p class="text-danger"><strong>注意：此操作不可撤销！</strong></p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-danger" id="confirm-delete-passkey">
                         <i class="bi bi-trash-fill me-1"></i> 确认删除
                     </button>
                 </div>

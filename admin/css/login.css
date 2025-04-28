@@ -16,27 +16,4 @@ body {
     padding: 2.5rem;
     border-radius: 0.5rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* 添加分隔线样式 */
-.divider-with-text {
-    display: flex;
-    align-items: center;
-    text-align: center;
-    color: #6c757d;
-    margin: 15px 0;
-}
-
-.divider-with-text::before,
-.divider-with-text::after {
-    content: '';
-    flex: 1;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.divider-with-text span {
-    padding: 0 10px;
-    font-size: 0.9rem;
-}
-
-/* 修复可能的现有样式 */ 
+} 
