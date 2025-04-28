@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (commentsSection && typeof initializeCommentManagement === 'function') {
         initializeCommentManagement();
     }
+    initializePasskeyManagement();
 });
 
 /**
@@ -841,4 +842,316 @@ function escapeHTML(str) {
  */
 function showToast(title, message, type = 'info') {
     createToast(`<strong>${title}</strong>: ${message}`, type);
+}
+
+// --- Passkey管理相关函数 ---
+
+/**
+ * 辅助函数：Base64Url转ArrayBuffer
+ */
+function base64UrlToBuffer(base64Url) {
+    const padding = '='.repeat((4 - base64Url.length % 4) % 4);
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/') + padding;
+    const rawData = atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray.buffer;
+}
+
+/**
+ * 辅助函数：ArrayBuffer转Base64Url
+ */
+function arrayBufferToBase64Url(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    const base64 = btoa(binary);
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+/**
+ * 初始化Passkey管理功能
+ */
+function initializePasskeyManagement() {
+    const addPasskeyButton = document.getElementById('add-passkey-button');
+    const startRegistrationButton = document.getElementById('start-passkey-registration');
+    const confirmDeleteButton = document.getElementById('confirm-delete-passkey');
+    
+    if (!addPasskeyButton || !startRegistrationButton || !confirmDeleteButton) return;
+
+    // 添加Passkey按钮点击事件
+    addPasskeyButton.addEventListener('click', () => {
+        // 重置模态框状态
+        document.getElementById('passkey-name').value = '';
+        document.getElementById('passkey-registration-status').style.display = 'none';
+        document.getElementById('passkey-registering').style.display = 'block';
+        document.getElementById('passkey-success').style.display = 'none';
+        document.getElementById('passkey-error').style.display = 'none';
+        
+        // 显示Passkey注册模态框
+        const modal = new bootstrap.Modal(document.getElementById('addPasskeyModal'));
+        modal.show();
+    });
+    
+    // 开始注册按钮点击事件
+    startRegistrationButton.addEventListener('click', async () => {
+        const nameInput = document.getElementById('passkey-name');
+        const name = nameInput.value.trim();
+        
+        if (!name) {
+            nameInput.focus();
+            return;
+        }
+        
+        // 显示注册状态
+        document.getElementById('passkey-registration-status').style.display = 'block';
+        startRegistrationButton.disabled = true;
+        
+        try {
+            await registerNewPasskey(name);
+        } finally {
+            startRegistrationButton.disabled = false;
+        }
+    });
+    
+    // 确认删除Passkey按钮点击事件
+    confirmDeleteButton.addEventListener('click', async () => {
+        const passkeyId = confirmDeleteButton.getAttribute('data-passkey-id');
+        if (!passkeyId) return;
+        
+        confirmDeleteButton.disabled = true;
+        
+        try {
+            await deletePasskey(passkeyId);
+            // 关闭模态框
+            bootstrap.Modal.getInstance(document.getElementById('deletePasskeyModal')).hide();
+            // 重新加载Passkey列表
+            loadPasskeys();
+            // 显示成功提示
+            showToast('成功', 'Passkey已删除', 'success');
+        } catch (error) {
+            console.error('删除Passkey失败:', error);
+            showToast('错误', `删除Passkey失败: ${error.message}`, 'danger');
+        } finally {
+            confirmDeleteButton.disabled = false;
+        }
+    });
+    
+    // 加载Passkey列表
+    loadPasskeys();
+}
+
+/**
+ * 加载Passkey列表
+ */
+async function loadPasskeys() {
+    const loadingElement = document.getElementById('passkeys-loading');
+    const emptyElement = document.getElementById('passkeys-empty');
+    const errorElement = document.getElementById('passkeys-error');
+    const errorMessageElement = document.getElementById('passkeys-error-message');
+    const tableElement = document.getElementById('passkeys-table');
+    const listElement = document.getElementById('passkeys-list');
+    
+    if (!loadingElement || !emptyElement || !errorElement || !errorMessageElement || !tableElement || !listElement) return;
+    
+    // 显示加载状态
+    loadingElement.style.display = 'block';
+    emptyElement.style.display = 'none';
+    errorElement.style.display = 'none';
+    tableElement.style.display = 'none';
+    
+    try {
+        const response = await fetch('/admin/api/passkey/list');
+        
+        if (!response.ok) {
+            throw new Error(`获取Passkey列表失败: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        // 检查是否有Passkey
+        if (!data.passkeys || data.passkeys.length === 0) {
+            loadingElement.style.display = 'none';
+            emptyElement.style.display = 'block';
+            return;
+        }
+        
+        // 清空列表
+        listElement.innerHTML = '';
+        
+        // 填充列表
+        data.passkeys.forEach(passkey => {
+            const row = document.createElement('tr');
+            const createdDate = new Date(passkey.created).toLocaleString('zh-CN');
+            
+            row.innerHTML = `
+                <td>${escapeHTML(passkey.name)}</td>
+                <td>${createdDate}</td>
+                <td>
+                    <button class="btn btn-danger btn-sm delete-passkey-button" data-passkey-id="${passkey.id}">
+                        <i class="bi bi-trash-fill"></i> 删除
+                    </button>
+                </td>
+            `;
+            
+            // 添加删除按钮事件
+            row.querySelector('.delete-passkey-button').addEventListener('click', () => {
+                showDeletePasskeyConfirm(passkey);
+            });
+            
+            listElement.appendChild(row);
+        });
+        
+        // 显示表格
+        loadingElement.style.display = 'none';
+        tableElement.style.display = 'table';
+        
+    } catch (error) {
+        console.error('加载Passkey列表失败:', error);
+        loadingElement.style.display = 'none';
+        errorMessageElement.textContent = error.message;
+        errorElement.style.display = 'block';
+    }
+}
+
+/**
+ * 注册新Passkey
+ * @param {string} name - Passkey名称
+ */
+async function registerNewPasskey(name) {
+    const registeringElement = document.getElementById('passkey-registering');
+    const successElement = document.getElementById('passkey-success');
+    const errorElement = document.getElementById('passkey-error');
+    const errorMessageElement = document.getElementById('passkey-error-message');
+    
+    if (!registeringElement || !successElement || !errorElement || !errorMessageElement) return;
+    
+    // 显示注册中状态
+    registeringElement.style.display = 'block';
+    successElement.style.display = 'none';
+    errorElement.style.display = 'none';
+    
+    try {
+        // 1. 开始注册流程
+        const startResponse = await fetch('/admin/api/passkey/begin-registration', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+        });
+        
+        if (!startResponse.ok) {
+            const error = await startResponse.json();
+            throw new Error(error.error || '开始注册流程失败');
+        }
+        
+        const { publicKey } = await startResponse.json();
+        
+        // 2. 准备注册选项
+        const options = {
+            ...publicKey,
+            challenge: base64UrlToBuffer(publicKey.challenge),
+            user: {
+                ...publicKey.user,
+                id: base64UrlToBuffer(publicKey.user.id)
+            }
+        };
+        
+        // 3. 调用浏览器的证书API
+        const credential = await navigator.credentials.create({
+            publicKey: options
+        });
+        
+        // 4. 处理注册结果
+        const registrationResult = {
+            credential: {
+                id: credential.id,
+                rawId: arrayBufferToBase64Url(credential.rawId),
+                type: credential.type,
+                response: {
+                    attestationObject: arrayBufferToBase64Url(credential.response.attestationObject),
+                    clientDataJSON: arrayBufferToBase64Url(credential.response.clientDataJSON)
+                }
+            }
+        };
+        
+        // 5. 发送注册结果到服务器
+        const completeResponse = await fetch('/admin/api/passkey/complete-registration', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(registrationResult)
+        });
+        
+        const completeData = await completeResponse.json();
+        
+        if (completeResponse.ok && completeData.success) {
+            // 注册成功
+            registeringElement.style.display = 'none';
+            successElement.style.display = 'block';
+            
+            // 重新加载Passkey列表
+            setTimeout(() => {
+                loadPasskeys();
+                // 3秒后关闭模态框
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('addPasskeyModal')).hide();
+                }, 1500);
+            }, 1000);
+            
+        } else {
+            // 注册失败
+            throw new Error(completeData.error || '注册失败');
+        }
+        
+    } catch (error) {
+        console.error('Passkey注册失败:', error);
+        registeringElement.style.display = 'none';
+        errorMessageElement.textContent = error.message || '未知错误';
+        errorElement.style.display = 'block';
+    }
+}
+
+/**
+ * 显示删除Passkey确认对话框
+ * @param {Object} passkey - Passkey对象
+ */
+function showDeletePasskeyConfirm(passkey) {
+    const modal = document.getElementById('deletePasskeyModal');
+    const confirmMessage = document.getElementById('delete-passkey-message');
+    const confirmButton = document.getElementById('confirm-delete-passkey');
+    
+    if (!modal || !confirmMessage || !confirmButton) return;
+    
+    // 设置确认消息
+    confirmMessage.textContent = `您确定要删除Passkey "${passkey.name}" 吗？`;
+    
+    // 设置Passkey ID
+    confirmButton.setAttribute('data-passkey-id', passkey.id);
+    
+    // 显示模态框
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
+/**
+ * 删除Passkey
+ * @param {string} passkeyId - Passkey ID
+ */
+async function deletePasskey(passkeyId) {
+    const response = await fetch('/admin/api/passkey/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passkeyId })
+    });
+    
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || `删除失败: ${response.statusText}`);
+    }
+    
+    return await response.json();
 } 
