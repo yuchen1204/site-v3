@@ -1,108 +1,19 @@
-/* 登录页面样式 */
 body {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     background-color: #f8f9fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
 }
 
 .login-container {
     width: 100%;
     max-width: 400px;
-    padding: 15px;
 }
 
 .login-box {
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    padding: 2rem;
-}
-
-.login-box h2 {
-    color: #333;
-    margin-bottom: 1.5rem;
-}
-
-/* 分隔线样式 */
-.separator {
-    display: flex;
-    align-items: center;
-    text-align: center;
-    color: #6c757d;
-}
-
-.separator::before,
-.separator::after {
-    content: '';
-    flex: 1;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.separator-text {
-    padding: 0 10px;
-}
-
-/* Passkey按钮样式 */
-#passkey-login-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.75rem;
-    transition: all 0.2s ease-in-out;
-}
-
-#passkey-login-button:hover {
-    background-color: #f8f9fa;
-}
-
-#passkey-login-button .bi-fingerprint {
-    font-size: 1.2rem;
-}
-
-/* Passkey管理区域样式 */
-#passkey-management {
-    padding-top: 1rem;
-    border-top: 1px dashed #dee2e6;
-}
-
-/* 响应式调整 */
-@media (max-width: 576px) {
-    .login-box {
-        padding: 1.5rem;
-    }
-}
-
-/* 切换暗色主题 */
-@media (prefers-color-scheme: dark) {
-    body {
-        background-color: #212529;
-    }
-    
-    .login-box {
-        background-color: #343a40;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
-    }
-    
-    .login-box h2 {
-        color: #f8f9fa;
-    }
-    
-    .separator::before,
-    .separator::after {
-        border-bottom-color: #495057;
-    }
-    
-    .separator-text {
-        color: #adb5bd;
-    }
-    
-    #passkey-login-button:hover {
-        background-color: #495057;
-    }
-    
-    #passkey-management {
-        border-top-color: #495057;
-    }
+    background-color: #ffffff;
+    padding: 2.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 } 

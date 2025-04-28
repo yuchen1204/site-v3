@@ -10,7 +10,6 @@
 - 支持分类筛选和分页的博客列表
 - 博客文章详情页及评论系统（评论存储于 KV）
 - 基于 Session 和 Cloudflare KV 的后台管理身份验证
-- 支持 Passkey (WebAuthn) 的安全登录方式
 - 后台管理界面，用于管理文章、评论和个人资料
 - 通过 Node.js 脚本将本地 JSON 数据同步到 Cloudflare KV
 
@@ -65,39 +64,6 @@ site-v3/
 - **线上存储:** Cloudflare KV 被用作线上的主要数据存储。Functions API 直接与 KV 交互以获取和修改数据。Session 数据也存储在 KV 中。
 - **同步:** 需要手动运行 `node scripts/sync-to-kv.js` 脚本将 `data/` 目录下的 JSON 文件内容同步到 Cloudflare KV 的 `blog_data` 命名空间中。每次更新本地 JSON 文件后，都需要运行此脚本以使更改在线上生效。评论数据是直接通过 API 写入 KV 的。
 
-## 后台登录系统
-
-网站后台管理系统支持两种登录方式:
-
-### 传统用户名密码登录
-
-使用环境变量配置的用户名和密码进行登录。在 Cloudflare Pages 的环境变量中设置:
-
-- `ADMIN_USERNAME`: 管理员用户名
-- `ADMIN_PASSWORD`: 管理员密码
-
-### Passkey (WebAuthn) 登录
-
-网站支持现代的 Passkey 登录方式，提供以下优势:
-
-- **增强安全性**: 使用公钥加密技术，无需记忆复杂密码
-- **抗钓鱼**: 凭证绑定到特定域名，无法被钓鱼网站窃取
-- **便捷登录**: 使用设备的生物识别功能 (指纹、面部识别等) 快速登录
-- **跨设备同步**: 在支持的平台上 (如 iOS/macOS/Android) 可实现凭证同步
-
-#### 启用 Passkey
-
-1. 首先使用传统用户名密码登录
-2. 在登录页面，点击"注册新Passkey"按钮
-3. 按照浏览器提示完成注册
-4. 注册成功后，下次可直接使用"使用Passkey登录"按钮进行登录
-
-#### Passkey 兼容性要求
-
-- 现代浏览器 (Chrome 67+, Firefox 60+, Safari 13+, Edge 79+)
-- 支持生物识别的设备 (带有指纹识别器或面部识别的设备)
-- 某些功能可能需要操作系统支持 (Windows 10+, macOS 11+, iOS 14+, Android 7+)
-
 ## 部署到 Cloudflare Pages
 
 1.  **Fork 或 Clone 仓库:** 将此项目仓库 Fork 到你的 GitHub 账户或 Clone 到本地。
@@ -129,13 +95,8 @@ site-v3/
     *   点击 "Add binding"。
     *   **Variable name:** `blog_data` (必须与 Functions 代码和 `wrangler.toml` 中的 `binding` 名称一致)。
     *   **KV namespace:** 选择你之前创建的 KV 命名空间。
-8.  **设置环境变量:**
-    *   在 Pages 项目的设置 (Settings) -> Environment variables 中添加生产环境变量。
-    *   **必需变量:**
-        * `ADMIN_USERNAME`: 管理员用户名
-        * `ADMIN_PASSWORD`: 管理员密码用于传统登录
-    *   **可选变量:**
-        * 其他自定义配置项
+8.  **设置环境变量 (可选但推荐):**
+    *   在 Pages 项目的设置 (Settings) -> Environment variables 中添加生产环境变量。例如，可以设置一个用于后台登录的复杂密码，然后在 `functions/admin/login.js` 中引用它，而不是硬编码。
 9.  **部署:** 点击 "Save and Deploy"。
 
 ## 本地开发
@@ -264,17 +225,4 @@ wrangler pages dev ./ --kv=blog_data
     - 在本地运行 `npm install <package_name>`。
     - 在 Cloudflare Pages 的构建设置中添加构建命令，例如 `npm install`。
     - 在 Functions 代码中可以通过 `import` 或 `require` 使用这些依赖。
-- **测试:** 使用 `wrangler pages dev` 在本地充分测试所有更改，包括前端交互和后端 API 调用。
-
-## 安装依赖
-
-项目使用以下依赖:
-
-```bash
-# 安装依赖
-npm install
-```
-
-主要依赖:
-- @simplewebauthn/browser: Passkey客户端功能
-- @simplewebauthn/server: Passkey服务端验证 
+- **测试:** 使用 `wrangler pages dev` 在本地充分测试所有更改，包括前端交互和后端 API 调用。 
