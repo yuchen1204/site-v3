@@ -1,7 +1,104 @@
-// 从SimpleWebAuthn获取浏览器API
-const { startAuthentication } = SimpleWebAuthn.browserSupport;
+// 确保SimpleWebAuthn库加载完成
+function ensureSimpleWebAuthnLoaded() {
+    return new Promise((resolve, reject) => {
+        // 如果已经加载，直接返回
+        if (window.SimpleWebAuthn) {
+            resolve(window.SimpleWebAuthn);
+            return;
+        }
 
-document.addEventListener('DOMContentLoaded', function() {
+        // 检查库是否正在加载
+        let scriptExists = false;
+        const scripts = document.querySelectorAll('script');
+        for (const script of scripts) {
+            if (script.src.includes('@simplewebauthn/browser')) {
+                scriptExists = true;
+                break;
+            }
+        }
+
+        // 如果脚本标签不存在，添加脚本
+        if (!scriptExists) {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js';
+            script.async = true;
+
+            script.onload = () => {
+                if (window.SimpleWebAuthn) {
+                    resolve(window.SimpleWebAuthn);
+                } else {
+                    reject(new Error('SimpleWebAuthn加载成功但未定义'));
+                }
+            };
+
+            script.onerror = () => {
+                reject(new Error('无法加载SimpleWebAuthn库'));
+            };
+
+            document.head.appendChild(script);
+        } else {
+            // 如果脚本存在但还未加载完成，轮询等待
+            let attempts = 0;
+            const maxAttempts = 20; // 最多等待10秒(20次，每次500ms)
+            
+            const checkLoaded = () => {
+                if (window.SimpleWebAuthn) {
+                    resolve(window.SimpleWebAuthn);
+                    return;
+                }
+                
+                attempts++;
+                if (attempts >= maxAttempts) {
+                    reject(new Error('SimpleWebAuthn库加载超时'));
+                    return;
+                }
+                
+                setTimeout(checkLoaded, 500);
+            };
+            
+            checkLoaded();
+        }
+    });
+}
+
+// 等待库加载完成后初始化
+ensureSimpleWebAuthnLoaded()
+    .then(SimpleWebAuthn => {
+        // 保存全局引用
+        window.safeSimpleWebAuthn = SimpleWebAuthn;
+        // 从SimpleWebAuthn获取浏览器API
+        const { startAuthentication } = SimpleWebAuthn.browserSupport;
+        
+        // 存储以供后续使用
+        window.safeStartAuthentication = startAuthentication;
+        
+        // 初始化页面
+        initializeLoginPage();
+    })
+    .catch(error => {
+        console.error('SimpleWebAuthn库加载失败:', error);
+        // 隐藏Passkey选项，只显示密码登录
+        const passkeyTab = document.getElementById('passkey-tab');
+        if (passkeyTab) {
+            passkeyTab.style.display = 'none';
+        }
+        
+        // 确保密码登录选项卡是激活的
+        const passwordTab = document.getElementById('password-tab');
+        const passwordLogin = document.getElementById('password-login');
+        if (passwordTab && passwordLogin) {
+            passwordTab.classList.add('active');
+            passwordLogin.classList.add('show', 'active');
+        }
+        
+        // 只初始化密码登录部分
+        initPasswordLogin();
+    });
+
+/**
+ * 初始化登录页面的所有功能
+ */
+function initializeLoginPage() {
     // 检查浏览器是否支持WebAuthn/Passkey
     checkWebAuthnSupport();
     
@@ -10,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化Passkey登录
     initPasskeyLogin();
-});
+}
 
 /**
  * 检查浏览器是否支持WebAuthn
@@ -31,7 +128,10 @@ function checkWebAuthnSupport() {
  * 初始化常规密码登录
  */
 function initPasswordLogin() {
-    document.getElementById('login-form').addEventListener('submit', async function(event) {
+    const loginForm = document.getElementById('login-form');
+    if (!loginForm) return;
+    
+    loginForm.addEventListener('submit', async function(event) {
         event.preventDefault(); // 阻止表单默认提交行为
 
         const usernameInput = document.getElementById('username');
@@ -100,6 +200,12 @@ function initPasskeyLogin() {
         passkeyButton.innerHTML = '<i class="bi bi-hourglass-split"></i> 验证中...';
         
         try {
+            // 使用安全存储的函数
+            const startAuthentication = window.safeStartAuthentication;
+            if (!startAuthentication) {
+                throw new Error('Passkey功能未正确加载，请刷新页面重试');
+            }
+            
             // 1. 获取验证选项
             const optionsResponse = await fetch('/admin/api/passkey/authenticate-options', {
                 method: 'GET'
