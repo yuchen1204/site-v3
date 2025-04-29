@@ -1,151 +1,132 @@
-/**
- * Cloudflare Pages Function for verifying WebAuthn/Passkey registration
- * 
- * @param {Request} request
- * @param {Object} env - Contains environment bindings
- * @param {Object} ctx - Contains execution context
- * @returns {Response}
- */
 import { verifyRegistrationResponse } from '@simplewebauthn/server';
+import { isoBase64URL } from '@simplewebauthn/server/helpers';
 
+// 辅助函数：将 ArrayBuffer 转换为 Base64URL 字符串
+function arrayBufferToBase64Url(buffer) {
+  return isoBase64URL.fromBuffer(buffer);
+}
+
+/**
+ * 验证 Passkey 注册结果并存储凭证
+ */
 export async function onRequestPost(context) {
   const { request, env } = context;
-  
-  try {
-    // 仅管理员可以注册 Passkey
-    const userInfo = await validateAdminSession(request, env);
-    if (!userInfo) {
-      return new Response(JSON.stringify({ error: '未授权，请先登录' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json;charset=UTF-8' }
-      });
-    }
 
-    // 确定用户 ID (这里用用户名)
-    const userId = userInfo.username;
-    
-    // 获取存储的注册挑战
-    const challengeKey = `passkey:challenge:${userId}`;
-    const storedChallenge = await env.blog_data.get(challengeKey);
-    
-    if (!storedChallenge) {
-      return new Response(JSON.stringify({ error: '注册会话已过期，请重新开始注册' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json;charset=UTF-8' }
-      });
-    }
+  // 检查必要的环境变量
+  const RP_ID = env.RP_ID;
+  const RP_NAME = env.RP_NAME;
+  const EXPECTED_ORIGIN = env.EXPECTED_ORIGIN; // e.g., 'https://yourdomain.com'
+  const ADMIN_USERNAME = env.ADMIN_USERNAME;
 
-    // 从请求获取验证数据
-    const data = await request.json();
-    const { attestationResponse } = data;
-
-    if (!attestationResponse) {
-      return new Response(JSON.stringify({ error: '请求缺少必要数据' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json;charset=UTF-8' }
-      });
-    }
-
-    // 确定期望的原点和RP ID
-    const origin = request.headers.get('Origin');
-    const rpID = new URL(origin).hostname;
-
-    // 验证注册响应
-    const verification = await verifyRegistrationResponse({
-      response: attestationResponse,
-      expectedChallenge: storedChallenge,
-      expectedOrigin: origin,
-      expectedRPID: rpID,
-    });
-
-    if (!verification.verified) {
-      return new Response(JSON.stringify({ error: '验证失败', verification }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json;charset=UTF-8' }
-      });
-    }
-
-    // 清理注册挑战
-    await env.blog_data.delete(challengeKey);
-
-    // 提取凭据ID和公钥
-    const { credentialID, credentialPublicKey } = verification.registrationInfo;
-    const base64CredentialID = Buffer.from(credentialID).toString('base64url');
-    const base64PublicKey = Buffer.from(credentialPublicKey).toString('base64url');
-
-    // 获取用户现有凭据列表
-    const credentialsKey = `passkey:credentials:${userId}`;
-    let credentials = await env.blog_data.get(credentialsKey, { type: 'json' }) || [];
-
-    // 为新凭据创建友好名称
-    const deviceName = data.deviceName || `设备 ${credentials.length + 1}`;
-    const now = new Date().toISOString();
-
-    // 添加新凭据
-    credentials.push({
-      credentialID: base64CredentialID,
-      publicKey: base64PublicKey,
-      name: deviceName,
-      createdAt: now,
-      lastUsed: now,
-      counter: verification.registrationInfo.counter,
-      transports: attestationResponse.response.transports || [],
-    });
-
-    // 存储更新的凭据列表
-    await env.blog_data.put(credentialsKey, JSON.stringify(credentials));
-
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: 'Passkey注册成功',
-      deviceName
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json;charset=UTF-8' }
-    });
-  } catch (error) {
-    console.error('验证Passkey注册出错:', error);
-    return new Response(JSON.stringify({ error: '验证注册失败: ' + error.message }), {
+  if (!RP_ID || !RP_NAME || !EXPECTED_ORIGIN || !ADMIN_USERNAME) {
+    console.error('Passkey 相关环境变量 (RP_ID, RP_NAME, EXPECTED_ORIGIN, ADMIN_USERNAME) 未设置');
+    return new Response(JSON.stringify({ error: '服务器配置错误' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json;charset=UTF-8' }
     });
   }
-}
 
-/**
- * 从请求中提取并验证管理员会话
- */
-async function validateAdminSession(request, env) {
-  // 获取 Cookie
-  const cookieHeader = request.headers.get('Cookie') || '';
-  const cookies = parseCookies(cookieHeader);
-  const sessionToken = cookies['admin_session'];
+  try {
+    const { username, data: registrationResponse } = await request.json();
 
-  if (!sessionToken) {
-    return null; // 没有会话令牌
-  }
+    // 再次验证用户名
+    if (username !== ADMIN_USERNAME) {
+        return new Response(JSON.stringify({ error: '无效的用户名' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json;charset=UTF-8' }
+        });
+    }
 
-  // 从 KV 获取会话数据
-  const sessionKey = `session:${sessionToken}`;
-  const sessionData = await env.blog_data.get(sessionKey, { type: 'json' });
+    const userId = `admin_${username}`;
 
-  if (!sessionData) {
-    return null; // 无效会话
-  }
+    // 从 KV 中获取之前存储的 challenge
+    const challengeKey = `challenge:${userId}:register`;
+    const expectedChallenge = await env.blog_data.get(challengeKey);
 
-  return sessionData; // 包含用户信息的会话
-}
+    if (!expectedChallenge) {
+      return new Response(JSON.stringify({ error: '未找到 Challenge 或已过期' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json;charset=UTF-8' }
+      });
+    }
 
-/**
- * 从 Cookie 头解析 Cookie
- */
-function parseCookies(cookieHeader) {
-  const cookies = {};
-  if (cookieHeader) {
-    cookieHeader.split(';').forEach(cookie => {
-      const [name, value] = cookie.trim().split('=');
-      cookies[name] = value;
+    // 验证注册响应
+    const verification = await verifyRegistrationResponse({
+      response: registrationResponse,
+      expectedChallenge: expectedChallenge,
+      expectedOrigin: EXPECTED_ORIGIN,
+      expectedRPID: RP_ID,
+      requireUserVerification: true, // 确保用户已验证 (例如，通过生物识别或PIN)
+    });
+
+    const { verified, registrationInfo } = verification;
+
+    if (verified && registrationInfo) {
+      // 清除已使用的 challenge
+      await env.blog_data.delete(challengeKey);
+
+      const { credentialPublicKey, credentialID, counter, credentialDeviceType, credentialBackedUp } = registrationInfo;
+
+      // 从 KV 获取该用户当前的 authenticators
+      const kvKey = `passkey:${username}`;
+      let userAuthenticators = await env.blog_data.get(kvKey, { type: 'json' }) || [];
+      
+      // 检查凭证是否已存在
+      const existingAuthenticator = userAuthenticators.find(auth => 
+         arrayBufferToBase64Url(credentialID) === auth.credentialID
+      );
+
+      if (existingAuthenticator) {
+        console.warn('尝试注册已存在的 Passkey 凭证');
+        // 可以选择更新现有凭证的 counter 或直接返回成功
+         return new Response(JSON.stringify({ verified: true }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json;charset=UTF-8' }
+         });
+      } 
+
+      // 创建新的 authenticator 对象用于存储
+      const newAuthenticator = {
+        credentialID: arrayBufferToBase64Url(credentialID), // 存储为 Base64URL
+        credentialPublicKey: arrayBufferToBase64Url(credentialPublicKey), // 存储为 Base64URL
+        counter: counter,
+        credentialDeviceType: credentialDeviceType, // 'singleDevice' 或 'multiDevice'
+        credentialBackedUp: credentialBackedUp, // 是否已备份
+        transports: registrationResponse.response.transports || [], // 获取 transports 信息
+      };
+
+      // 将新的 authenticator 添加到用户列表中并存回 KV
+      userAuthenticators.push(newAuthenticator);
+      await env.blog_data.put(kvKey, JSON.stringify(userAuthenticators));
+
+      return new Response(JSON.stringify({ verified: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json;charset=UTF-8' }
+      });
+    } else {
+      // 验证失败，清除 challenge
+      await env.blog_data.delete(challengeKey);
+      return new Response(JSON.stringify({ error: 'Passkey 验证失败' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json;charset=UTF-8' }
+      });
+    }
+
+  } catch (error) {
+    console.error('验证 Passkey 注册失败:', error);
+    // 尝试清除可能未清除的 challenge
+    try {
+      const { username } = await request.json();
+      const userId = `admin_${username}`;
+      const challengeKey = `challenge:${userId}:register`;
+      await env.blog_data.delete(challengeKey);
+    } catch (cleanupError) {
+       console.error('清理 challenge 时出错:', cleanupError); 
+    }
+    
+    return new Response(JSON.stringify({ error: '验证注册响应时出错' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json;charset=UTF-8' }
     });
   }
-  return cookies;
 } 
