@@ -6,6 +6,8 @@
     <title>后台登录</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <!-- Custom Admin CSS -->
     <link rel="stylesheet" href="css/login.css">
 </head>
@@ -13,25 +15,67 @@
     <div class="login-container">
         <div class="login-box">
             <h2 class="text-center mb-4">后台管理登录</h2>
-            <form id="login-form">
-                <div class="mb-3">
-                    <label for="username" class="form-label">用户名</label>
-                    <input type="text" class="form-control" id="username" name="username" required>
+            
+            <!-- 切换标签页 -->
+            <ul class="nav nav-tabs mb-4" id="loginTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="password-tab" data-bs-toggle="tab" data-bs-target="#password-pane" type="button" role="tab" aria-controls="password-pane" aria-selected="true">密码登录</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="passkey-tab" data-bs-toggle="tab" data-bs-target="#passkey-pane" type="button" role="tab" aria-controls="passkey-pane" aria-selected="false">Passkey登录</button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="loginTabsContent">
+                <!-- 密码登录表单 -->
+                <div class="tab-pane fade show active" id="password-pane" role="tabpanel" aria-labelledby="password-tab">
+                    <form id="login-form">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">密码</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">登录</button>
+                        </div>
+                    </form>
                 </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">密码</label>
-                    <input type="password" class="form-control" id="password" name="password" required>
+                
+                <!-- Passkey登录表单 -->
+                <div class="tab-pane fade" id="passkey-pane" role="tabpanel" aria-labelledby="passkey-tab">
+                    <form id="passkey-login-form">
+                        <div class="mb-3">
+                            <label for="passkey-username" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="passkey-username" name="username" required>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-fingerprint"></i> 使用Passkey登录
+                            </button>
+                            <button type="button" id="register-passkey-btn" class="btn btn-outline-secondary">
+                                <i class="bi bi-plus-circle"></i> 注册新Passkey
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">登录</button>
-                </div>
-                <div id="login-error" class="mt-3 text-danger text-center" style="display: none;"></div>
-            </form>
+            </div>
+            
+            <div id="login-error" class="mt-3 text-danger text-center" style="display: none;"></div>
+            <div id="login-success" class="mt-3 text-success text-center" style="display: none;"></div>
+            
+            <div class="mt-3 text-center text-muted small">
+                <p>Passkey是一种更安全的无密码登录方式</p>
+            </div>
         </div>
     </div>
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SimpleWebAuthn -->
+    <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
     <!-- Custom Admin JS -->
     <script src="js/login.js"></script>
 </body>
