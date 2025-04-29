@@ -1,0 +1,15 @@
+{
+  "name": "site-v3-functions",
+  "version": "1.0.0",
+  "description": "Cloudflare Functions for site-v3",
+  "main": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@simplewebauthn/server": "^9.0.0"
+  }
+}
