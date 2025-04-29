@@ -130,14 +130,6 @@ function initializeAdminSidebar() {
                             console.warn('评论管理功能 (initializeCommentManagement) 未定义或不可用。');
                         }
                         break;
-                    case 'manage-passkeys':
-                        // 加载Passkey列表
-                        if (typeof loadPasskeys === 'function') {
-                            loadPasskeys(); // 重新加载Passkey列表
-                        } else {
-                            console.warn('Passkey管理功能 (loadPasskeys) 未定义或不可用。');
-                        }
-                        break;
                     case 'dashboard-overview':
                         // 仪表盘通常是静态的或有自己的更新机制，这里暂时不处理
                         break;
@@ -182,12 +174,6 @@ function initializeAdminSidebar() {
                     // 初始加载评论
                     if (typeof initializeCommentManagement === 'function') {
                         initializeCommentManagement();
-                    }
-                    break;
-                case 'manage-passkeys':
-                    // 初始加载Passkey列表
-                    if (typeof loadPasskeys === 'function') {
-                        loadPasskeys();
                     }
                     break;
                 // dashboard-overview 通常不需要初始加载动态数据
